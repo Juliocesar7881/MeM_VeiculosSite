@@ -103,6 +103,16 @@ veículo, mude o **Status** e marque **Publicado no site**.
 
 **Excluir** (Ações → Excluir) tira o veículo do painel e apaga as fotos — use só para cadastros errados.
 
+## Ver quais veículos chamam mais atenção
+
+- No **Dashboard**, o quadro **“Interesse nos últimos 30 dias”** mostra o total de visualizações das páginas de
+  veículos e de toques nos botões de WhatsApp, e os 5 veículos com mais procura.
+- Na página de cada veículo no painel, ao lado do status, aparecem os números dele nos últimos 30 dias.
+
+Use para decidir destaques e ofertas: muita visualização e pouco WhatsApp pode indicar preço ou fotos a melhorar.
+A contagem é anônima (não identifica o cliente) e a mesma pessoa abrindo a página várias vezes na mesma visita conta
+uma vez só.
+
 ---
 
 ## Consultar propostas (“Anuncie seu veículo”)

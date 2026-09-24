@@ -56,7 +56,8 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 | `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                    |
 | `/sitemap.xml`, `/robots.txt`                      | Gerados dinamicamente                                                                                                                            |
 
-**Painel (`/admin`)** — Dashboard, Veículos (lista com filtros e ações rápidas), Novo veículo, fotos (upload múltiplo,
+**Painel (`/admin`)** — Dashboard (com **interesse por veículo**: visualizações e cliques no WhatsApp dos últimos 30
+dias, contados de forma anônima), Veículos (lista com filtros e ações rápidas), Novo veículo, fotos (upload múltiplo,
 arrastar, reordenar, capa, excluir), Propostas (status, WhatsApp do cliente, anotações, **transformar em veículo**,
 exclusão LGPD), Ofertas e Repasses (filtros da lista), Configurações (contatos, redes, textos).
 
@@ -99,7 +100,7 @@ Navegador ──► Cloudflare (borda mais próxima)
                  │  arquivos estáticos (CSS/JS/logo) servidos direto, sem Worker
                  ▼
           Worker (Astro SSR)
-          middleware.ts  → cache de borda (domínio próprio) · CSRF · auth do /admin · headers de segurança
+          middleware.ts  → cache de borda · endereço oficial (301) · CSRF · auth do /admin · headers de segurança
                  │
           pages/          → só apresentação: chama serviços, nunca SQL
           services/       → regras de negócio (oferta ativa, publicação, conversão proposta→veículo…)
@@ -131,27 +132,28 @@ npm run dev                       # http://localhost:4321  —  painel em http:/
 
 ## Scripts
 
-| Comando                                            | O que faz                                                                                       |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`                                      | Servidor de desenvolvimento (Node)                                                              |
-| `npm run cf:dev`                                   | Desenvolvimento dentro do runtime da Cloudflare (D1/KV locais)                                  |
-| `npm run cf:deploy`                                | **Publica na Cloudflare**: migrations no D1 remoto + build + `wrangler deploy`                  |
-| `npm run cf:build`                                 | Só o build para Workers                                                                         |
-| `npm run cf:migrate` / `cf:migrate:local`          | Migrations no D1 remoto / local                                                                 |
-| `npm run cf:backup` / `cf:restore`                 | Backup e restauração da produção (D1 + fotos) — [docs/BACKUP.md](docs/BACKUP.md)                |
-| `npm run build`                                    | Build Node (`DEPLOY_TARGET=vercel` para a Vercel)                                               |
-| `npm run vercel-build`                             | Usado pela Vercel: migrations no Turso + build                                                  |
-| `npm run preview:local`                            | Build de **produção** rodando localmente (Node) em http://localhost:4330 — útil para Lighthouse |
-| `npm run typecheck`                                | `astro check` (TypeScript + templates)                                                          |
-| `npm run lint` / `lint:fix`                        | ESLint                                                                                          |
-| `npm run format` / `format:check`                  | Prettier                                                                                        |
-| `npm test`                                         | Testes unitários + integração (Vitest)                                                          |
-| `npm run test:e2e`                                 | Testes E2E (Playwright, usa o Edge/Chrome instalado)                                            |
-| `npm run verify`                                   | lint + typecheck + testes + build                                                               |
-| `npm run db:migrate` / `db:seed:demo` / `db:reset` | Banco local (libSQL)                                                                            |
-| `npm run db:backup` / `db:restore`                 | Backup/restauração do banco libSQL/Turso                                                        |
-| `npm run admin:hash-password`                      | Hash da senha do painel (`-- --cloudflare` para o Workers)                                      |
-| `npm run brand:logo`                               | Regenera logo SVG/PNG, favicons e imagem Open Graph                                             |
+| Comando                                            | O que faz                                                                                                      |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                                      | Servidor de desenvolvimento (Node)                                                                             |
+| `npm run cf:dev`                                   | Desenvolvimento dentro do runtime da Cloudflare (D1/KV locais)                                                 |
+| `npm run cf:deploy`                                | **Publica na Cloudflare**: migrations no D1 remoto + build + `wrangler deploy`                                 |
+| `npm run cf:build`                                 | Só o build para Workers                                                                                        |
+| `npm run cf:migrate` / `cf:migrate:local`          | Migrations no D1 remoto / local                                                                                |
+| `npm run cf:backup` / `cf:restore`                 | Backup e restauração da produção (D1 + fotos) — [docs/BACKUP.md](docs/BACKUP.md)                               |
+| `npm run cf:domain -- <domínio>`                   | Liga o domínio definitivo (Custom Domains, indexação, Turnstile) — [passo 6](docs/DEPLOY.md#6-domínio-próprio) |
+| `npm run build`                                    | Build Node (`DEPLOY_TARGET=vercel` para a Vercel)                                                              |
+| `npm run vercel-build`                             | Usado pela Vercel: migrations no Turso + build                                                                 |
+| `npm run preview:local`                            | Build de **produção** rodando localmente (Node) em http://localhost:4330 — útil para Lighthouse                |
+| `npm run typecheck`                                | `astro check` (TypeScript + templates)                                                                         |
+| `npm run lint` / `lint:fix`                        | ESLint                                                                                                         |
+| `npm run format` / `format:check`                  | Prettier                                                                                                       |
+| `npm test`                                         | Testes unitários + integração (Vitest)                                                                         |
+| `npm run test:e2e`                                 | Testes E2E (Playwright, usa o Edge/Chrome instalado)                                                           |
+| `npm run verify`                                   | lint + typecheck + testes + build                                                                              |
+| `npm run db:migrate` / `db:seed:demo` / `db:reset` | Banco local (libSQL)                                                                                           |
+| `npm run db:backup` / `db:restore`                 | Backup/restauração do banco libSQL/Turso                                                                       |
+| `npm run admin:hash-password`                      | Hash da senha do painel (`-- --cloudflare` para o Workers)                                                     |
+| `npm run brand:logo`                               | Regenera logo SVG/PNG, favicons e imagem Open Graph                                                            |
 
 ## Variáveis de ambiente
 
@@ -213,9 +215,9 @@ dados só são aceitas da própria origem (proteção CSRF).
 ## Testes
 
 ```bash
-npm test          # 140 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens (4 versões),
-                  # auth/CSP, cache de borda + integração (veículos, propostas, conversão, fotos, configurações,
-                  # rate limit) + adaptadores Cloudflare (D1, KV, R2, cota diária do KV)
+npm test          # 145 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens (4 versões),
+                  # auth/CSP, cache de borda, redirecionamento de domínio + integração (veículos, propostas,
+                  # conversão, fotos, configurações, rate limit, métricas) + adaptadores Cloudflare (D1, KV, R2)
 npm run test:e2e  # 29 testes Playwright: compra, ofertas, repasses, anunciar+proposta, admin→converter→publicar,
                   # celular, headers/CSP/CSRF e ausência de rolagem horizontal em 11 larguras (320→1920 px)
 ```

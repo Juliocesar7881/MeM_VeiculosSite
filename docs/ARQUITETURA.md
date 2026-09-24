@@ -69,7 +69,8 @@ sem sistema de arquivos (fotos em KV/R2).
 ```
 vehicles ─┬─< vehicle_images        (large_key, medium_key, thumb_key, og_key, dimensões, position — 0 = capa)
           ├─< vehicle_features      (opcionais)
-          └─< vehicle_slug_history  (slugs antigos → redirect 301)
+          ├─< vehicle_slug_history  (slugs antigos → redirect 301)
+          └─< vehicle_daily_stats   (por dia: views, whatsapp_clicks — contadores anônimos)
 
 vehicle_leads ──< vehicle_lead_images   (propostas "Anuncie seu veículo")
       └── converted_vehicle_id ──► vehicles.id   (vehicles.source_lead_id aponta de volta)
@@ -124,8 +125,8 @@ Detalhes e resultado da verificação em [AUDITORIA.md](AUDITORIA.md).
 - CSP sem scripts inline (`script-src 'self' https://challenges.cloudflare.com`), `frame-ancestors 'none'`,
   `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`; HSTS em HTTPS; `nosniff`; Referrer-Policy;
   Permissions-Policy; COOP.
-- CSRF: toda requisição que altera dados em `/admin` e `/api` precisa vir da própria origem + cookie `SameSite=Strict`
-  - `security.checkOrigin` do Astro.
+- CSRF: toda requisição que altera dados em `/admin` e `/api` precisa vir da própria origem, com cookie
+  `SameSite=Strict` e o `security.checkOrigin` do Astro.
 - Painel: autenticação no middleware **e** verificação repetida nos endpoints sensíveis; `no-store` e `noindex`.
 - Uploads: validação de conteúdo real, limites de tamanho e dimensão, chaves geradas pelo servidor (UUID).
 - Rate limit persistido no banco (funciona entre instâncias) com IP em hash salgado.
@@ -144,6 +145,17 @@ site em até ~1 minuto.
 
 O cache de borda ignora cookies na chave (as páginas públicas são iguais para todos) e só guarda respostas marcadas
 como página pública — sem `Set-Cookie`, nunca `/admin`, `/api`, `/media` ou `/og`.
+
+## Endereço oficial e métricas
+
+- **Endereço oficial:** com `PUBLIC_SITE_URL` definido, o middleware (`src/server/canonical.ts`) responde 301 para
+  qualquer outro host (domínio sem www, `*.workers.dev`), mantendo caminho e busca. Só GET/HEAD; localhost fica de
+  fora. Cache do redirecionamento: 5 min. `npm run cf:domain` configura domínio, indexação e Turnstile de uma vez.
+- **Métricas anônimas:** a página do veículo envia `navigator.sendBeacon('/api/metrics', {v, e})` — uma visualização
+  por sessão do navegador (`sessionStorage`) e cada toque em botão de WhatsApp (`a[data-whatsapp-click]`). O
+  endpoint aceita só a mesma origem, responde sempre 204 e grava com um único `INSERT … SELECT … ON CONFLICT` que
+  ignora veículos inexistentes ou fora do site. Nada identifica o visitante (sem cookie, sem IP). O painel mostra os
+  últimos 30 dias (fuso de Brasília).
 
 ## Latência
 

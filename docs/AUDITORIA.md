@@ -8,7 +8,7 @@ build local em Node (testes E2E) e runtime local da Cloudflare (`wrangler dev`/w
 | ESLint                                                                        | ✅ 0 problemas                                                                                                                                                                |
 | Typecheck (`astro check`, TypeScript strictest)                               | ✅ 0 erros, 0 avisos                                                                                                                                                          |
 | Prettier (`format:check`)                                                     | ✅                                                                                                                                                                            |
-| Testes unitários + integração (Vitest)                                        | ✅ 140 passando (inclui adaptadores D1, KV e R2)                                                                                                                              |
+| Testes unitários + integração (Vitest)                                        | ✅ 145 passando (inclui adaptadores D1, KV e R2, métricas e redirecionamento)                                                                                                 |
 | Testes E2E (Playwright, desktop + celular)                                    | ✅ 29 passando                                                                                                                                                                |
 | Builds (`cloudflare`, `vercel`, `node`)                                       | ✅ os três compilam                                                                                                                                                           |
 | `npm audit`                                                                   | ✅ 0 vulnerabilidades                                                                                                                                                         |
@@ -51,6 +51,8 @@ CLS = 0 e TBT = 0 ms em todas. Observações:
 | Redirecionamentos | `next`/`returnTo` aceitam apenas caminhos internos do painel (sem open redirect)                                                                                                                                                                 |
 | Uploads           | Assinatura real do arquivo, limite de bytes, dimensões e proporção entre as versões; chaves geradas no servidor; PNG/SVG/HTML recusados; storage privado                                                                                         |
 | Cache de borda    | Só páginas públicas GET 200 sem `Set-Cookie`; nunca `/admin`, `/api`, `/media`, `/og`; chave sem cookies (páginas iguais para todos) — teste unitário + verificação no workerd                                                                   |
+| Métricas          | `/api/metrics` só aceita a própria origem (403 para outros sites, verificado na produção), resposta sempre 204, grava apenas contadores de veículos publicados; nenhum dado do visitante                                                         |
+| Endereço oficial  | 301 para o domínio de `PUBLIC_SITE_URL` (sem open redirect: destino fixo na configuração) — teste unitário                                                                                                                                       |
 | Dados pessoais    | IP só em hash salgado; fotos de propostas só por rota autenticada `no-store`; exclusão definitiva (LGPD) no painel; política de privacidade publicada                                                                                            |
 | Anti-spam         | Turnstile validado no servidor (chave real na produção), honeypot, rate limit 5/h e 15/dia por IP, limite de 4,3 MB por envio; sem chaves o formulário é bloqueado (falha segura)                                                                |
 | Segredos          | Secrets do Worker (`wrangler secret`) e `.env` local ignorado pelo Git; nada exposto ao navegador; o arquivo `.dev.vars` gerado pelo build é apagado antes do deploy                                                                             |
@@ -84,6 +86,16 @@ Fase 2 (Cloudflare):
     proposta é salva sem as fotos, com anotação para pedi-las pelo WhatsApp (testes).
 14. `cf:backup` quebrou com o limite de termos de `UNION` do D1; `cf:restore` rodaria `CREATE TABLE` sobre o banco em
     uso → consultas separadas, modo `--media-only` e restauração documentada em banco novo (ou Time Travel).
+
+Fase 3 (conta dedicada, senha, domínio, métricas):
+
+15. A conta Cloudflare anterior dividia a cota diária gratuita com outro projeto (37% das leituras do D1) → site
+    recriado numa conta dedicada; senha de desenvolvimento trocada por senha forte aleatória.
+16. **Incidente (24/09/2026, ~2 min):** durante a edição da documentação, um comando foi disparado por engano e
+    publicou uma versão apontando para um domínio ainda inexistente; todas as páginas redirecionaram para ele até a
+    versão correta ser republicada. Nenhum dado foi afetado. Correções: o `cf:domain` agora confere no DNS que o
+    domínio já está na Cloudflare antes de alterar qualquer coisa e, se a publicação falhar, republica a versão
+    anterior e restaura o Turnstile; o redirecionamento de domínio fica em cache por só 5 min.
 
 **Riscos aceitos / limitações conhecidas**
 

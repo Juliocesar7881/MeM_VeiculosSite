@@ -10,6 +10,7 @@ import type { FieldErrors } from '@/schemas/common';
 import { parseVehicleForm, vehicleToFormValues, type FormValues } from '@/server/vehicle-form';
 import type { VehicleCard } from '@/types/domain';
 import { formatDateTime } from '@/utils/dates';
+import { STATS_PERIOD_DAYS } from '@/services/stats-service';
 import { vehicleFullName, yearLabel } from '@/utils/vehicle-format';
 
 const { container, admin } = Astro.locals;
@@ -38,10 +39,12 @@ if (Astro.request.method === 'POST' && admin) {
   vehicle = (await container.vehicles.getDetail(id)) ?? vehicle;
 }
 
-const [brands, history] = await Promise.all([
+const [brands, history, interest] = await Promise.all([
   container.vehicles.distinctBrands(),
   container.audit.listForEntity('vehicle', id),
+  container.stats.forVehicle(id),
 ]);
+const number = new Intl.NumberFormat('pt-BR');
 const cover = vehicle.images[0] ?? null;
 const card: VehicleCard = {
   ...vehicle,
@@ -92,6 +95,19 @@ const ACTION_LABELS: Record<string, string> = {
       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
         <StatusPill kind="vehicle" status={vehicle.status} />
         <span class="text-mist-400">{vehicle.published ? 'Publicado' : 'Não publicado'}</span>
+        {(publicVisible || interest.views > 0) && (
+          <span class="inline-flex items-center gap-3 text-mist-400" title={`Últimos ${STATS_PERIOD_DAYS} dias`}>
+            <span class="inline-flex items-center gap-1">
+              <Icon name="eye" size={15} />
+              {number.format(interest.views)} visualizações
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <Icon name="whatsapp" size={15} class="text-[#25d366]" />
+              {number.format(interest.whatsappClicks)} no WhatsApp
+            </span>
+            <span class="text-mist-500">({STATS_PERIOD_DAYS} dias)</span>
+          </span>
+        )}
         {vehicle.sourceLeadId && (
           <a
             href={`/admin/propostas/${vehicle.sourceLeadId}`}

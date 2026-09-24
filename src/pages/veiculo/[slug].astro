@@ -132,7 +132,7 @@ const preload = cover
   preloadImage={preload}
   jsonLd={[vehicleJsonLd(vehicle, settings, siteUrl, pageUrl), breadcrumbJsonLd(breadcrumbs, siteUrl)]}
 >
-  <div class="container-site pb-28 pt-5 lg:pb-8">
+  <div class="container-site pb-28 pt-5 lg:pb-8" data-vehicle-id={vehicle.id}>
     <Breadcrumbs items={breadcrumbs} class="mb-5" />
 
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
@@ -178,6 +178,7 @@ const preload = cover
               <p class="mt-2 text-sm text-mist-300">Fale com a nossa equipe e conte o que você procura.</p>
               <a
                 href={similarUrl}
+                data-whatsapp-click
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn btn-whatsapp btn-lg mt-5 w-full"
@@ -202,6 +203,7 @@ const preload = cover
               )}
               <a
                 href={interestUrl}
+                data-whatsapp-click
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn btn-whatsapp btn-lg mt-5 w-full"
@@ -212,6 +214,7 @@ const preload = cover
               </a>
               <a
                 href={financingUrl}
+                data-whatsapp-click
                 target="_blank"
                 rel="noopener noreferrer"
                 class="mt-3 flex items-center justify-center gap-2 text-sm font-medium text-mist-200 hover:text-white"
@@ -325,6 +328,7 @@ const preload = cover
     </div>
     <a
       href={sold ? similarUrl : interestUrl}
+      data-whatsapp-click
       target="_blank"
       rel="noopener noreferrer"
       class="btn btn-whatsapp shrink-0"
@@ -352,5 +356,7 @@ const preload = cover
 
 <script>
   import { initShareButtons } from '@/features/share';
+  import { initVehicleMetrics } from '@/features/vehicle-metrics';
   initShareButtons();
+  initVehicleMetrics();
 </script>

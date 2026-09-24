@@ -17,6 +17,7 @@
     "cf:migrate:local": "tsx scripts/cf.ts migrate:local",
     "cf:backup": "tsx scripts/cf-backup.ts backup",
     "cf:restore": "tsx scripts/cf-backup.ts restore",
+    "cf:domain": "tsx scripts/cf-domain.ts",
     "vercel-build": "npm run db:migrate && DEPLOY_TARGET=vercel astro build",
     "preview:local": "tsx scripts/preview-local.ts",
     "typecheck": "astro check",

@@ -13,8 +13,11 @@ test.describe('Cliente que quer comprar', () => {
     await expect(page).toHaveURL(/\/estoque\?q=Corolla/);
     await expect(page.getByText('1 veículo encontrado')).toBeVisible();
 
+    // Métrica anônima de visualização enviada pela página do veículo
+    const viewMetric = page.waitForResponse((res) => res.url().endsWith('/api/metrics'));
     await page.getByRole('link', { name: 'Corolla', exact: true }).click();
     await expect(page).toHaveURL(/\/veiculo\/toyota-corolla-/);
+    expect((await viewMetric).status()).toBe(204);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Corolla');
 
     // Preço de oferta: De/Por

@@ -6,16 +6,16 @@ zero. O único custo obrigatório é o **domínio**. A alternativa pela Vercel c
 
 ## Situação atual (24/09/2026)
 
-| Item                        | Estado                                                                                                                 |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Site no ar (URL temporária) | **https://mm-veiculos.lupinho7881.workers.dev**                                                                        |
-| Painel                      | https://mm-veiculos.lupinho7881.workers.dev/admin (senha de **desenvolvimento**, trocar antes da entrega, ver passo 4) |
-| Conta Cloudflare            | **lupinho7881@gmail.com** (dedicada a este projeto)                                                                    |
-| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                                |
-| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0004 aplicadas                                                         |
-| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                              |
-| Anti-spam                   | Turnstile com chave real (hostname `mm-veiculos.lupinho7881.workers.dev`)                                              |
-| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                              |
+| Item                        | Estado                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Site no ar (URL temporária) | **https://mm-veiculos.lupinho7881.workers.dev**                                                              |
+| Painel                      | https://mm-veiculos.lupinho7881.workers.dev/admin (senha forte definida em 24/09/2026; para trocar: passo 4) |
+| Conta Cloudflare            | **lupinho7881@gmail.com** (dedicada a este projeto)                                                          |
+| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                      |
+| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0005 aplicadas                                               |
+| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                    |
+| Anti-spam                   | Turnstile com chave real (hostname `mm-veiculos.lupinho7881.workers.dev`)                                    |
+| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                    |
 
 Tudo o que o site precisa já está configurado em [`wrangler.jsonc`](../wrangler.jsonc) (bindings e variáveis
 públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git).
@@ -78,8 +78,8 @@ O `cf:deploy` faz, na ordem: `wrangler d1 migrations apply DB --remote` (binding
 
 ## 4. Senha do painel e secrets
 
-> A senha atual é de **desenvolvimento** e foi combinada fora do repositório. **Troque-a antes de entregar o painel
-> ao cliente.**
+A senha de desenvolvimento já foi substituída por uma senha forte (24/09/2026), passada fora do repositório. Para
+trocar de novo (ex.: ao entregar o painel ou quando alguém sair da equipe):
 
 ```bash
 npm run admin:hash-password -- --cloudflare
@@ -111,28 +111,35 @@ Painel da Cloudflare → **Turnstile** → widget “M&M Veículos”:
 
 ## 6. Domínio próprio
 
-1. Compre o domínio (ex.: **Registro.br** para `.com.br`, ~R$ 40/ano).
-2. Cloudflare → **Add a domain** → plano **Free** → a Cloudflare mostra 2 nameservers.
-3. No Registro.br → domínio → **DNS** → “Alterar servidores DNS” → informe os 2 nameservers da Cloudflare. A
-   ativação leva de minutos a algumas horas.
-4. Workers → `mm-veiculos` → **Settings → Domains & Routes → Add → Custom domain**: adicione
-   `www.seudominio.com.br` e `seudominio.com.br`. O HTTPS é emitido automaticamente.
-5. Escolha a versão principal (sugestão: `www`) e crie um redirecionamento 301 da outra:
-   **Rules → Redirect Rules → Redirect from root to WWW** (modelo pronto, gratuito).
-6. Em `wrangler.jsonc` → `vars`:
+Em 24/09/2026, **`mmveiculos.com.br` estava disponível** no Registro.br (e também `mmveiculossc.com.br`;
+`mmveiculos.net.br` já tem dono).
 
-   ```jsonc
-   "PUBLIC_SITE_URL": "https://www.seudominio.com.br",
-   "ALLOW_INDEXING": "true",
+1. Compre o domínio no **Registro.br** (~R$ 40/ano para `.com.br`). O titular precisa de CPF ou CNPJ — de
+   preferência o CNPJ da M&M.
+2. Cloudflare (conta lupinho7881@gmail.com) → **Add a domain** → plano **Free** → a Cloudflare mostra 2 nameservers.
+3. No Registro.br → domínio → **DNS** → “Alterar servidores DNS” → informe os 2 nameservers da Cloudflare. A
+   ativação leva de minutos a algumas horas; a Cloudflare avisa por e-mail quando o domínio fica **Active**.
+4. Com o domínio ativo, um comando faz o resto:
+
+   ```bash
+   npm run cf:domain -- mmveiculos.com.br             # endereço oficial: https://www.mmveiculos.com.br
+   npm run cf:domain -- mmveiculos.com.br --sem-www   # ou, se preferir, sem www
+   npm run cf:domain -- mmveiculos.com.br --simular   # só mostra o que mudaria
    ```
 
-7. Adicione o domínio nos **Hostnames do Turnstile** (passo 5) e rode `npm run cf:deploy`.
-8. Confira `https://www.seudominio.com.br/robots.txt` (deve liberar o site e apontar o sitemap) e compartilhe um
+   O comando confere no DNS que o domínio já aponta para a Cloudflare (senão, não mexe em nada), adiciona os Custom
+   Domains com e sem www (HTTPS automático), define `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true`, libera o domínio no
+   Turnstile e publica. Se a publicação falhar, ele restaura o `wrangler.jsonc`, republica a versão anterior e
+   devolve o Turnstile ao que era. Depois de dar certo, faça commit do `wrangler.jsonc`.
+
+   O próprio site redireciona (301) o endereço sem www e a URL `*.workers.dev` para o endereço oficial — não é
+   preciso criar Redirect Rules.
+
+5. Confira `https://www.seudominio.com.br/robots.txt` (deve liberar o site e apontar o sitemap) e compartilhe um
    veículo no WhatsApp para ver a prévia (foto + título + preço).
-9. **Google Search Console** → adicionar propriedade (tipo _Domínio_, verificação por DNS na Cloudflare) → enviar
+6. **Google Search Console** → adicionar propriedade (tipo _Domínio_, verificação por DNS na Cloudflare) → enviar
    `https://www.seudominio.com.br/sitemap.xml`.
-10. Atualize o link do site no Instagram e no Facebook.
-11. Opcional: Workers → Settings → desligue a URL `workers.dev` (`"workers_dev": false`) para existir só o domínio.
+7. Atualize o link do site no Instagram e no Facebook.
 
 Com domínio próprio, o **cache de borda** passa a funcionar: páginas públicas ficam 60 s no data center mais próximo
 do visitante (sem consultar o banco). Na URL `*.workers.dev` a Cloudflare ignora esse cache.
@@ -230,12 +237,12 @@ recém-criado, vazio). Detalhes em [BACKUP.md](BACKUP.md).
 
 ## 12. Checklist de entrega
 
-- [ ] Senha de desenvolvimento substituída (passo 4) e entregue ao cliente de forma segura
+- [x] Senha de desenvolvimento substituída por senha forte (passo 4) — falta entregá-la ao cliente de forma segura
 - [ ] Configurações conferidas no painel (WhatsApp 554896410338, Instagram, Facebook, e-mail, slogan)
 - [ ] Endereço e horário preenchidos, se o cliente quiser exibir
 - [ ] R2 ativado antes do cadastro do estoque inicial (passo 7)
 - [ ] Veículos reais cadastrados com fotos; destaques marcados
 - [ ] Formulário “Anuncie seu veículo” testado de ponta a ponta (proposta chegou no painel)
-- [ ] Domínio conectado com HTTPS; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true`; domínio no Turnstile
+- [ ] Domínio comprado e ativo na Cloudflare; `npm run cf:domain -- <domínio>` executado com sucesso
 - [ ] Sitemap enviado ao Google Search Console
-- [ ] Primeiro backup feito (`npm run cf:backup`) e guardado em local seguro
+- [x] Backup inicial feito (`npm run cf:backup`) — repetir depois do cadastro real e semanalmente

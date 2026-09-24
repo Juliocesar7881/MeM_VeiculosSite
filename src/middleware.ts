@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { authenticateAdmin } from '@/server/admin-auth';
+import { canonicalRedirect } from '@/server/canonical';
 import { getContainer } from '@/server/container';
 import { readEdgeCache, writeEdgeCache } from '@/server/edge-cache';
 import { applySecurityHeaders, CACHE } from '@/server/security-headers';
@@ -49,6 +50,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.siteUrl = config.siteUrl ?? url.origin;
 
   const handle = async (): Promise<Response> => {
+    const redirect = canonicalRedirect(request, url, config.siteUrl);
+    if (redirect) return redirect;
+
     if (!SAFE_METHODS.has(request.method) && (adminPage || pathname.startsWith('/api/'))) {
       const allowed = config.siteUrl ? [config.siteUrl] : [];
       if (!isSameOrigin(request, url, allowed)) {

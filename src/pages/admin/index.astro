@@ -4,17 +4,20 @@ import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import { leadMediaUrl, mediaUrl } from '@/lib/storage/keys';
+import { STATS_PERIOD_DAYS } from '@/services/stats-service';
 import { formatRelative } from '@/utils/dates';
 import { formatBRL } from '@/utils/money';
 import { yearLabel } from '@/utils/vehicle-format';
 
 const { container } = Astro.locals;
-const [stats, leadCounts, latestVehicles, latestLeads] = await Promise.all([
+const [stats, leadCounts, latestVehicles, latestLeads, interest] = await Promise.all([
   container.vehicles.stats(),
   container.leads.countByStatus(),
   container.vehicles.listAdmin({ page: 1, pageSize: 6 }),
   container.leads.latest(6),
+  container.stats.overview(5),
 ]);
+const number = new Intl.NumberFormat('pt-BR');
 
 const cards: { label: string; value: number; href: string; icon: IconName; accent?: boolean }[] = [
   { label: 'Total', value: stats.total - stats.archived, href: '/admin/veiculos', icon: 'car' },
@@ -152,6 +155,55 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
       )}
     </section>
   </div>
+
+  <section class="surface mt-6 p-5 sm:p-6" aria-labelledby="interesse">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 id="interesse" class="text-lg font-bold text-white">
+          Interesse nos últimos {STATS_PERIOD_DAYS} dias
+        </h2>
+        <p class="mt-1 text-xs text-mist-500">
+          Contagem anônima (sem cookies): visitas às páginas dos veículos e toques nos botões de WhatsApp.
+        </p>
+      </div>
+      <p class="flex gap-5 text-sm text-mist-300">
+        <span class="inline-flex items-center gap-1.5">
+          <Icon name="eye" size={16} class="text-mist-500" />
+          <strong class="text-white tabular">{number.format(interest.views)}</strong> visualizações
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <Icon name="whatsapp" size={16} class="text-[#25d366]" />
+          <strong class="text-white tabular">{number.format(interest.whatsappClicks)}</strong> cliques no WhatsApp
+        </span>
+      </p>
+    </div>
+    {interest.top.length ? (
+      <ol class="mt-4 grid gap-1">
+        {interest.top.map((row, index) => (
+          <li>
+            <a href={`/admin/veiculos/${row.vehicleId}`} class="mini-row">
+              <span class="w-6 text-center text-sm font-bold text-mist-500 tabular">{index + 1}</span>
+              <span class="min-w-0 flex-1 truncate font-medium text-white">
+                {row.brand} {row.model} {yearLabel(row)}
+              </span>
+              <span class="text-sm text-mist-300 tabular" title="Visualizações">
+                <Icon name="eye" size={14} class="mr-1 inline text-mist-500" />
+                {number.format(row.views)}
+              </span>
+              <span class="w-16 text-right text-sm font-semibold text-white tabular" title="Cliques no WhatsApp">
+                <Icon name="whatsapp" size={14} class="mr-1 inline text-[#25d366]" />
+                {number.format(row.whatsappClicks)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    ) : (
+      <p class="mt-4 text-sm text-mist-400">
+        Ainda sem dados. Os números aparecem conforme os clientes visitam os veículos publicados.
+      </p>
+    )}
+  </section>
 </AdminLayout>
 
 <style>

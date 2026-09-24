@@ -4,6 +4,7 @@ import { AuditRepository } from '@/repositories/audit-repository';
 import { LeadRepository } from '@/repositories/lead-repository';
 import { RateLimitRepository } from '@/repositories/rate-limit-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { StatsRepository } from '@/repositories/stats-repository';
 import { VehicleImageRepository } from '@/repositories/vehicle-image-repository';
 import { VehicleRepository } from '@/repositories/vehicle-repository';
 import { AuditService } from '@/services/audit-service';
@@ -11,6 +12,7 @@ import { LeadService, type LeadNotifier } from '@/services/lead-service';
 import { MediaService } from '@/services/media-service';
 import { RateLimiter } from '@/services/rate-limiter';
 import { SettingsService } from '@/services/settings-service';
+import { StatsService } from '@/services/stats-service';
 import { VehicleService } from '@/services/vehicle-service';
 
 /**
@@ -26,6 +28,7 @@ export interface Services {
   media: MediaService;
   leads: LeadService;
   rateLimiter: RateLimiter;
+  stats: StatsService;
 }
 
 export function buildServices(options: {
@@ -57,5 +60,6 @@ export function buildServices(options: {
       notifier: options.notifier ?? null,
     }),
     rateLimiter: new RateLimiter(new RateLimitRepository(db), options.ipHashSalt),
+    stats: new StatsService(new StatsRepository(db)),
   };
 }
