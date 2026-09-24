@@ -1,0 +1,59 @@
+---
+import '@/styles/global.css';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import MobileTabBar from '@/components/layout/MobileTabBar.astro';
+import SiteFooter from '@/components/layout/SiteFooter.astro';
+import SiteHeader from '@/components/layout/SiteHeader.astro';
+import Seo, { type SeoProps } from '@/components/seo/Seo.astro';
+
+interface Props extends SeoProps {
+  /** Oculta a barra inferior do celular (ex.: página do veículo tem barra própria). */
+  hideTabBar?: boolean;
+  /** Imagem a pré-carregar (LCP). */
+  preloadImage?: { href: string; srcset?: string; sizes?: string };
+}
+
+const { hideTabBar = false, preloadImage, ...seo } = Astro.props;
+const settings = await Astro.locals.container.settings.get();
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08090a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    {preloadImage && (
+      <link
+        rel="preload"
+        as="image"
+        href={preloadImage.href}
+        imagesrcset={preloadImage.srcset}
+        imagesizes={preloadImage.sizes}
+        fetchpriority="high"
+      />
+    )}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <Seo {...seo} />
+  </head>
+  <body
+    class:list={['flex min-h-dvh flex-col', { 'pb-[calc(3.6rem+env(safe-area-inset-bottom))] lg:pb-0': !hideTabBar }]}
+  >
+    <a href="#conteudo" class="skip-link">
+      Pular para o conteúdo
+    </a>
+    <SiteHeader settings={settings} />
+    <main id="conteudo" class="flex-1">
+      <slot />
+    </main>
+    <SiteFooter settings={settings} />
+    {!hideTabBar && <MobileTabBar settings={settings} />}
+    <slot name="after" />
+  </body>
+</html>

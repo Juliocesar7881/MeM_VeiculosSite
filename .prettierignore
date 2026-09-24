@@ -1,0 +1,12 @@
+dist/
+.astro/
+.vercel/
+.data/
+backups/
+node_modules/
+playwright-report/
+test-results/
+public/
+package-lock.json
+src/components/brand/logo-data.ts
+docs/brand/

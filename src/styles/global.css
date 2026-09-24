@@ -1,0 +1,554 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/archivo/wdth.css';
+
+/* ==========================================================================
+   M&M Veículos — Design system
+   Preto/grafite + dourado extraído da logo (#F2C12E) + prata do traço do veículo.
+   ========================================================================== */
+
+@theme {
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-ink-950: #08090a;
+  --color-ink-900: #0d0f11;
+  --color-ink-850: #111316;
+  --color-ink-800: #15181b;
+  --color-ink-750: #1a1d21;
+  --color-ink-700: #1f2327;
+  --color-ink-600: #2a2f35;
+  --color-ink-500: #3a4047;
+
+  --color-mist-500: #7d848d;
+  --color-mist-400: #969ca5;
+  --color-mist-300: #b3b8bf;
+  --color-mist-200: #d2d5da;
+  --color-mist-100: #ebedef;
+  --color-paper: #f4f4f2;
+
+  --color-gold-200: #fbe7a6;
+  --color-gold-300: #f8d970;
+  --color-gold-400: #f5cb45;
+  --color-gold-500: #f2c12e;
+  --color-gold-600: #d8a813;
+  --color-gold-700: #a8820c;
+  --color-gold-950: #231b04;
+
+  --color-silver-300: #e3e5e8;
+  --color-silver-500: #b9bdc3;
+
+  --color-sold: #c3282f;
+  --color-reserved: #f08c2a;
+  --color-success: #37c47e;
+  --color-danger: #ef4444;
+  --color-whatsapp: #25d366;
+
+  --radius-card: 1rem;
+  --shadow-lift: 0 18px 40px -18px rgb(0 0 0 / 0.7);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --breakpoint-xs: 400px;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --header-h: 4.5rem;
+  }
+
+  html {
+    background: var(--color-ink-950);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-ink-950);
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-gold-500);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  a,
+  button,
+  summary,
+  label[for] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role='button'],
+  summary {
+    cursor: pointer;
+  }
+
+  img {
+    color: transparent; /* evita texto alt "piscando" enquanto carrega */
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Transições suaves entre páginas (navegadores compatíveis, sem JavaScript). */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+@layer components {
+  .container-site {
+    width: 100%;
+    max-width: 88rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-site {
+      padding-inline: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-site {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  /* Tipografia de marca: sans larga, pesada — referência automotiva. */
+  .display {
+    font-stretch: 118%;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+  .heading {
+    font-stretch: 112%;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-gold-400);
+  }
+  .eyebrow::before {
+    content: '';
+    width: 1.5rem;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Botões */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 2.9rem;
+    padding: 0.7rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 650;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    letter-spacing: 0.005em;
+    border: 1px solid transparent;
+    transition:
+      background-color 160ms var(--ease-out-soft),
+      border-color 160ms var(--ease-out-soft),
+      color 160ms var(--ease-out-soft),
+      transform 160ms var(--ease-out-soft);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
+  }
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-gold {
+    background: var(--color-gold-500);
+    color: #111;
+  }
+  .btn-gold:hover:not(:disabled) {
+    background: var(--color-gold-400);
+  }
+  .btn-outline-gold {
+    border-color: color-mix(in oklab, var(--color-gold-500) 70%, transparent);
+    color: var(--color-gold-300);
+    background: transparent;
+  }
+  .btn-outline-gold:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--color-gold-500) 12%, transparent);
+    border-color: var(--color-gold-400);
+    color: var(--color-gold-200);
+  }
+  .btn-ghost {
+    background: color-mix(in oklab, white 6%, transparent);
+    border-color: color-mix(in oklab, white 10%, transparent);
+    color: var(--color-paper);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: color-mix(in oklab, white 11%, transparent);
+    border-color: color-mix(in oklab, white 18%, transparent);
+  }
+  .btn-whatsapp {
+    background: var(--color-whatsapp);
+    color: #06180d;
+  }
+  .btn-whatsapp:hover:not(:disabled) {
+    background: #3be07a;
+  }
+  .btn-danger {
+    background: color-mix(in oklab, var(--color-danger) 16%, transparent);
+    border-color: color-mix(in oklab, var(--color-danger) 45%, transparent);
+    color: #fecaca;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--color-danger) 26%, transparent);
+  }
+  .btn-sm {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.85rem;
+    border-radius: 0.6rem;
+  }
+  .btn-lg {
+    min-height: 3.35rem;
+    padding: 0.9rem 1.6rem;
+    font-size: 1rem;
+  }
+  .btn-icon {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+  }
+
+  /* Botão de ícone (header/menu). Fica em @layer para utilitários como "hidden lg:inline-flex" funcionarem. */
+  .icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.7rem;
+    color: var(--color-mist-100);
+    transition:
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+  .icon-link:hover {
+    background: color-mix(in oklab, white 8%, transparent);
+    color: #fff;
+  }
+
+  /* Superfícies */
+  .surface {
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+    border-radius: var(--radius-card);
+  }
+  .hairline {
+    border-color: color-mix(in oklab, white 8%, transparent);
+  }
+
+  /* Formulários */
+  .field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-mist-200);
+  }
+  .field-label .req {
+    color: var(--color-gold-400);
+  }
+  .input {
+    display: block;
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.7rem;
+    background: var(--color-ink-900);
+    border: 1px solid color-mix(in oklab, white 12%, transparent);
+    color: var(--color-paper);
+    font-size: 1rem; /* 16px evita zoom automático no iOS */
+    transition:
+      border-color 140ms ease,
+      box-shadow 140ms ease,
+      background-color 140ms ease;
+  }
+  .input::placeholder {
+    color: var(--color-mist-500);
+  }
+  .input:hover {
+    border-color: color-mix(in oklab, white 20%, transparent);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-gold-500);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-gold-500) 22%, transparent);
+  }
+  .input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+  select.input {
+    appearance: none;
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23b3b8bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+  }
+  textarea.input {
+    min-height: 7rem;
+    resize: vertical;
+  }
+  .field-error {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: #fca5a5;
+  }
+  .field-hint {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-mist-400);
+  }
+
+  .check {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+  .check input[type='checkbox'],
+  .check input[type='radio'] {
+    appearance: none;
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.08rem;
+    border-radius: 0.35rem;
+    border: 1.5px solid color-mix(in oklab, white 30%, transparent);
+    background: var(--color-ink-900);
+    display: grid;
+    place-content: center;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+  .check input[type='radio'] {
+    border-radius: 999px;
+  }
+  .check input:checked {
+    background: var(--color-gold-500);
+    border-color: var(--color-gold-500);
+  }
+  .check input[type='checkbox']:checked::after {
+    content: '';
+    width: 0.62rem;
+    height: 0.36rem;
+    border-left: 2px solid #111;
+    border-bottom: 2px solid #111;
+    transform: translateY(-1px) rotate(-45deg);
+  }
+  .check input[type='radio']:checked::after {
+    content: '';
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #111;
+  }
+
+  /* Selos */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.6rem;
+    border-radius: 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .badge-offer {
+    background: var(--color-gold-500);
+    color: #111;
+  }
+  .badge-repasse {
+    background: var(--color-silver-300);
+    color: #111;
+  }
+  .badge-featured {
+    background: rgb(8 9 10 / 0.78);
+    color: var(--color-gold-300);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 60%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .badge-reserved {
+    background: rgb(8 9 10 / 0.8);
+    color: #fdd9b0;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-reserved) 70%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .badge-reserved::before {
+    content: '';
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--color-reserved);
+  }
+  .badge-sold {
+    background: var(--color-sold);
+    color: #fff;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.1rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 550;
+    background: color-mix(in oklab, white 6%, transparent);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    color: var(--color-mist-100);
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease;
+  }
+  .chip:hover {
+    background: color-mix(in oklab, white 10%, transparent);
+  }
+  .chip[aria-pressed='true'],
+  .chip.is-active {
+    background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+    border-color: color-mix(in oklab, var(--color-gold-500) 55%, transparent);
+    color: var(--color-gold-200);
+  }
+
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 140ms ease;
+  }
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    border-radius: 0.6rem;
+    background: var(--color-gold-500);
+    color: #111;
+    font-weight: 700;
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* Texto rico simples (descrição de veículos, política) */
+  .prose-mm {
+    color: var(--color-mist-200);
+    line-height: 1.7;
+  }
+  .prose-mm p + p {
+    margin-top: 1em;
+  }
+  .prose-mm h2 {
+    margin-top: 2.2rem;
+    margin-bottom: 0.8rem;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-stretch: 110%;
+  }
+  .prose-mm ul {
+    margin: 0.8rem 0 0.8rem 1.2rem;
+    list-style: disc;
+  }
+  .prose-mm li + li {
+    margin-top: 0.35rem;
+  }
+  .prose-mm a {
+    color: var(--color-gold-300);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .prose-mm strong {
+    color: #fff;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ruído/grão sutil para superfícies grandes (sem imagem externa). */
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at 70% 30%, black 20%, transparent 70%);
+  }
+}

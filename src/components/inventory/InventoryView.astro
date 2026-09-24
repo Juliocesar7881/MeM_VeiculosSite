@@ -1,0 +1,477 @@
+---
+import EmptyState from '@/components/common/EmptyState.astro';
+import Icon from '@/components/ui/Icon.astro';
+import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
+import {
+  CATEGORY_INFO,
+  COMMERCIAL_TYPE_LABELS,
+  FUEL_LABELS,
+  FUELS,
+  PUBLIC_STATUS_SLUGS,
+  SORT_LABELS,
+  SORT_OPTIONS,
+  TRANSMISSION_LABELS,
+  TRANSMISSIONS,
+  VEHICLE_CATEGORIES,
+  VEHICLE_STATUS_LABELS,
+  type VehicleCategory,
+} from '@/config/catalog';
+import type { InventoryFacets } from '@/repositories/vehicle-repository';
+import { countActiveFilters, inventoryHref, type InventoryFilters } from '@/schemas/filters';
+import type { Paginated, VehicleCard } from '@/types/domain';
+import type { SiteSettings } from '@/types/settings';
+import { formatNumber } from '@/utils/money';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+import Pagination from './Pagination.astro';
+
+interface Props {
+  filters: InventoryFilters;
+  result: Paginated<VehicleCard>;
+  facets: InventoryFacets;
+  settings: SiteSettings;
+  basePath: string;
+  /** Filtro fixo da página (ofertas/repasses) — não aparece como removível. */
+  locked?: 'offers' | 'repasses';
+}
+
+const { filters, result, facets, settings, basePath, locked } = Astro.props;
+const href = (overrides: Partial<InventoryFilters>) => inventoryHref(filters, { page: 1, ...overrides }, basePath);
+const active = countActiveFilters(filters) - (locked ? 1 : 0);
+const categoryCounts = new Map(facets.categories.map((c) => [c.value, c.count]));
+
+const currentYear = new Date().getFullYear() + 1;
+const yearMin = facets.yearRange.min ?? currentYear - 30;
+const yearMax = facets.yearRange.max ?? currentYear;
+const years: number[] = [];
+for (let y = Math.max(yearMax, currentYear - 1); y >= Math.min(yearMin, yearMax); y -= 1) years.push(y);
+
+// Chips de filtros ativos (removíveis)
+const chips: { label: string; href: string }[] = [];
+if (filters.q) chips.push({ label: `“${filters.q}”`, href: href({ q: undefined }) });
+if (filters.category)
+  chips.push({ label: CATEGORY_INFO[filters.category].plural, href: href({ category: undefined }) });
+if (filters.brand) chips.push({ label: filters.brand, href: href({ brand: undefined, model: undefined }) });
+if (filters.model) chips.push({ label: filters.model, href: href({ model: undefined }) });
+if (filters.yearMin) chips.push({ label: `A partir de ${filters.yearMin}`, href: href({ yearMin: undefined }) });
+if (filters.yearMax) chips.push({ label: `Até ${filters.yearMax}`, href: href({ yearMax: undefined }) });
+if (filters.priceMin)
+  chips.push({ label: `Mín. R$ ${formatNumber(filters.priceMin)}`, href: href({ priceMin: undefined }) });
+if (filters.priceMax)
+  chips.push({ label: `Máx. R$ ${formatNumber(filters.priceMax)}`, href: href({ priceMax: undefined }) });
+if (filters.fuel) chips.push({ label: FUEL_LABELS[filters.fuel], href: href({ fuel: undefined }) });
+if (filters.transmission)
+  chips.push({ label: TRANSMISSION_LABELS[filters.transmission], href: href({ transmission: undefined }) });
+if (filters.commercialType && !filters.repasseOnly)
+  chips.push({ label: COMMERCIAL_TYPE_LABELS[filters.commercialType], href: href({ commercialType: undefined }) });
+if (filters.status) chips.push({ label: VEHICLE_STATUS_LABELS[filters.status], href: href({ status: undefined }) });
+if (filters.offersOnly && locked !== 'offers')
+  chips.push({ label: 'Somente ofertas', href: href({ offersOnly: false }) });
+if (filters.repasseOnly && locked !== 'repasses')
+  chips.push({ label: 'Somente repasses', href: href({ repasseOnly: false }) });
+
+const clearHref = inventoryHref({}, {}, basePath);
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialType ?? '');
+---
+
+<div class="grid gap-8 lg:grid-cols-[17.5rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)] xl:gap-10">
+  <!-- Filtros: barra lateral no desktop, gaveta no celular -->
+  <aside class="filter-panel" id="filtros" data-filter-panel aria-label="Filtros">
+    <div class="filter-panel-inner">
+      <div class="flex items-center justify-between border-b hairline px-5 py-4 lg:hidden">
+        <p class="text-lg font-bold">Filtros</p>
+        <button type="button" class="icon-link" aria-label="Fechar filtros" data-filter-close>
+          <Icon name="x" size={24} />
+        </button>
+      </div>
+
+      <form
+        id="inventory-filters"
+        action={basePath}
+        method="get"
+        class="grid gap-5 px-5 py-5 lg:px-0 lg:py-0"
+        data-filter-form
+        role="search"
+      >
+        <div>
+          <label for="f-q" class="field-label">
+            Buscar
+          </label>
+          <div class="relative">
+            <Icon
+              name="search"
+              size={18}
+              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist-400"
+            />
+            <input
+              id="f-q"
+              name="q"
+              type="search"
+              value={filters.q ?? ''}
+              placeholder="Marca, modelo ou versão"
+              maxlength="80"
+              class="input pl-10"
+              enterkeyhint="search"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="f-categoria" class="field-label">
+            Categoria
+          </label>
+          <select id="f-categoria" name="categoria" class="input" data-autosubmit>
+            <option value="">Todas</option>
+            {VEHICLE_CATEGORIES.map((c: VehicleCategory) => (
+              <option value={CATEGORY_INFO[c].slug} selected={filters.category === c}>
+                {CATEGORY_INFO[c].plural} {categoryCounts.get(c) ? `(${categoryCounts.get(c)})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <div>
+            <label for="f-marca" class="field-label">
+              Marca
+            </label>
+            <select id="f-marca" name="marca" class="input" data-autosubmit data-brand-select>
+              <option value="">Todas</option>
+              {facets.brands.map((b) => (
+                <option value={b.value} selected={filters.brand?.toLowerCase() === b.value.toLowerCase()}>
+                  {b.value} ({b.count})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label for="f-modelo" class="field-label">
+              Modelo
+            </label>
+            <select id="f-modelo" name="modelo" class="input" data-autosubmit disabled={!filters.brand}>
+              <option value="">{filters.brand ? 'Todos' : 'Escolha a marca'}</option>
+              {facets.models.map((m) => (
+                <option value={m.value} selected={filters.model?.toLowerCase() === m.value.toLowerCase()}>
+                  {m.value} ({m.count})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <fieldset>
+          <legend class="field-label">Ano</legend>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="f-ano-min" class="sr-only">
+                Ano mínimo
+              </label>
+              <select id="f-ano-min" name="ano_min" class="input" data-autosubmit>
+                <option value="">De</option>
+                {years.map((y) => (
+                  <option value={y} selected={filters.yearMin === y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label for="f-ano-max" class="sr-only">
+                Ano máximo
+              </label>
+              <select id="f-ano-max" name="ano_max" class="input" data-autosubmit>
+                <option value="">Até</option>
+                {years.map((y) => (
+                  <option value={y} selected={filters.yearMax === y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="field-label">Preço (R$)</legend>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="f-preco-min" class="sr-only">
+                Preço mínimo em reais
+              </label>
+              <input
+                id="f-preco-min"
+                name="preco_min"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9.]*"
+                placeholder="Mínimo"
+                value={filters.priceMin ? formatNumber(filters.priceMin) : ''}
+                class="input"
+                data-money
+              />
+            </div>
+            <div>
+              <label for="f-preco-max" class="sr-only">
+                Preço máximo em reais
+              </label>
+              <input
+                id="f-preco-max"
+                name="preco_max"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9.]*"
+                placeholder="Máximo"
+                value={filters.priceMax ? formatNumber(filters.priceMax) : ''}
+                class="input"
+                data-money
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <div>
+            <label for="f-combustivel" class="field-label">
+              Combustível
+            </label>
+            <select id="f-combustivel" name="combustivel" class="input" data-autosubmit>
+              <option value="">Todos</option>
+              {FUELS.map((f) => (
+                <option value={f} selected={filters.fuel === f}>
+                  {FUEL_LABELS[f]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label for="f-cambio" class="field-label">
+              Câmbio
+            </label>
+            <select id="f-cambio" name="cambio" class="input" data-autosubmit>
+              <option value="">Todos</option>
+              {TRANSMISSIONS.map((t) => (
+                <option value={t} selected={filters.transmission === t}>
+                  {TRANSMISSION_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          {locked !== 'repasses' && (
+            <div>
+              <label for="f-tipo" class="field-label">
+                Tipo comercial
+              </label>
+              <select id="f-tipo" name="tipo" class="input" data-autosubmit>
+                <option value="">Todos</option>
+                <option value="normal" selected={commercialValue === 'normal'}>
+                  Estoque (normal)
+                </option>
+                <option value="repasse" selected={commercialValue === 'repasse'}>
+                  Repasse
+                </option>
+              </select>
+            </div>
+          )}
+          <div>
+            <label for="f-status" class="field-label">
+              Status
+            </label>
+            <select id="f-status" name="status" class="input" data-autosubmit>
+              <option value="">Todos</option>
+              <option value={PUBLIC_STATUS_SLUGS.available} selected={filters.status === 'available'}>
+                Disponível
+              </option>
+              <option value={PUBLIC_STATUS_SLUGS.reserved} selected={filters.status === 'reserved'}>
+                Reservado
+              </option>
+              {settings.showSoldVehicles && (
+                <option value={PUBLIC_STATUS_SLUGS.sold} selected={filters.status === 'sold'}>
+                  Vendido
+                </option>
+              )}
+            </select>
+          </div>
+        </div>
+
+        {locked !== 'offers' && (
+          <label class="check">
+            <input type="checkbox" name="oferta" value="true" checked={filters.offersOnly} data-autosubmit />
+            <span>Somente ofertas</span>
+          </label>
+        )}
+
+        <div class="sticky bottom-0 -mx-5 grid grid-cols-2 gap-3 border-t hairline bg-ink-900 px-5 py-4 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+          <a href={clearHref} class="btn btn-ghost">
+            Limpar
+          </a>
+          <button type="submit" class="btn btn-gold">
+            <span class="lg:hidden">Ver resultados</span>
+            <span class="hidden lg:inline">Aplicar filtros</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </aside>
+  <div class="filter-backdrop lg:hidden" data-filter-backdrop hidden></div>
+
+  <!-- Resultados -->
+  <div>
+    <div class="flex flex-wrap items-center gap-3">
+      <p class="mr-auto text-sm text-mist-300" aria-live="polite">
+        <strong class="text-base text-white tabular">{result.total}</strong>
+        {result.total === 1 ? ' veículo encontrado' : ' veículos encontrados'}
+      </p>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm lg:hidden"
+        data-filter-open
+        aria-controls="filtros"
+        aria-expanded="false"
+      >
+        <Icon name="sliders" size={18} />
+        Filtros
+        {active > 0 && (
+          <span class="rounded-full bg-gold-500 px-1.5 text-xs font-bold text-ink-950 tabular">{active}</span>
+        )}
+      </button>
+      <label for="f-ordem" class="sr-only">
+        Ordenar por
+      </label>
+      <select
+        id="f-ordem"
+        name="ordem"
+        form="inventory-filters"
+        class="input h-10 min-h-0 w-auto py-0 text-sm"
+        data-sort-select
+      >
+        {SORT_OPTIONS.map((s) => (
+          <option value={s} selected={filters.sort === s}>
+            {SORT_LABELS[s]}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      {locked !== 'offers' && (
+        <a
+          href={href({ offersOnly: !filters.offersOnly })}
+          class:list={['chip', { 'is-active': filters.offersOnly }]}
+          aria-current={filters.offersOnly ? 'true' : undefined}
+        >
+          <Icon name="tag" size={15} />
+          Somente ofertas
+        </a>
+      )}
+      {locked !== 'repasses' && (
+        <a
+          href={href({ repasseOnly: !filters.repasseOnly, commercialType: undefined })}
+          class:list={['chip', { 'is-active': filters.repasseOnly || filters.commercialType === 'repasse' }]}
+          aria-current={filters.repasseOnly || filters.commercialType === 'repasse' ? 'true' : undefined}
+        >
+          <Icon name="repasse" size={15} />
+          Somente repasses
+        </a>
+      )}
+      {chips.map((chip) => (
+        <a href={chip.href} class="chip is-active" aria-label={`Remover filtro ${chip.label}`}>
+          {chip.label}
+          <Icon name="x" size={14} />
+        </a>
+      ))}
+      {chips.length > 1 && (
+        <a href={clearHref} class="chip">
+          Limpar tudo
+        </a>
+      )}
+    </div>
+
+    <div class="mt-6">
+      <h2 class="sr-only">Veículos encontrados</h2>
+      {result.items.length > 0 ? (
+        <VehicleGrid vehicles={result.items} eagerCount={3} />
+      ) : (
+        <EmptyState
+          icon="search"
+          title="Nenhum veículo encontrado"
+          text={
+            active > 0
+              ? 'Tente remover alguns filtros ou fale com a gente: podemos ajudar a encontrar o veículo ideal.'
+              : 'No momento não há veículos nesta seção. Fale com a gente pelo WhatsApp para saber o que está chegando.'
+          }
+        >
+          {active > 0 && (
+            <a href={clearHref} class="btn btn-ghost">
+              Limpar filtros
+            </a>
+          )}
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp">
+            <Icon name="whatsapp" size={18} />
+            Falar no WhatsApp
+          </a>
+        </EmptyState>
+      )}
+    </div>
+
+    <Pagination
+      page={result.page}
+      totalPages={result.totalPages}
+      hrefFor={(page) => inventoryHref(filters, { page }, basePath)}
+    />
+  </div>
+</div>
+
+<style>
+  @media (max-width: 1023.98px) {
+    .filter-panel {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 60;
+      width: min(26rem, 100%);
+      background: var(--color-ink-900);
+      border-left: 1px solid color-mix(in oklab, white 8%, transparent);
+      transform: translateX(100%);
+      visibility: hidden;
+      transition:
+        transform 260ms var(--ease-out-soft),
+        visibility 0s linear 260ms;
+    }
+    .filter-panel.is-open {
+      transform: none;
+      visibility: visible;
+      transition: transform 260ms var(--ease-out-soft);
+    }
+    .filter-panel-inner {
+      height: 100%;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .filter-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgb(0 0 0 / 0.6);
+    }
+    .filter-backdrop[hidden] {
+      display: none;
+    }
+  }
+  @media (min-width: 1024px) {
+    .filter-panel-inner {
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+      max-height: calc(100dvh - var(--header-h) - 3rem);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      scrollbar-width: thin;
+    }
+  }
+</style>
+
+<script>
+  import { initInventoryFilters } from '@/features/inventory-filters';
+  initInventoryFilters();
+</script>

@@ -1,0 +1,41 @@
+---
+import PageHeader from '@/components/common/PageHeader.astro';
+import InventoryView from '@/components/inventory/InventoryView.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { CATEGORY_INFO } from '@/config/catalog';
+import { breadcrumbJsonLd } from '@/lib/seo';
+import { inventoryHref } from '@/schemas/filters';
+import { loadInventoryPage } from '@/server/inventory-page';
+
+const data = await loadInventoryPage(Astro);
+if (data.redirectTo) return Astro.redirect(inventoryHref(data.redirectTo), 302);
+
+const { settings, filters, result, facets, isFiltered } = data;
+const categoryLabel = filters.category ? CATEGORY_INFO[filters.category].plural : null;
+const heading = categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Estoque');
+const title = `${categoryLabel ? `${categoryLabel} à venda` : 'Estoque de veículos'}${filters.brand ? ` ${filters.brand}` : ''} | ${settings.businessName}`;
+const description = `Veja ${categoryLabel?.toLowerCase() ?? 'carros, motos, scooters, pesados e máquinas agrícolas'} à venda na ${settings.businessName}, em ${settings.city} - ${settings.state}. Filtre por marca, ano, preço e fale pelo WhatsApp.`;
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: 'Estoque', path: '/estoque' },
+];
+const canonicalPath = filters.page > 1 && !isFiltered ? `/estoque?pagina=${filters.page}` : '/estoque';
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={canonicalPath}
+  noindex={isFiltered}
+  jsonLd={[breadcrumbJsonLd(breadcrumbs, Astro.locals.siteUrl)]}
+>
+  <PageHeader
+    eyebrow="Estoque M&M"
+    title={heading}
+    subtitle="Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal."
+    breadcrumbs={breadcrumbs}
+  />
+  <div class="container-site pt-8">
+    <InventoryView filters={filters} result={result} facets={facets} settings={settings} basePath="/estoque" />
+  </div>
+</BaseLayout>

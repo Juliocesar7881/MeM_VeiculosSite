@@ -1,0 +1,100 @@
+---
+import { LOGO_GOLD_PATHS, LOGO_VIEWBOX } from '@/components/brand/logo-data';
+import Icon from '@/components/ui/Icon.astro';
+import type { SiteSettings } from '@/types/settings';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const steps = [
+  { icon: 'send' as const, title: 'Você envia os dados', text: 'Informações e fotos do veículo, em poucos minutos.' },
+  { icon: 'search' as const, title: 'A M&M analisa', text: 'Nossa equipe avalia as informações enviadas.' },
+  { icon: 'whatsapp' as const, title: 'Entramos em contato', text: 'Retornamos pelo WhatsApp para conversar.' },
+];
+---
+
+<section class="container-site" aria-labelledby="venda-title">
+  <div class="sell-cta relative overflow-hidden rounded-[1.75rem] p-7 sm:p-10 lg:p-14">
+    <svg viewBox={LOGO_VIEWBOX} class="sell-art" aria-hidden="true">
+      {LOGO_GOLD_PATHS.map((d) => (
+        <path d={d} fill="currentColor" />
+      ))}
+    </svg>
+    <div class="relative grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+      <div>
+        <p class="eyebrow">Venda com a M&M</p>
+        <h2 id="venda-title" class="display mt-4 text-4xl text-white sm:text-5xl">
+          Quer vender seu veículo?
+        </h2>
+        <p class="mt-4 max-w-md text-lg text-mist-200">Envie os dados do seu veículo para nossa equipe avaliar.</p>
+        <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+          <a href="/anuncie-seu-veiculo" class="btn btn-gold btn-lg">
+            Quero vender meu veículo
+            <Icon name="arrow-right" size={18} />
+          </a>
+        </div>
+        <p class="mt-4 text-sm text-mist-400">Sem compromisso. O envio não garante a compra do veículo.</p>
+      </div>
+      <ol class="grid gap-3">
+        {steps.map((step, index) => (
+          <li class="step">
+            <span class="step-num tabular">{index + 1}</span>
+            <div>
+              <p class="flex items-center gap-2 font-semibold text-white">
+                <Icon name={step.icon} size={17} class="text-gold-400" />
+                {step.title}
+              </p>
+              <p class="mt-1 text-sm text-mist-300">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+    <span class="sr-only">{settings.sellVehicleCta}</span>
+  </div>
+</section>
+
+<style>
+  .sell-cta {
+    background:
+      radial-gradient(
+        80% 120% at 100% 0%,
+        color-mix(in oklab, var(--color-gold-500) 14%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(160deg, #15181b, #0c0d0f);
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 22%, transparent);
+  }
+  .sell-art {
+    position: absolute;
+    right: -6%;
+    bottom: -18%;
+    width: 70%;
+    color: color-mix(in oklab, var(--color-gold-500) 9%, transparent);
+    pointer-events: none;
+  }
+  .step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1.1rem 1.2rem;
+    border-radius: 1rem;
+    background: rgb(8 9 10 / 0.55);
+    border: 1px solid color-mix(in oklab, white 8%, transparent);
+    backdrop-filter: blur(4px);
+  }
+  .step-num {
+    display: inline-flex;
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.65rem;
+    background: var(--color-gold-500);
+    color: #111;
+    font-weight: 800;
+  }
+</style>

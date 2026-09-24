@@ -1,0 +1,133 @@
+---
+import EmptyState from '@/components/common/EmptyState.astro';
+import SectionHeader from '@/components/common/SectionHeader.astro';
+import AboutBlock from '@/components/home/AboutBlock.astro';
+import CategoryShortcuts from '@/components/home/CategoryShortcuts.astro';
+import Hero from '@/components/home/Hero.astro';
+import SellCta from '@/components/home/SellCta.astro';
+import Icon from '@/components/ui/Icon.astro';
+import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { dealerJsonLd, instagramUrl } from '@/lib/seo';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+
+const { container, siteUrl } = Astro.locals;
+const settings = await container.settings.get();
+const [sections, counts, suggestions] = await Promise.all([
+  container.vehicles.homeSections(),
+  container.vehicles.countByCategory(),
+  container.vehicles.searchSuggestions(),
+]);
+
+const availableCount = Object.values(counts).reduce((a, b) => a + b, 0);
+const showcase = sections.featured.length ? sections.featured : sections.latest;
+const spotlight = showcase.find((v) => v.cover) ?? sections.offers.find((v) => v.cover) ?? null;
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+const repasseSubtitle =
+  settings.repasseDescription.split('\n')[0] ||
+  'Oportunidades de repasse selecionadas pela nossa equipe. Consulte as condições.';
+
+const title = `${settings.businessName} | Carros, motos e mais em ${settings.city} - ${settings.state}`;
+const description = `${settings.slogan} Compra, venda, financiamento e repasse de veículos em ${settings.city} - ${settings.state}. Veja o estoque e fale com a gente pelo WhatsApp.`;
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/" jsonLd={[dealerJsonLd(settings, siteUrl)]}>
+  <Hero settings={settings} spotlight={spotlight} availableCount={availableCount} suggestions={suggestions} />
+
+  <CategoryShortcuts counts={counts} offersTotal={sections.offersTotal} repassesTotal={sections.repassesTotal} />
+
+  <section class="container-site mt-20 sm:mt-24" aria-labelledby="destaques-title">
+    {showcase.length > 0 ? (
+      <>
+        <SectionHeader
+          id="destaques-title"
+          eyebrow={sections.featured.length ? 'Selecionados pela M&M' : 'Chegaram recentemente'}
+          title={sections.featured.length ? 'Destaques' : 'Novidades no estoque'}
+          href="/estoque"
+          linkLabel="Ver estoque completo"
+        />
+        <VehicleGrid vehicles={showcase.slice(0, 6)} hideFeatured={sections.featured.length > 0} />
+      </>
+    ) : (
+      <>
+        <h2 id="destaques-title" class="sr-only">
+          Estoque
+        </h2>
+        <EmptyState
+          title="Novos veículos em breve"
+          text="Nosso estoque está sendo atualizado. Fale com a gente pelo WhatsApp para saber o que está chegando."
+        >
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp">
+            <Icon name="whatsapp" size={18} />
+            Falar no WhatsApp
+          </a>
+          {settings.instagram && (
+            <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+              <Icon name="instagram" size={18} />
+              Ver no Instagram
+            </a>
+          )}
+        </EmptyState>
+      </>
+    )}
+  </section>
+
+  {sections.offers.length > 0 && (
+    <section class="offers-band mt-20 py-16 sm:mt-24 sm:py-20" aria-labelledby="ofertas-title">
+      <div class="container-site">
+        <SectionHeader
+          id="ofertas-title"
+          eyebrow="Condição especial"
+          title="Ofertas da M&M"
+          subtitle="Veículos com preço especial. Confira os valores e fale com a nossa equipe."
+          href="/ofertas"
+          linkLabel="Ver todas as ofertas"
+        />
+        <VehicleGrid vehicles={sections.offers.slice(0, 3)} />
+      </div>
+    </section>
+  )}
+
+  {sections.repasses.length > 0 && (
+    <section class="repasse-band mt-20 py-16 sm:mt-24 sm:py-20" aria-labelledby="repasses-title">
+      <div class="container-site">
+        <SectionHeader
+          id="repasses-title"
+          eyebrow="Oportunidades"
+          title="Repasses"
+          subtitle={repasseSubtitle}
+          href="/repasses"
+          linkLabel="Ver todos os repasses"
+        />
+        <VehicleGrid vehicles={sections.repasses.slice(0, 3)} />
+      </div>
+    </section>
+  )}
+
+  <div class="mt-20 sm:mt-24">
+    <SellCta settings={settings} />
+  </div>
+
+  <div class="mt-20 sm:mt-28">
+    <AboutBlock settings={settings} />
+  </div>
+</BaseLayout>
+
+<style>
+  .offers-band {
+    position: relative;
+    background:
+      radial-gradient(70% 60% at 15% 0%, color-mix(in oklab, var(--color-gold-500) 10%, transparent), transparent 70%),
+      var(--color-ink-900);
+    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 20%, transparent);
+  }
+  .repasse-band {
+    background:
+      radial-gradient(60% 60% at 85% 0%, color-mix(in oklab, var(--color-silver-300) 7%, transparent), transparent 70%),
+      var(--color-ink-900);
+    border-block: 1px solid color-mix(in oklab, white 8%, transparent);
+  }
+  .repasse-band :global(.eyebrow) {
+    color: var(--color-silver-300);
+  }
+</style>

@@ -1,0 +1,29 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+Astro.response.status = 404;
+---
+
+<BaseLayout
+  title="Página não encontrada | M&M Veículos"
+  description="A página procurada não existe ou o veículo não está mais disponível."
+  noindex
+>
+  <section class="container-site grid min-h-[60vh] place-items-center py-20 text-center">
+    <div class="max-w-lg">
+      <p class="display text-7xl text-gold-400 sm:text-8xl">404</p>
+      <h1 class="heading mt-4 text-3xl text-white">Página não encontrada</h1>
+      <p class="mt-3 text-mist-300">O endereço pode estar incorreto ou o veículo não está mais disponível no site.</p>
+      <div class="mt-8 flex flex-col justify-center gap-3 xs:flex-row">
+        <a href="/estoque" class="btn btn-gold">
+          Ver estoque
+          <Icon name="arrow-right" size={18} />
+        </a>
+        <a href="/" class="btn btn-ghost">
+          Ir para o início
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,63 @@
+---
+import { absoluteUrl, serializeJsonLd, type JsonLd } from '@/lib/seo';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Caminho canônico (sem domínio). Padrão: caminho atual sem query string. */
+  canonicalPath?: string;
+  image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  type?: 'website' | 'article' | 'product';
+  noindex?: boolean;
+  jsonLd?: JsonLd[];
+}
+
+export type SeoProps = Props;
+
+const {
+  title,
+  description,
+  canonicalPath = Astro.url.pathname.replace(/\/+$/, '') || '/',
+  image = '/og-default.jpg',
+  imageAlt = 'M&M Veículos',
+  imageWidth = 1200,
+  imageHeight = 630,
+  type = 'website',
+  noindex = false,
+  jsonLd = [],
+} = Astro.props;
+
+const { siteUrl, container } = Astro.locals;
+const allowIndexing = container.config.allowIndexing;
+const canonical = absoluteUrl(siteUrl, canonicalPath);
+const imageUrl = absoluteUrl(siteUrl, image);
+const robots = noindex || !allowIndexing ? 'noindex, nofollow' : 'index, follow, max-image-preview:large';
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content={robots} />
+
+<meta property="og:type" content={type === 'product' ? 'product' : type} />
+<meta property="og:site_name" content="M&M Veículos" />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:secure_url" content={imageUrl} />
+<meta property="og:image:width" content={String(imageWidth)} />
+<meta property="og:image:height" content={String(imageHeight)} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+{jsonLd.map((data) => (
+  <script is:inline type="application/ld+json" set:html={serializeJsonLd(data)}></script>
+))}

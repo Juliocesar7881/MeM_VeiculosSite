@@ -1,0 +1,120 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import type { SiteSettings } from '@/types/settings';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+
+const tabs: { label: string; href: string; icon: IconName; active: boolean }[] = [
+  { label: 'Início', href: '/', icon: 'home', active: path === '/' },
+  {
+    label: 'Estoque',
+    href: '/estoque',
+    icon: 'search',
+    active: path.startsWith('/estoque') || path.startsWith('/ofertas') || path.startsWith('/repasses'),
+  },
+  { label: 'Anunciar', href: '/anuncie-seu-veiculo', icon: 'plus', active: path.startsWith('/anuncie') },
+  { label: 'Favoritos', href: '/favoritos', icon: 'heart', active: path.startsWith('/favoritos') },
+];
+---
+
+<nav class="tabbar lg:hidden" aria-label="Navegação rápida">
+  <ul class="grid grid-cols-5">
+    {tabs.map((tab) => (
+      <li>
+        <a
+          href={tab.href}
+          class:list={['tab', { 'is-active': tab.active, 'is-cta': tab.icon === 'plus' }]}
+          aria-current={tab.active ? 'page' : undefined}
+        >
+          <span class="tab-icon">
+            <Icon name={tab.icon} size={21} />
+            {tab.icon === 'heart' && <span class="tab-badge" data-fav-count hidden />}
+          </span>
+          <span>{tab.label}</span>
+        </a>
+      </li>
+    ))}
+    <li>
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="tab tab-wa">
+        <span class="tab-icon">
+          <Icon name="whatsapp" size={21} />
+        </span>
+        <span>WhatsApp</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<style>
+  .tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 35;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: color-mix(in oklab, var(--color-ink-950) 92%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid color-mix(in oklab, white 8%, transparent);
+  }
+  .tab {
+    display: flex;
+    min-height: 3.6rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-mist-400);
+    transition: color 140ms ease;
+  }
+  .tab.is-active {
+    color: var(--color-gold-400);
+  }
+  .tab-icon {
+    position: relative;
+    display: inline-flex;
+  }
+  .tab.is-cta .tab-icon {
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    background: var(--color-gold-500);
+    color: #111;
+  }
+  .tab.is-cta {
+    color: var(--color-gold-300);
+  }
+  .tab-wa .tab-icon {
+    color: var(--color-whatsapp);
+  }
+  .tab-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.6rem;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.2rem;
+    border-radius: 999px;
+    background: var(--color-gold-500);
+    color: #111;
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1rem;
+    text-align: center;
+  }
+  .tab-badge[hidden] {
+    display: none;
+  }
+</style>

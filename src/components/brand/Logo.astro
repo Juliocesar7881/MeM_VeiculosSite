@@ -1,0 +1,24 @@
+---
+import { LOGO_ASPECT } from './logo-data';
+
+interface Props {
+  /** Altura em px; a largura acompanha a proporção da logo. */
+  height?: number;
+  class?: string;
+  priority?: boolean;
+}
+
+const { height = 40, class: className, priority = false } = Astro.props;
+const width = Math.round(height * LOGO_ASPECT);
+---
+
+<img
+  src="/brand/mm-veiculos-logo.svg"
+  alt="M&M Veículos"
+  width={width}
+  height={height}
+  class={className}
+  decoding="async"
+  loading={priority ? 'eager' : 'lazy'}
+  fetchpriority={priority ? 'high' : undefined}
+/>

@@ -1,0 +1,98 @@
+---
+import PageHeader from '@/components/common/PageHeader.astro';
+import SellForm from '@/components/forms/SellForm.astro';
+import Icon from '@/components/ui/Icon.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '@/lib/seo';
+import { buildWhatsAppUrl, sellVehicleMessage } from '@/utils/whatsapp';
+
+const { container, siteUrl } = Astro.locals;
+const settings = await container.settings.get();
+const { turnstile } = container.config;
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, sellVehicleMessage(settings.businessName));
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: settings.sellVehicleCta, path: '/anuncie-seu-veiculo' },
+];
+const steps = [
+  { title: 'Você envia os dados', text: 'Preencha as informações e, se quiser, adicione até 6 fotos.' },
+  { title: 'A M&M analisa', text: 'Nossa equipe avalia as informações do veículo.' },
+  { title: 'Entramos em contato', text: 'Retornamos pelo WhatsApp informado para conversar.' },
+];
+---
+
+<BaseLayout
+  title={`Venda seu veículo em ${settings.city} | ${settings.businessName}`}
+  description={`Quer vender seu carro, moto ou máquina? Envie os dados do seu veículo para a equipe da ${settings.businessName} avaliar. Atendimento em ${settings.city} - ${settings.state}.`}
+  canonicalPath="/anuncie-seu-veiculo"
+  jsonLd={[breadcrumbJsonLd(breadcrumbs, siteUrl)]}
+>
+  <PageHeader
+    tone="gold"
+    eyebrow="Venda com a M&M"
+    title="Quer vender seu veículo?"
+    subtitle="Envie as informações para nossa equipe avaliar."
+    breadcrumbs={breadcrumbs}
+  />
+
+  <div class="container-site grid gap-8 pt-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div class="min-w-0">
+      <SellForm
+        turnstileSiteKey={turnstile.siteKey}
+        turnstileAvailable={turnstile.configured}
+        defaultState={settings.state}
+      />
+    </div>
+
+    <aside class="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]" aria-label="Como funciona">
+      <div class="surface p-6">
+        <h2 class="heading text-xl text-white">Como funciona</h2>
+        <ol class="mt-5 grid gap-5">
+          {steps.map((step, index) => (
+            <li class="flex gap-4">
+              <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-gold-500 font-extrabold text-ink-950">
+                {index + 1}
+              </span>
+              <div>
+                <p class="font-semibold text-white">{step.title}</p>
+                <p class="mt-0.5 text-sm text-mist-300">{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p class="mt-6 border-t hairline pt-5 text-sm text-mist-400">
+          O envio não é uma proposta de compra. Após a análise, nossa equipe entra em contato para conversar.
+        </p>
+      </div>
+      <div class="surface flex items-start gap-3 p-6">
+        <Icon name="whatsapp" size={24} class="mt-0.5 shrink-0 text-whatsapp" />
+        <div>
+          <p class="font-semibold text-white">Prefere conversar?</p>
+          <p class="mt-1 text-sm text-mist-300">Envie as fotos e informações diretamente pelo WhatsApp.</p>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-300 hover:text-gold-200"
+          >
+            Falar no WhatsApp <Icon name="arrow-right" size={16} />
+          </a>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 px-2 text-sm text-mist-400">
+        <Icon name="lock" size={18} class="mt-0.5 shrink-0" />
+        <p>
+          Seus dados são usados apenas para o contato sobre este veículo.{' '}
+          <a href="/politica-de-privacidade" class="link-underline">
+            Saiba mais
+          </a>
+          .
+        </p>
+      </div>
+    </aside>
+  </div>
+
+  {turnstile.configured && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  )}
+</BaseLayout>

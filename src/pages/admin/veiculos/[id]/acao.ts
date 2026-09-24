@@ -1,0 +1,43 @@
+import type { APIRoute } from 'astro';
+import { isAppError } from '@/lib/errors';
+import { vehicleQuickActionSchema, type VehicleQuickAction } from '@/schemas/vehicle';
+import { redirectWithFlash } from '@/server/http';
+
+const MESSAGES: Record<VehicleQuickAction, string> = {
+  publish: 'Veículo publicado no site.',
+  unpublish: 'Veículo ocultado do site.',
+  'mark-available': 'Veículo marcado como disponível.',
+  'mark-reserved': 'Veículo marcado como reservado.',
+  'mark-sold': 'Veículo marcado como vendido.',
+  archive: 'Veículo arquivado.',
+  feature: 'Veículo destacado na Home.',
+  unfeature: 'Destaque removido.',
+  'offer-on': 'Veículo marcado como oferta.',
+  'offer-off': 'Oferta removida.',
+  'repasse-on': 'Veículo marcado como repasse.',
+  'repasse-off': 'Repasse removido.',
+  delete: 'Veículo excluído.',
+};
+
+function safeReturn(value: FormDataEntryValue | null, fallback: string): string {
+  const path = typeof value === 'string' ? value : '';
+  return path.startsWith('/admin') && !path.startsWith('//') ? path : fallback;
+}
+
+export const POST: APIRoute = async ({ params, request, locals }) => {
+  const id = params.id ?? '';
+  const form = await request.formData();
+  const parsed = vehicleQuickActionSchema.safeParse(form.get('action'));
+  const back = safeReturn(form.get('returnTo'), `/admin/veiculos/${id}`);
+  if (!parsed.success || !locals.admin) return redirectWithFlash(back, 'Ação inválida.', 'erro');
+
+  try {
+    await locals.container.vehicles.quickAction(id, parsed.data, locals.admin);
+    const target = parsed.data === 'delete' && back.startsWith(`/admin/veiculos/${id}`) ? '/admin/veiculos' : back;
+    return redirectWithFlash(target, MESSAGES[parsed.data]);
+  } catch (error) {
+    const message = isAppError(error) ? error.message : 'Não foi possível concluir a ação.';
+    if (!isAppError(error)) console.error('[admin] ação de veículo', error);
+    return redirectWithFlash(back, message, 'erro');
+  }
+};

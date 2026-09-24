@@ -1,0 +1,75 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+
+interface Props {
+  id: string;
+  name: string;
+  class?: string;
+  variant?: 'overlay' | 'solid';
+}
+
+const { id, name, class: className, variant = 'overlay' } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={['fav-btn', `fav-${variant}`, className]}
+  data-fav-toggle={id}
+  aria-pressed="false"
+  aria-label={`Salvar ${name} nos favoritos`}
+  data-label-on={`Remover ${name} dos favoritos`}
+  data-label-off={`Salvar ${name} nos favoritos`}
+>
+  <Icon name="heart" size={20} strokeWidth={2} />
+  {variant === 'solid' && <span class="fav-text">Favoritar</span>}
+</button>
+
+<style>
+  /* Posicionamento (absolute/relative) vem da classe passada pelo componente pai. */
+  .fav-btn {
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border-radius: 999px;
+    color: #fff;
+    transition:
+      transform 160ms var(--ease-out-soft),
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+  .fav-overlay {
+    background: rgb(8 9 10 / 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  }
+  .fav-overlay:hover {
+    background: rgb(8 9 10 / 0.8);
+  }
+  .fav-solid {
+    padding: 0 1rem;
+    border-radius: 0.75rem;
+    background: color-mix(in oklab, white 6%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, white 12%, transparent);
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .fav-btn:active {
+    transform: scale(0.92);
+  }
+  .fav-btn[aria-pressed='true'] {
+    color: var(--color-gold-400);
+  }
+  .fav-btn[aria-pressed='true'] :global(svg) {
+    fill: currentColor;
+  }
+</style>
+
+<script>
+  import { initFavoriteButtons } from '@/features/favorites-ui';
+  initFavoriteButtons();
+</script>

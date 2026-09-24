@@ -1,0 +1,95 @@
+---
+import PageHeader from '@/components/common/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const settings = await Astro.locals.container.settings.get();
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: 'Política de privacidade', path: '/politica-de-privacidade' },
+];
+const updatedAt = '23/09/2026';
+---
+
+<BaseLayout
+  title={`Política de privacidade | ${settings.businessName}`}
+  description={`Como a ${settings.businessName} coleta, usa e protege os dados enviados pelo site, em conformidade com a LGPD.`}
+  canonicalPath="/politica-de-privacidade"
+>
+  <PageHeader title="Política de privacidade" subtitle={`Última atualização: ${updatedAt}`} breadcrumbs={breadcrumbs} />
+
+  <article class="container-site max-w-3xl pt-10">
+    <div class="prose-mm">
+      <p>
+        Esta política explica como a <strong>{settings.businessName}</strong> ({settings.city} - {settings.state}) trata
+        os dados pessoais informados neste site, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
+      </p>
+
+      <h2>1. Quais dados coletamos</h2>
+      <ul>
+        <li>
+          <strong>Formulário “Anuncie seu veículo”:</strong> nome, WhatsApp, e-mail (opcional), dados e fotos do
+          veículo, cidade/estado e preço pretendido (opcional).
+        </li>
+        <li>
+          <strong>Dados técnicos de segurança:</strong> um identificador anonimizado (hash) do endereço IP, usado apenas
+          para limitar envios abusivos, e a verificação anti-robô do Cloudflare Turnstile.
+        </li>
+        <li>
+          <strong>Favoritos:</strong> ficam salvos somente no seu navegador (armazenamento local) e não são enviados
+          para nós.
+        </li>
+      </ul>
+      <p>Não solicitamos CPF, RG, dados bancários ou informações de renda pelo site.</p>
+
+      <h2>2. Para que usamos</h2>
+      <ul>
+        <li>Avaliar o veículo que você nos enviou e entrar em contato com você sobre ele;</li>
+        <li>Proteger o site contra spam, fraudes e uso abusivo.</li>
+      </ul>
+      <p>
+        A base legal é o seu <strong>consentimento</strong>, registrado no envio do formulário, e o legítimo interesse
+        na segurança do site. O envio de dados não gera obrigação de compra por nenhuma das partes.
+      </p>
+
+      <h2>3. Compartilhamento</h2>
+      <p>
+        Não vendemos nem compartilhamos seus dados para fins de marketing. Os dados são armazenados em provedores de
+        infraestrutura contratados para operar o site (hospedagem, banco de dados, armazenamento de arquivos e proteção
+        anti-robô — como Vercel, Turso e Cloudflare), que atuam como operadores e podem processar dados fora do Brasil,
+        com salvaguardas contratuais.
+      </p>
+
+      <h2>4. Por quanto tempo guardamos</h2>
+      <p>
+        Mantemos os dados da proposta pelo tempo necessário para a avaliação e negociação do veículo. Você pode pedir a
+        exclusão a qualquer momento; propostas sem negociação podem ser excluídas periodicamente.
+      </p>
+
+      <h2>5. Seus direitos</h2>
+      <p>
+        Você pode solicitar confirmação de tratamento, acesso, correção, anonimização, portabilidade ou exclusão dos
+        seus dados, além de revogar o consentimento, nos termos do art. 18 da LGPD.
+      </p>
+
+      <h2>6. Cookies</h2>
+      <p>
+        O site público não usa cookies de publicidade ou rastreamento. O painel administrativo usa um cookie técnico de
+        sessão, restrito à equipe da {settings.businessName}. O Cloudflare Turnstile pode utilizar dados técnicos do
+        navegador para diferenciar pessoas de robôs.
+      </p>
+
+      <h2>7. Contato</h2>
+      <p>
+        Para exercer seus direitos ou tirar dúvidas sobre privacidade, fale com a gente
+        {settings.email && (
+          <>
+            {' '}
+            pelo e-mail <a href={`mailto:${settings.email}`}>{settings.email}</a> ou
+          </>
+        )}{' '}
+        pelo WhatsApp
+        {settings.phone}.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

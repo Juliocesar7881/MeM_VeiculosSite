@@ -1,0 +1,25 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { getVehicleBadges, type BadgeOptions, type BadgeSource } from '@/utils/badges';
+
+interface Props extends BadgeOptions {
+  vehicle: BadgeSource;
+  class?: string;
+}
+
+const { vehicle, class: className, ...options } = Astro.props;
+const badges = getVehicleBadges(vehicle, options);
+---
+
+{badges.length > 0 && (
+  <ul class:list={['flex flex-wrap gap-1.5', className]} aria-label="Condições do veículo">
+    {badges.map((badge) => (
+      <li class={`badge badge-${badge.kind}`}>
+        {badge.kind === 'offer' && <Icon name="tag" size={12} strokeWidth={2.4} />}
+        {badge.kind === 'repasse' && <Icon name="repasse" size={12} strokeWidth={2.4} />}
+        {badge.kind === 'featured' && <Icon name="star" size={12} strokeWidth={2.4} />}
+        {badge.label}
+      </li>
+    ))}
+  </ul>
+)}

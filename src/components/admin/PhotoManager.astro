@@ -1,0 +1,217 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
+import { mediaUrl } from '@/lib/storage/keys';
+import type { VehicleImage } from '@/types/domain';
+
+interface Props {
+  vehicleId: string;
+  images: VehicleImage[];
+}
+
+const { vehicleId, images } = Astro.props;
+const config = {
+  vehicleId,
+  maxPhotos: SITE_CONSTANTS.maxVehiclePhotos,
+  largeEdge: IMAGE_LIMITS.largeMaxEdge,
+  largeMaxBytes: IMAGE_LIMITS.vehicleLargeMaxBytes,
+  thumbEdge: IMAGE_LIMITS.thumbMaxEdge,
+  thumbMaxBytes: IMAGE_LIMITS.vehicleThumbMaxBytes,
+};
+---
+
+<section
+  id="fotos"
+  class="photo-manager"
+  data-photo-manager
+  data-config={JSON.stringify(config)}
+  aria-labelledby="fotos-title"
+>
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h2 id="fotos-title" class="text-lg font-bold text-white">
+        Fotos{' '}
+        <span class="text-sm font-normal text-mist-400 tabular" data-photo-count>
+          ({images.length}/{config.maxPhotos})
+        </span>
+      </h2>
+      <p class="mt-0.5 text-sm text-mist-400">A primeira foto é a capa. Arraste para reordenar ou use as setas.</p>
+    </div>
+    <label class="btn btn-gold btn-sm cursor-pointer">
+      <Icon name="upload" size={17} />
+      Adicionar fotos
+      <input type="file" accept="image/*" multiple class="sr-only" data-photo-input />
+    </label>
+  </div>
+
+  <div class="dropzone mt-4" data-dropzone>
+    <p class="text-sm text-mist-400">
+      <Icon name="image" size={18} class="mr-1 inline" />
+      Solte as fotos aqui — elas são otimizadas (WebP, até {config.largeEdge}px) antes do envio.
+    </p>
+  </div>
+
+  <p class="mt-3 text-sm text-red-300" data-photo-error role="alert" hidden></p>
+
+  <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" data-photo-list>
+    {images.map((image, index) => (
+      <li class="photo-item" data-photo-id={image.id} draggable="true">
+        <img
+          src={mediaUrl(image.thumbKey)}
+          alt={`Foto ${index + 1}`}
+          width={image.thumbWidth}
+          height={image.thumbHeight}
+          loading="lazy"
+          class="aspect-[4/3] w-full rounded-lg object-cover"
+        />
+        <span class="cover-badge">Capa</span>
+        <div class="photo-tools">
+          <button type="button" class="tool" data-move="-1" aria-label="Mover para a esquerda">
+            <Icon name="chevron-left" size={16} />
+          </button>
+          <button type="button" class="tool" data-make-cover aria-label="Definir como capa">
+            <Icon name="star" size={15} />
+          </button>
+          <button type="button" class="tool" data-move="1" aria-label="Mover para a direita">
+            <Icon name="chevron-right" size={16} />
+          </button>
+          <button type="button" class="tool tool-danger ml-auto" data-delete aria-label="Excluir foto">
+            <Icon name="trash" size={15} />
+          </button>
+        </div>
+      </li>
+    ))}
+  </ul>
+  <p class="mt-4 text-sm text-mist-500" data-photo-empty hidden={images.length > 0}>
+    Nenhuma foto ainda. Veículos com boas fotos vendem mais rápido.
+  </p>
+</section>
+
+<template data-photo-template>
+  <li class="photo-item" draggable="true">
+    <img alt="" class="aspect-[4/3] w-full rounded-lg object-cover" />
+    <span class="cover-badge">Capa</span>
+    <div class="photo-tools">
+      <button type="button" class="tool" data-move="-1" aria-label="Mover para a esquerda">
+        <Icon name="chevron-left" size={16} />
+      </button>
+      <button type="button" class="tool" data-make-cover aria-label="Definir como capa">
+        <Icon name="star" size={15} />
+      </button>
+      <button type="button" class="tool" data-move="1" aria-label="Mover para a direita">
+        <Icon name="chevron-right" size={16} />
+      </button>
+      <button type="button" class="tool tool-danger ml-auto" data-delete aria-label="Excluir foto">
+        <Icon name="trash" size={15} />
+      </button>
+    </div>
+  </li>
+</template>
+
+<style>
+  .photo-manager {
+    padding: 1.25rem;
+    border-radius: 1.1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .photo-manager {
+      padding: 1.6rem;
+    }
+  }
+  .dropzone {
+    padding: 1rem;
+    border-radius: 0.9rem;
+    border: 1.5px dashed color-mix(in oklab, white 16%, transparent);
+    text-align: center;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease;
+  }
+  .dropzone.is-over {
+    border-color: var(--color-gold-500);
+    background: color-mix(in oklab, var(--color-gold-500) 7%, transparent);
+  }
+  .photo-item {
+    position: relative;
+    padding: 0.4rem;
+    border-radius: 0.8rem;
+    background: var(--color-ink-900);
+    border: 1px solid color-mix(in oklab, white 8%, transparent);
+    cursor: grab;
+    transition:
+      opacity 140ms ease,
+      border-color 140ms ease;
+  }
+  .photo-item.is-dragging {
+    opacity: 0.4;
+  }
+  .photo-item.is-target {
+    border-color: var(--color-gold-500);
+  }
+  .photo-item.is-pending img {
+    opacity: 0.45;
+  }
+  .photo-item.is-failed {
+    border-color: var(--color-danger);
+  }
+  .cover-badge {
+    position: absolute;
+    left: 0.8rem;
+    top: 0.8rem;
+    display: none;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.4rem;
+    background: var(--color-gold-500);
+    color: #111;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .photo-item:first-child .cover-badge {
+    display: inline-block;
+  }
+  .photo-tools {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.4rem;
+  }
+  .tool {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    color: var(--color-mist-200);
+    background: color-mix(in oklab, white 5%, transparent);
+  }
+  .tool:hover {
+    background: color-mix(in oklab, white 12%, transparent);
+    color: #fff;
+  }
+  .tool-danger:hover {
+    background: color-mix(in oklab, var(--color-danger) 25%, transparent);
+    color: #fecaca;
+  }
+  .photo-manager :global(.photo-status) {
+    position: absolute;
+    inset: 0.4rem 0.4rem auto;
+    display: grid;
+    aspect-ratio: 4 / 3;
+    place-items: center;
+    border-radius: 0.5rem;
+    background: rgb(0 0 0 / 0.55);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.5rem;
+  }
+</style>
+
+<script>
+  import { initPhotoManager } from '@/features/admin/photo-manager';
+  initPhotoManager();
+</script>

@@ -1,0 +1,173 @@
+---
+import PageHeader from '@/components/common/PageHeader.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { breadcrumbJsonLd, dealerJsonLd, instagramUrl } from '@/lib/seo';
+import { telHref } from '@/utils/phone';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+
+const { container, siteUrl } = Astro.locals;
+const settings = await container.settings.get();
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: 'Contato', path: '/contato' },
+];
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+const mapsUrl = settings.address
+  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${settings.address}, ${settings.city} - ${settings.state}`)}`
+  : null;
+
+const channels: { icon: IconName; label: string; value: string; href: string; external: boolean; accent?: string }[] = [
+  {
+    icon: 'whatsapp',
+    label: 'WhatsApp',
+    value: settings.phone,
+    href: whatsappUrl,
+    external: true,
+    accent: 'text-whatsapp',
+  },
+  { icon: 'phone', label: 'Telefone', value: settings.phone, href: telHref(settings.phone), external: false },
+];
+if (settings.email)
+  channels.push({
+    icon: 'mail',
+    label: 'E-mail',
+    value: settings.email,
+    href: `mailto:${settings.email}`,
+    external: false,
+  });
+if (settings.instagram)
+  channels.push({
+    icon: 'instagram',
+    label: 'Instagram',
+    value: `@${settings.instagram}`,
+    href: instagramUrl(settings.instagram),
+    external: true,
+  });
+if (settings.facebook)
+  channels.push({
+    icon: 'facebook',
+    label: 'Facebook',
+    value: 'M&M Veículos',
+    href: settings.facebook,
+    external: true,
+  });
+---
+
+<BaseLayout
+  title={`Contato | ${settings.businessName}`}
+  description={`Fale com a ${settings.businessName} pelo WhatsApp ${settings.phone}, e-mail ou redes sociais. ${settings.city} - ${settings.state}.`}
+  canonicalPath="/contato"
+  jsonLd={[dealerJsonLd(settings, siteUrl), breadcrumbJsonLd(breadcrumbs, siteUrl)]}
+>
+  <PageHeader
+    eyebrow="Atendimento"
+    title="Contato"
+    subtitle="O jeito mais rápido de falar com a gente é pelo WhatsApp."
+    breadcrumbs={breadcrumbs}
+  />
+
+  <div class="container-site grid gap-8 pt-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+    <section aria-labelledby="canais">
+      <h2 id="canais" class="sr-only">
+        Canais de atendimento
+      </h2>
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="wa-card group">
+        <span class="inline-flex size-14 shrink-0 items-center justify-center rounded-2xl bg-whatsapp text-[#06180d]">
+          <Icon name="whatsapp" size={30} />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-sm text-mist-300">Fale agora pelo WhatsApp</span>
+          <span class="block text-2xl font-extrabold text-white [font-stretch:110%] tabular">{settings.phone}</span>
+        </span>
+        <Icon
+          name="arrow-up-right"
+          size={22}
+          class="text-mist-300 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
+      </a>
+
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2" role="list">
+        {channels.slice(1).map((c) => (
+          <li>
+            <a href={c.href} class="channel" {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+              <Icon name={c.icon} size={22} class={c.accent ?? 'text-gold-400'} />
+              <span class="min-w-0">
+                <span class="block text-xs uppercase tracking-wider text-mist-400">{c.label}</span>
+                <span class="block truncate font-semibold text-white">{c.value}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="surface p-6 sm:p-8" aria-labelledby="localizacao">
+      <h2 id="localizacao" class="heading text-2xl text-white">
+        Onde estamos
+      </h2>
+      <div class="mt-5 grid gap-5 text-mist-200">
+        <p class="flex items-start gap-3">
+          <Icon name="map-pin" size={20} class="mt-0.5 shrink-0 text-gold-400" />
+          <span>
+            {settings.address && (
+              <>
+                {settings.address}
+                <br />
+              </>
+            )}
+            {settings.city} - {settings.state}
+          </span>
+        </p>
+        {settings.openingHours && (
+          <p class="flex items-start gap-3">
+            <Icon name="clock" size={20} class="mt-0.5 shrink-0 text-gold-400" />
+            <span class="whitespace-pre-line">{settings.openingHours}</span>
+          </p>
+        )}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" class="btn btn-ghost justify-self-start">
+            <Icon name="external" size={18} />
+            Ver no mapa
+          </a>
+        )}
+        {!settings.address && <p class="text-sm text-mist-400">Combine uma visita pelo WhatsApp.</p>}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .wa-card {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.4rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-whatsapp) 14%, var(--color-ink-850)),
+      var(--color-ink-850)
+    );
+    border: 1px solid color-mix(in oklab, var(--color-whatsapp) 35%, transparent);
+    transition: border-color 160ms ease;
+  }
+  .wa-card:hover {
+    border-color: var(--color-whatsapp);
+  }
+  .channel {
+    display: flex;
+    min-height: 4.5rem;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+    transition: border-color 160ms ease;
+  }
+  .channel:hover {
+    border-color: color-mix(in oklab, var(--color-gold-500) 50%, transparent);
+  }
+</style>

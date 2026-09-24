@@ -1,0 +1,494 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import {
+  BRAZIL_STATES,
+  CATEGORY_INFO,
+  FUEL_LABELS,
+  FUELS,
+  TRANSMISSION_LABELS,
+  TRANSMISSIONS,
+  VEHICLE_CATEGORIES,
+  type VehicleCategory,
+} from '@/config/catalog';
+import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
+import { LEAD_CONSENT_TEXT } from '@/schemas/lead';
+import { currentYear } from '@/utils/dates';
+
+interface Props {
+  turnstileSiteKey: string;
+  turnstileAvailable: boolean;
+  defaultState: string;
+}
+
+const { turnstileSiteKey, turnstileAvailable, defaultState } = Astro.props;
+const maxYear = currentYear() + 1;
+const categoryIcons: Record<VehicleCategory, IconName> = {
+  carro: 'car',
+  moto: 'moto',
+  scooter: 'scooter',
+  pesado: 'truck',
+  maquina_agricola: 'tractor',
+};
+const limits = {
+  maxPhotos: SITE_CONSTANTS.maxLeadPhotos,
+  largeEdge: IMAGE_LIMITS.leadLargeMaxEdge,
+  largeMaxBytes: IMAGE_LIMITS.leadLargeMaxBytes,
+  thumbEdge: IMAGE_LIMITS.thumbMaxEdge,
+  thumbMaxBytes: IMAGE_LIMITS.leadThumbMaxBytes,
+};
+---
+
+<form
+  class="sell-form grid gap-8"
+  method="post"
+  action="/api/leads"
+  enctype="multipart/form-data"
+  novalidate
+  data-sell-form
+  data-limits={JSON.stringify(limits)}
+>
+  <div class="form-alert" role="alert" data-form-alert hidden></div>
+
+  <fieldset class="form-section">
+    <legend class="section-title">
+      <span class="section-num">1</span> Seus dados
+    </legend>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <label for="l-name" class="field-label">
+          Nome{' '}
+          <span class="req" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <input id="l-name" name="name" class="input" required minlength="2" maxlength="80" autocomplete="name" />
+      </div>
+      <div>
+        <label for="l-whatsapp" class="field-label">
+          WhatsApp{' '}
+          <span class="req" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <input
+          id="l-whatsapp"
+          name="whatsapp"
+          type="tel"
+          class="input"
+          required
+          inputmode="tel"
+          autocomplete="tel-national"
+          placeholder="(47) 99999-9999"
+          maxlength="20"
+          data-phone
+        />
+      </div>
+      <div>
+        <label for="l-email" class="field-label">
+          E-mail <span class="text-mist-500">(opcional)</span>
+        </label>
+        <input id="l-email" name="email" type="email" class="input" autocomplete="email" maxlength="120" />
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend class="section-title">
+      <span class="section-num">2</span> Dados do veículo
+    </legend>
+
+    <div role="radiogroup" aria-labelledby="l-cat-label" aria-required="true">
+      <p id="l-cat-label" class="field-label">
+        Categoria{' '}
+        <span class="req" aria-hidden="true">
+          *
+        </span>
+      </p>
+      <div class="grid grid-cols-2 gap-2 xs:grid-cols-3 md:grid-cols-5">
+        {VEHICLE_CATEGORIES.map((c, index) => (
+          <label class="cat-option">
+            <input type="radio" name="category" value={c} required={index === 0} class="sr-only" />
+            <Icon name={categoryIcons[c]} size={26} strokeWidth={1.5} />
+            <span>{CATEGORY_INFO[c].label}</span>
+          </label>
+        ))}
+      </div>
+      <p class="field-error" data-error-for="category" hidden></p>
+    </div>
+
+    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+      <div>
+        <label for="l-brand" class="field-label">
+          Marca{' '}
+          <span class="req" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <input id="l-brand" name="brand" class="input" required maxlength="40" placeholder="Ex.: Volkswagen" />
+      </div>
+      <div>
+        <label for="l-model" class="field-label">
+          Modelo{' '}
+          <span class="req" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <input id="l-model" name="model" class="input" required maxlength="60" placeholder="Ex.: Gol" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="l-version" class="field-label">
+          Versão
+        </label>
+        <input id="l-version" name="version" class="input" maxlength="80" placeholder="Ex.: 1.6 MSI Trendline" />
+      </div>
+      <div>
+        <label for="l-fab" class="field-label">
+          Ano de fabricação{' '}
+          <span class="req" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <input
+          id="l-fab"
+          name="manufactureYear"
+          class="input"
+          required
+          inputmode="numeric"
+          pattern="[0-9]{4}"
+          maxlength="4"
+          min="1950"
+          max={maxYear}
+          placeholder="Ex.: 2019"
+        />
+      </div>
+      <div>
+        <label for="l-mod" class="field-label">
+          Ano modelo
+        </label>
+        <input
+          id="l-mod"
+          name="modelYear"
+          class="input"
+          inputmode="numeric"
+          pattern="[0-9]{4}"
+          maxlength="4"
+          placeholder="Ex.: 2020"
+        />
+      </div>
+      <div class="field-km">
+        <label for="l-km" class="field-label">
+          Quilometragem
+        </label>
+        <input
+          id="l-km"
+          name="mileage"
+          class="input"
+          inputmode="numeric"
+          maxlength="9"
+          placeholder="Ex.: 65.000"
+          data-thousands
+        />
+      </div>
+      <div class="field-hours">
+        <label for="l-hours" class="field-label">
+          Horas de uso
+        </label>
+        <input
+          id="l-hours"
+          name="usageHours"
+          class="input"
+          inputmode="numeric"
+          maxlength="7"
+          placeholder="Ex.: 3.200"
+          data-thousands
+        />
+      </div>
+      <div>
+        <label for="l-fuel" class="field-label">
+          Combustível
+        </label>
+        <select id="l-fuel" name="fuel" class="input">
+          <option value="">Selecione</option>
+          {FUELS.map((f) => (
+            <option value={f}>{FUEL_LABELS[f]}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label for="l-trans" class="field-label">
+          Câmbio
+        </label>
+        <select id="l-trans" name="transmission" class="input">
+          <option value="">Selecione</option>
+          {TRANSMISSIONS.map((t) => (
+            <option value={t}>{TRANSMISSION_LABELS[t]}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label for="l-color" class="field-label">
+          Cor
+        </label>
+        <input id="l-color" name="color" class="input" maxlength="30" />
+      </div>
+      <div>
+        <label for="l-price" class="field-label">
+          Preço pretendido <span class="text-mist-500">(opcional)</span>
+        </label>
+        <div class="relative">
+          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mist-400">R$</span>
+          <input
+            id="l-price"
+            name="desiredPrice"
+            class="input pl-10"
+            inputmode="numeric"
+            maxlength="14"
+            placeholder="0"
+            data-thousands
+          />
+        </div>
+      </div>
+      <div>
+        <label for="l-city" class="field-label">
+          Cidade
+        </label>
+        <input id="l-city" name="city" class="input" maxlength="60" autocomplete="address-level2" />
+      </div>
+      <div>
+        <label for="l-state" class="field-label">
+          Estado
+        </label>
+        <select id="l-state" name="state" class="input" autocomplete="address-level1">
+          <option value="">Selecione</option>
+          {BRAZIL_STATES.map((uf) => (
+            <option value={uf} selected={uf === defaultState}>
+              {uf}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <label for="l-desc" class="field-label">
+          Descrição
+        </label>
+        <textarea
+          id="l-desc"
+          name="description"
+          class="input"
+          maxlength="2000"
+          rows="4"
+          placeholder="Estado de conservação, revisões, detalhes, se é financiado..."
+        ></textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend class="section-title">
+      <span class="section-num">3</span> Fotos{' '}
+      <span class="text-sm font-normal text-mist-400">(até {limits.maxPhotos}, opcional)</span>
+    </legend>
+    <div class="dropzone" data-dropzone>
+      <input id="l-photos" type="file" accept="image/*" multiple class="sr-only" data-photo-input />
+      <label for="l-photos" class="flex cursor-pointer flex-col items-center gap-2 px-4 py-8 text-center">
+        <span class="inline-flex size-12 items-center justify-center rounded-xl bg-white/5 text-gold-400">
+          <Icon name="upload" size={24} />
+        </span>
+        <span class="font-semibold text-white">Adicionar fotos</span>
+        <span class="text-sm text-mist-400">
+          Toque para escolher ou arraste as imagens aqui. Elas são otimizadas antes do envio.
+        </span>
+      </label>
+    </div>
+    <ul class="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6" data-photo-list aria-live="polite"></ul>
+    <p class="field-error" data-photo-error hidden></p>
+  </fieldset>
+
+  <div class="form-section grid gap-5">
+    <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+
+    <label class="check">
+      <input type="checkbox" name="consent" value="on" required />
+      <span>
+        {LEAD_CONSENT_TEXT}
+        <a href="/politica-de-privacidade" target="_blank" class="link-underline text-gold-300">
+          Política de Privacidade
+        </a>
+        .
+      </span>
+    </label>
+    <p class="field-error -mt-3" data-error-for="consent" hidden></p>
+
+    {turnstileAvailable ? (
+      <div class="min-h-[65px] max-w-full" data-turnstile data-sitekey={turnstileSiteKey} />
+    ) : (
+      <p class="rounded-lg bg-danger/15 px-4 py-3 text-sm text-red-200">
+        O envio pelo site está temporariamente indisponível. Fale com a gente pelo WhatsApp.
+      </p>
+    )}
+
+    <button
+      type="submit"
+      class="btn btn-gold btn-lg w-full sm:w-auto sm:justify-self-start"
+      data-submit
+      disabled={!turnstileAvailable}
+    >
+      <span data-submit-label>Enviar para avaliação</span>
+      <Icon name="send" size={18} />
+    </button>
+    <p class="text-sm text-mist-400">
+      Não pedimos CPF, RG, dados bancários ou renda. O envio não publica o veículo no site e não garante a compra.
+    </p>
+  </div>
+</form>
+
+<div class="success hidden" data-sell-success tabindex="-1">
+  <span class="inline-flex size-16 items-center justify-center rounded-2xl bg-success/15 text-success">
+    <Icon name="check-circle" size={34} />
+  </span>
+  <h2 class="heading mt-6 text-3xl text-white">Recebemos as informações!</h2>
+  <p class="mt-3 max-w-md text-mist-200">
+    Nossa equipe vai analisar os dados do seu veículo e entrar em contato pelo WhatsApp informado.
+  </p>
+  <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+    <a href="/estoque" class="btn btn-gold">
+      Ver estoque
+    </a>
+    <a href="/" class="btn btn-ghost">
+      Voltar ao início
+    </a>
+  </div>
+</div>
+
+<noscript>
+  <p class="mt-6 rounded-lg bg-white/5 px-4 py-3 text-sm text-mist-200">
+    Para enviar o formulário é necessário ativar o JavaScript. Você também pode falar com a gente pelo WhatsApp.
+  </p>
+</noscript>
+
+<style>
+  .form-section {
+    min-width: 0;
+    padding: 1.4rem;
+    border-radius: 1.25rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .form-section {
+      padding: 1.8rem;
+    }
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.25rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-stretch: 108%;
+    color: #fff;
+  }
+  .section-num {
+    display: inline-flex;
+    width: 1.8rem;
+    height: 1.8rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    background: var(--color-gold-500);
+    color: #111;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+  .cat-option {
+    display: flex;
+    min-height: 5.5rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in oklab, white 12%, transparent);
+    background: var(--color-ink-900);
+    color: var(--color-mist-200);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+  .cat-option:hover {
+    border-color: color-mix(in oklab, white 25%, transparent);
+  }
+  .cat-option:has(input:checked) {
+    border-color: var(--color-gold-500);
+    background: color-mix(in oklab, var(--color-gold-500) 12%, transparent);
+    color: var(--color-gold-200);
+  }
+  .cat-option:has(input:focus-visible) {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
+  }
+  /* Horas de uso só aparecem para máquinas agrícolas e pesados */
+  .field-hours {
+    display: none;
+  }
+  .sell-form:has(input[name='category'][value='maquina_agricola']:checked) .field-hours,
+  .sell-form:has(input[name='category'][value='pesado']:checked) .field-hours {
+    display: block;
+  }
+  .dropzone {
+    border-radius: 1rem;
+    border: 1.5px dashed color-mix(in oklab, white 18%, transparent);
+    background: var(--color-ink-900);
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease;
+  }
+  .dropzone:hover,
+  .dropzone.is-over {
+    border-color: var(--color-gold-500);
+    background: color-mix(in oklab, var(--color-gold-500) 6%, var(--color-ink-900));
+  }
+  .dropzone:has(input:focus-visible) {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 3px;
+  }
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .form-alert {
+    padding: 1rem 1.2rem;
+    border-radius: 0.9rem;
+    background: color-mix(in oklab, var(--color-danger) 14%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 40%, transparent);
+    color: #fecaca;
+    font-size: 0.92rem;
+  }
+  .success {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2rem;
+    border-radius: 1.25rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, var(--color-success) 30%, transparent);
+  }
+  .success.is-visible {
+    display: flex;
+  }
+</style>
+
+<script>
+  import { initSellForm } from '@/features/sell-form';
+  initSellForm();
+</script>

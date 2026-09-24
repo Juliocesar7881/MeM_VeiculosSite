@@ -1,0 +1,172 @@
+---
+import StatusPill from '@/components/admin/StatusPill.astro';
+import Pagination from '@/components/inventory/Pagination.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { LEAD_STATUS_LABELS, LEAD_STATUSES, type LeadStatus } from '@/config/catalog';
+import { SITE_CONSTANTS } from '@/config/site';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { leadMediaUrl } from '@/lib/storage/keys';
+import { formatRelative } from '@/utils/dates';
+import { formatBRL } from '@/utils/money';
+import { formatBrazilPhone } from '@/utils/phone';
+import { yearLabel } from '@/utils/vehicle-format';
+
+const params = Astro.url.searchParams;
+const statusParam = params.get('status') ?? '';
+const status = LEAD_STATUSES.includes(statusParam as LeadStatus) ? (statusParam as LeadStatus) : undefined;
+const scope = statusParam === 'todas' ? 'all' : 'open';
+const q = (params.get('q') ?? '').trim().slice(0, 80);
+const page = Math.max(1, Number(params.get('pagina')) || 1);
+
+const { container } = Astro.locals;
+const [result, counts] = await Promise.all([
+  container.leads.list({
+    ...(status ? { status } : { scope }),
+    ...(q ? { q } : {}),
+    page,
+    pageSize: SITE_CONSTANTS.adminPageSize,
+  }),
+  container.leads.countByStatus(),
+]);
+const openCount = counts.new + counts.reviewing + counts.contacted + counts.negotiating + counts.accepted;
+const allCount = Object.values(counts).reduce((a, b) => a + b, 0);
+
+const tabs: { label: string; value: string; count: number }[] = [
+  { label: 'Em aberto', value: '', count: openCount },
+  ...LEAD_STATUSES.map((s) => ({ label: LEAD_STATUS_LABELS[s], value: s, count: counts[s] })),
+  { label: 'Todas', value: 'todas', count: allCount },
+];
+const currentTab = status ?? (scope === 'all' ? 'todas' : '');
+const href = (p: number) => {
+  const next = new URLSearchParams();
+  if (statusParam) next.set('status', statusParam);
+  if (q) next.set('q', q);
+  if (p > 1) next.set('pagina', String(p));
+  const qs = next.toString();
+  return qs ? `/admin/propostas?${qs}` : '/admin/propostas';
+};
+---
+
+<AdminLayout title="Propostas" section="propostas">
+  <h1 class="heading text-3xl text-white">Propostas</h1>
+  <p class="mt-1 text-sm text-mist-400">
+    Veículos enviados pelo formulário “Anuncie seu veículo”. Nada é publicado automaticamente.
+  </p>
+
+  <div class="scrollbar-none -mx-4 mt-6 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+    {tabs.map((tab) => (
+      <a
+        href={tab.value ? `/admin/propostas?status=${tab.value}` : '/admin/propostas'}
+        class:list={['chip shrink-0', { 'is-active': tab.value === currentTab }]}
+        aria-current={tab.value === currentTab ? 'page' : undefined}
+      >
+        {tab.label}
+        <span class="text-xs opacity-70 tabular">{tab.count}</span>
+      </a>
+    ))}
+  </div>
+
+  <form method="get" action="/admin/propostas" class="mt-4">
+    {statusParam && <input type="hidden" name="status" value={statusParam} />}
+    <label for="lead-q" class="sr-only">
+      Buscar propostas
+    </label>
+    <div class="relative max-w-xl">
+      <Icon
+        name="search"
+        size={18}
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist-400"
+      />
+      <input
+        id="lead-q"
+        name="q"
+        type="search"
+        value={q}
+        placeholder="Buscar por nome, veículo ou WhatsApp"
+        class="input pl-10"
+      />
+    </div>
+  </form>
+
+  {result.items.length > 0 ? (
+    <ul class="mt-6 grid gap-2.5">
+      {result.items.map((lead) => (
+        <li>
+          <a href={`/admin/propostas/${lead.id}`} class:list={['lead-row', { 'is-new': lead.status === 'new' }]}>
+            <span class="lead-thumb">
+              {lead.cover ? (
+                <img
+                  src={leadMediaUrl(lead.cover.thumbKey)}
+                  alt=""
+                  width={lead.cover.thumbWidth}
+                  height={lead.cover.thumbHeight}
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
+              ) : (
+                <span class="grid h-full place-items-center text-mist-500">
+                  <Icon name="image" size={20} />
+                </span>
+              )}
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate font-semibold text-white">
+                {lead.brand} {lead.model} <span class="font-normal text-mist-300">{yearLabel(lead)}</span>
+              </span>
+              <span class="mt-0.5 block truncate text-sm text-mist-400">
+                {lead.name} · {formatBrazilPhone(lead.whatsapp)}
+              </span>
+              <span class="mt-2 flex flex-wrap items-center gap-2">
+                <StatusPill kind="lead" status={lead.status} />
+                <span class="text-xs text-mist-500">{lead.imageCount} foto(s)</span>
+              </span>
+            </span>
+            <span class="lead-meta">
+              <span class="block font-semibold text-white tabular">
+                {lead.desiredPrice ? formatBRL(lead.desiredPrice) : '—'}
+              </span>
+              <span class="block text-xs text-mist-500">{formatRelative(lead.createdAt)}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div class="surface mt-6 px-6 py-14 text-center">
+      <p class="text-lg font-semibold text-white">Nenhuma proposta aqui</p>
+      <p class="mt-2 text-sm text-mist-400">Quando alguém enviar um veículo pelo site, ele aparece nesta lista.</p>
+    </div>
+  )}
+
+  <Pagination page={result.page} totalPages={result.totalPages} hrefFor={href} />
+</AdminLayout>
+
+<style>
+  .lead-row {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    border-radius: 1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+    transition: border-color 140ms ease;
+  }
+  .lead-row:hover {
+    border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+  }
+  .lead-row.is-new {
+    border-left: 3px solid var(--color-gold-500);
+  }
+  .lead-thumb {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: var(--color-ink-800);
+  }
+  .lead-meta {
+    text-align: right;
+  }
+</style>

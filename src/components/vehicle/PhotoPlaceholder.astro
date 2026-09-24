@@ -1,0 +1,43 @@
+---
+import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
+
+interface Props {
+  class?: string;
+  label?: string;
+}
+
+const { class: className, label = 'Fotos em breve' } = Astro.props;
+---
+
+<div class:list={['photo-placeholder', className]} role="img" aria-label={label}>
+  <svg viewBox={LOGO_VIEWBOX} class="w-[58%] max-w-[16rem]" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+    <g transform="translate(0 -20)">
+      {LOGO_GOLD_PATHS.map((d) => (
+        <path d={d} fill="currentColor" />
+      ))}
+      <path d={LOGO_SILVER_PATH} fill="currentColor" opacity="0.6" />
+    </g>
+  </svg>
+  <span>{label}</span>
+</div>
+
+<style>
+  .photo-placeholder {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: radial-gradient(120% 90% at 50% 20%, #1c1f24 0%, #0d0f11 70%);
+    color: color-mix(in oklab, var(--color-gold-500) 38%, transparent);
+  }
+  .photo-placeholder span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-mist-500);
+  }
+</style>

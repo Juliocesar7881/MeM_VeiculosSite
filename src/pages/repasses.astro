@@ -1,0 +1,51 @@
+---
+import PageHeader from '@/components/common/PageHeader.astro';
+import InventoryView from '@/components/inventory/InventoryView.astro';
+import Icon from '@/components/ui/Icon.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '@/lib/seo';
+import { inventoryHref } from '@/schemas/filters';
+import { loadInventoryPage } from '@/server/inventory-page';
+
+const data = await loadInventoryPage(Astro, 'repasses');
+if (data.redirectTo) return Astro.redirect(inventoryHref(data.redirectTo, {}, '/repasses'), 302);
+
+const { settings, filters, result, facets, isFiltered } = data;
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: 'Repasses', path: '/repasses' },
+];
+---
+
+<BaseLayout
+  title={`Veículos de repasse em ${settings.city} | ${settings.businessName}`}
+  description={`Veículos de repasse disponíveis na ${settings.businessName}, em ${settings.city} - ${settings.state}. Consulte as condições de cada veículo pelo WhatsApp.`}
+  canonicalPath="/repasses"
+  noindex={isFiltered}
+  jsonLd={[breadcrumbJsonLd(breadcrumbs, Astro.locals.siteUrl)]}
+>
+  <PageHeader
+    tone="silver"
+    eyebrow="Oportunidades"
+    title="Repasses"
+    subtitle="Veículos de repasse selecionados pela nossa equipe. Consulte as condições de cada um pelo WhatsApp."
+    breadcrumbs={breadcrumbs}
+  >
+    {settings.repasseDescription && (
+      <div class="mt-6 flex max-w-3xl gap-3 rounded-2xl border hairline bg-white/[0.03] p-4 text-sm text-mist-200 sm:p-5">
+        <Icon name="info" size={20} class="mt-0.5 shrink-0 text-silver-300" />
+        <p class="whitespace-pre-line">{settings.repasseDescription}</p>
+      </div>
+    )}
+  </PageHeader>
+  <div class="container-site pt-8">
+    <InventoryView
+      filters={filters}
+      result={result}
+      facets={facets}
+      settings={settings}
+      basePath="/repasses"
+      locked="repasses"
+    />
+  </div>
+</BaseLayout>

@@ -1,0 +1,125 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import type { VehicleQuickAction } from '@/schemas/vehicle';
+import type { VehicleCard } from '@/types/domain';
+import { isOfferActive } from '@/utils/offer';
+
+interface Props {
+  vehicle: VehicleCard;
+  /** Para onde voltar após a ação. */
+  returnTo: string;
+}
+
+const { vehicle: v, returnTo } = Astro.props;
+const action = `/admin/veiculos/${v.id}/acao`;
+
+const items: { action: VehicleQuickAction; label: string; icon: IconName; confirm?: string; danger?: boolean }[] = [];
+if (!v.published && v.status !== 'archived') items.push({ action: 'publish', label: 'Publicar no site', icon: 'eye' });
+if (v.published) items.push({ action: 'unpublish', label: 'Ocultar do site', icon: 'eye-off' });
+if (v.status !== 'available' && v.status !== 'draft')
+  items.push({ action: 'mark-available', label: 'Marcar como disponível', icon: 'check' });
+if (v.status !== 'reserved' && v.status !== 'archived')
+  items.push({ action: 'mark-reserved', label: 'Marcar como reservado', icon: 'clock' });
+if (v.status !== 'sold' && v.status !== 'archived')
+  items.push({
+    action: 'mark-sold',
+    label: 'Marcar como vendido',
+    icon: 'handshake',
+    confirm: 'Marcar este veículo como VENDIDO?',
+  });
+items.push(
+  v.featured
+    ? { action: 'unfeature', label: 'Remover destaque', icon: 'star' }
+    : { action: 'feature', label: 'Destacar na Home', icon: 'star' },
+);
+items.push(
+  v.isOffer
+    ? { action: 'offer-off', label: 'Remover oferta', icon: 'tag' }
+    : { action: 'offer-on', label: 'Marcar como oferta', icon: 'tag' },
+);
+items.push(
+  v.commercialType === 'repasse'
+    ? { action: 'repasse-off', label: 'Remover repasse', icon: 'repasse' }
+    : { action: 'repasse-on', label: 'Marcar como repasse', icon: 'repasse' },
+);
+if (v.status !== 'archived')
+  items.push({
+    action: 'archive',
+    label: 'Arquivar',
+    icon: 'archive',
+    confirm: 'Arquivar este veículo? Ele sai do site, mas continua no painel.',
+  });
+items.push({
+  action: 'delete',
+  label: 'Excluir',
+  icon: 'trash',
+  danger: true,
+  confirm:
+    'Excluir este veículo? As fotos serão apagadas e ele deixará de aparecer no painel. Esta ação não pode ser desfeita.',
+});
+const offerWarning = v.isOffer && !isOfferActive(v);
+---
+
+<details class="relative" data-menu>
+  <summary class="btn btn-ghost btn-sm list-none" aria-label={`Ações para ${v.brand} ${v.model}`}>
+    Ações
+    <Icon name="chevron-down" size={16} />
+  </summary>
+  <div class="menu-panel" role="menu">
+    <a href={`/admin/veiculos/${v.id}`} class="menu-item" role="menuitem">
+      <Icon name="wrench" size={17} /> Editar
+    </a>
+    {v.published && ['available', 'reserved', 'sold'].includes(v.status) && (
+      <a href={`/veiculo/${v.slug}`} target="_blank" rel="noopener" class="menu-item" role="menuitem">
+        <Icon name="external" size={17} /> Ver no site
+      </a>
+    )}
+    {offerWarning && <p class="px-3 py-1.5 text-xs text-gold-300">Oferta fora do período definido.</p>}
+    <div class="my-1 border-t hairline"></div>
+    {items.map((item) => (
+      <form method="post" action={action} data-confirm={item.confirm}>
+        <input type="hidden" name="action" value={item.action} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <button type="submit" class:list={['menu-item w-full', { 'is-danger': item.danger }]} role="menuitem">
+          <Icon name={item.icon} size={17} /> {item.label}
+        </button>
+      </form>
+    ))}
+  </div>
+</details>
+
+<style>
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    z-index: 20;
+    width: 15rem;
+    padding: 0.35rem;
+    border-radius: 0.9rem;
+    background: var(--color-ink-800);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.8);
+  }
+  .menu-item {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 0.75rem;
+    border-radius: 0.55rem;
+    font-size: 0.88rem;
+    text-align: left;
+    color: var(--color-mist-100);
+  }
+  .menu-item:hover {
+    background: color-mix(in oklab, white 7%, transparent);
+  }
+  .menu-item.is-danger {
+    color: #fca5a5;
+  }
+</style>

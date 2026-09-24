@@ -1,0 +1,147 @@
+---
+import PhotoManager from '@/components/admin/PhotoManager.astro';
+import StatusPill from '@/components/admin/StatusPill.astro';
+import VehicleActions from '@/components/admin/VehicleActions.astro';
+import VehicleForm from '@/components/admin/VehicleForm.astro';
+import Icon from '@/components/ui/Icon.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { isAppError } from '@/lib/errors';
+import type { FieldErrors } from '@/schemas/common';
+import { parseVehicleForm, vehicleToFormValues, type FormValues } from '@/server/vehicle-form';
+import type { VehicleCard } from '@/types/domain';
+import { formatDateTime } from '@/utils/dates';
+import { vehicleFullName, yearLabel } from '@/utils/vehicle-format';
+
+const { container, admin } = Astro.locals;
+const id = Astro.params.id ?? '';
+let vehicle = await container.vehicles.getDetail(id);
+if (!vehicle) return Astro.redirect('/admin/veiculos?erro=' + encodeURIComponent('Veículo não encontrado.'), 303);
+
+let values: FormValues = vehicleToFormValues(vehicle);
+let errors: FieldErrors = {};
+
+if (Astro.request.method === 'POST' && admin) {
+  const parsed = parseVehicleForm(await Astro.request.formData());
+  if (parsed.ok) {
+    try {
+      await container.vehicles.update(id, parsed.data, admin);
+      return Astro.redirect(`/admin/veiculos/${id}?ok=${encodeURIComponent('Alterações salvas.')}`, 303);
+    } catch (error) {
+      values = parsed.values;
+      errors = { _form: isAppError(error) ? error.message : 'Não foi possível salvar. Tente novamente.' };
+      if (!isAppError(error)) console.error('[admin] atualizar veículo', error);
+    }
+  } else {
+    values = parsed.values;
+    errors = parsed.errors;
+  }
+  vehicle = (await container.vehicles.getDetail(id)) ?? vehicle;
+}
+
+const [brands, history] = await Promise.all([
+  container.vehicles.distinctBrands(),
+  container.audit.listForEntity('vehicle', id),
+]);
+const cover = vehicle.images[0] ?? null;
+const card: VehicleCard = {
+  ...vehicle,
+  cover: cover
+    ? {
+        largeKey: cover.largeKey,
+        thumbKey: cover.thumbKey,
+        width: cover.width,
+        height: cover.height,
+        thumbWidth: cover.thumbWidth,
+        thumbHeight: cover.thumbHeight,
+      }
+    : null,
+  imageCount: vehicle.images.length,
+};
+const publicVisible = vehicle.published && ['available', 'reserved', 'sold'].includes(vehicle.status);
+const ACTION_LABELS: Record<string, string> = {
+  'vehicle.create': 'Cadastrado',
+  'vehicle.create_from_lead': 'Criado a partir de proposta',
+  'vehicle.update': 'Dados atualizados',
+  'vehicle.image.add': 'Foto adicionada',
+  'vehicle.image.delete': 'Foto excluída',
+  'vehicle.image.reorder': 'Fotos reordenadas',
+  'vehicle.publish': 'Publicado',
+  'vehicle.unpublish': 'Ocultado do site',
+  'vehicle.mark-available': 'Marcado como disponível',
+  'vehicle.mark-reserved': 'Marcado como reservado',
+  'vehicle.mark-sold': 'Marcado como vendido',
+  'vehicle.archive': 'Arquivado',
+  'vehicle.feature': 'Destacado',
+  'vehicle.unfeature': 'Destaque removido',
+  'vehicle.offer-on': 'Oferta ativada',
+  'vehicle.offer-off': 'Oferta removida',
+  'vehicle.repasse-on': 'Marcado como repasse',
+  'vehicle.repasse-off': 'Repasse removido',
+};
+---
+
+<AdminLayout title={vehicleFullName(vehicle)} section="veiculos">
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <a href="/admin/veiculos" class="text-sm text-mist-400 hover:text-white">
+        ← Veículos
+      </a>
+      <h1 class="heading mt-2 text-2xl text-white sm:text-3xl">
+        {vehicleFullName(vehicle)} <span class="text-mist-400">{yearLabel(vehicle)}</span>
+      </h1>
+      <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <StatusPill kind="vehicle" status={vehicle.status} />
+        <span class="text-mist-400">{vehicle.published ? 'Publicado' : 'Não publicado'}</span>
+        {vehicle.sourceLeadId && (
+          <a
+            href={`/admin/propostas/${vehicle.sourceLeadId}`}
+            class="inline-flex items-center gap-1 text-gold-300 hover:text-gold-200"
+          >
+            <Icon name="inbox" size={15} /> Ver proposta de origem
+          </a>
+        )}
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      {publicVisible && (
+        <a href={`/veiculo/${vehicle.slug}`} target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+          <Icon name="external" size={16} /> Ver no site
+        </a>
+      )}
+      <VehicleActions vehicle={card} returnTo={`/admin/veiculos/${vehicle.id}`} />
+    </div>
+  </div>
+
+  {vehicle.status === 'draft' && (
+    <div class="mb-6 flex items-start gap-3 rounded-xl border border-gold-500/30 bg-gold-500/[0.06] px-4 py-3 text-sm text-gold-200">
+      <Icon name="info" size={19} class="mt-0.5 shrink-0" />
+      <p>
+        Este veículo é um <strong>rascunho</strong> e não aparece no site. Revise os dados, defina o preço e marque
+        <strong>“Publicado no site”</strong> quando estiver pronto.
+      </p>
+    </div>
+  )}
+
+  <div class="grid gap-6">
+    <PhotoManager vehicleId={vehicle.id} images={vehicle.images} />
+    <VehicleForm values={values} errors={errors} brands={brands} mode="edit" />
+
+    <details class="surface p-5">
+      <summary class="cursor-pointer font-semibold text-white">Histórico de alterações</summary>
+      {history.length ? (
+        <ul class="mt-4 grid gap-2 text-sm">
+          {history.map((entry) => (
+            <li class="flex flex-wrap justify-between gap-2 border-b hairline pb-2">
+              <span class="text-mist-200">{ACTION_LABELS[entry.action] ?? entry.action}</span>
+              <span class="text-mist-500">
+                {entry.actor} · {formatDateTime(entry.createdAt)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-3 text-sm text-mist-400">Sem registros.</p>
+      )}
+    </details>
+  </div>
+</AdminLayout>

@@ -1,0 +1,145 @@
+---
+import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
+import PageHeader from '@/components/common/PageHeader.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { breadcrumbJsonLd, dealerJsonLd, instagramUrl } from '@/lib/seo';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+
+const { container, siteUrl } = Astro.locals;
+const settings = await container.settings.get();
+const breadcrumbs = [
+  { name: 'Início', path: '/' },
+  { name: 'Empresa', path: '/empresa' },
+];
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+
+const services: { icon: IconName; title: string; text: string; href?: string; cta?: string }[] = [
+  {
+    icon: 'car',
+    title: 'Venda',
+    text: 'Carros, motos, scooters, pesados e máquinas agrícolas no nosso estoque.',
+    href: '/estoque',
+    cta: 'Ver estoque',
+  },
+  {
+    icon: 'handshake',
+    title: 'Compra',
+    text: 'Quer vender? Envie os dados do seu veículo para a nossa equipe avaliar.',
+    href: '/anuncie-seu-veiculo',
+    cta: settings.sellVehicleCta,
+  },
+  {
+    icon: 'shield',
+    title: 'Financiamento',
+    text: 'Trabalhamos com financiamento. Consulte as condições diretamente pelo WhatsApp.',
+    href: whatsappUrl,
+    cta: 'Consultar',
+  },
+  {
+    icon: 'repasse',
+    title: 'Repasses',
+    text: 'Oportunidades de repasse divulgadas quando disponíveis.',
+    href: '/repasses',
+    cta: 'Ver repasses',
+  },
+];
+---
+
+<BaseLayout
+  title={`A empresa | ${settings.businessName} — ${settings.city} - ${settings.state}`}
+  description={`Conheça a ${settings.businessName}: compra, venda, financiamento e repasse de veículos em ${settings.city} - ${settings.state}. ${settings.slogan}`}
+  canonicalPath="/empresa"
+  jsonLd={[dealerJsonLd(settings, siteUrl), breadcrumbJsonLd(breadcrumbs, siteUrl)]}
+>
+  <PageHeader
+    eyebrow={`${settings.city} - ${settings.state}`}
+    title={settings.businessName}
+    breadcrumbs={breadcrumbs}
+  />
+
+  <section class="container-site grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16">
+    <div>
+      <p class="display text-3xl text-gold-300 sm:text-4xl">“{settings.slogan}”</p>
+      <p class="mt-6 text-lg text-mist-200">
+        A {settings.businessName} atua em {settings.city}, Santa Catarina, com compra, venda, financiamento e repasse de
+        veículos.
+      </p>
+      <p class="mt-4 text-mist-300">
+        No nosso estoque você encontra carros, motos, scooters, veículos pesados e máquinas agrícolas. O atendimento é
+        feito diretamente pela nossa equipe, pelo WhatsApp e pelas redes sociais.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
+          <Icon name="whatsapp" size={20} />
+          Falar no WhatsApp
+        </a>
+        <a href="/contato" class="btn btn-ghost btn-lg">
+          Contato
+        </a>
+      </div>
+    </div>
+    <div
+      class="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-[1.75rem] border hairline bg-[radial-gradient(90%_70%_at_50%_30%,#1c1f23,#0a0b0d_75%)] p-10"
+      aria-hidden="true"
+    >
+      <svg viewBox={LOGO_VIEWBOX} class="w-full max-w-lg">
+        {LOGO_GOLD_PATHS.map((d) => (
+          <path d={d} fill="var(--color-gold-500)" />
+        ))}
+        <path d={LOGO_SILVER_PATH} fill="var(--color-silver-300)" />
+      </svg>
+    </div>
+  </section>
+
+  <section class="container-site" aria-labelledby="servicos">
+    <h2 id="servicos" class="heading text-3xl text-white">
+      O que fazemos
+    </h2>
+    <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
+      {services.map((s) => (
+        <li class="surface flex flex-col p-6">
+          <span class="inline-flex size-12 items-center justify-center rounded-xl bg-white/5 text-gold-400">
+            <Icon name={s.icon} size={26} strokeWidth={1.6} />
+          </span>
+          <h3 class="mt-5 text-xl font-bold text-white [font-stretch:108%]">{s.title}</h3>
+          <p class="mt-2 flex-1 text-sm text-mist-300">{s.text}</p>
+          {s.href && (
+            <a
+              href={s.href}
+              class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-300 hover:text-gold-200"
+              {...(s.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              {s.cta} <Icon name="arrow-right" size={16} />
+            </a>
+          )}
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="container-site mt-16" aria-labelledby="redes">
+    <div class="surface flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+      <div>
+        <h2 id="redes" class="heading text-2xl text-white">
+          Acompanhe a M&M
+        </h2>
+        <p class="mt-2 text-mist-300">Novidades do estoque e veículos vendidos nas nossas redes sociais.</p>
+      </div>
+      <div class="flex flex-col gap-3 xs:flex-row">
+        {settings.instagram && (
+          <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+            <Icon name="instagram" size={18} class="text-gold-400" />@{settings.instagram}
+          </a>
+        )}
+        {settings.facebook && (
+          <a href={settings.facebook} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+            <Icon name="facebook" size={18} class="text-gold-400" />
+            Facebook
+          </a>
+        )}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

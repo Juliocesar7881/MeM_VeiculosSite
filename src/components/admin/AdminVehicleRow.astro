@@ -1,0 +1,154 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { mediaUrl } from '@/lib/storage/keys';
+import type { VehicleCard } from '@/types/domain';
+import { formatRelative } from '@/utils/dates';
+import { formatBRL } from '@/utils/money';
+import { getPriceDisplay, isOfferActive } from '@/utils/offer';
+import { usageLabel, yearLabel } from '@/utils/vehicle-format';
+import StatusPill from './StatusPill.astro';
+import VehicleActions from './VehicleActions.astro';
+
+interface Props {
+  vehicle: VehicleCard;
+  returnTo: string;
+}
+
+const { vehicle: v, returnTo } = Astro.props;
+const price = getPriceDisplay(v);
+const offerActive = isOfferActive(v);
+---
+
+<li class="row">
+  <a href={`/admin/veiculos/${v.id}`} class="row-thumb" tabindex="-1" aria-hidden="true">
+    {v.cover ? (
+      <img
+        src={mediaUrl(v.cover.thumbKey)}
+        alt=""
+        width={v.cover.thumbWidth}
+        height={v.cover.thumbHeight}
+        loading="lazy"
+        class="h-full w-full object-cover"
+      />
+    ) : (
+      <span class="grid h-full place-items-center text-mist-500">
+        <Icon name="image" size={22} />
+      </span>
+    )}
+  </a>
+
+  <div class="min-w-0">
+    <a href={`/admin/veiculos/${v.id}`} class="block truncate font-semibold text-white hover:text-gold-200">
+      {v.brand} {v.model} <span class="font-normal text-mist-300">{v.version}</span>
+    </a>
+    <p class="mt-0.5 truncate text-sm text-mist-400">
+      {[yearLabel(v), usageLabel(v), `${v.imageCount} foto${v.imageCount === 1 ? '' : 's'}`]
+        .filter(Boolean)
+        .join(' · ')}
+    </p>
+    <div class="mt-2 flex flex-wrap items-center gap-1.5">
+      <StatusPill kind="vehicle" status={v.status} />
+      {v.published ? (
+        <span class="flag flag-on">
+          <Icon name="eye" size={13} /> Publicado
+        </span>
+      ) : (
+        <span class="flag">
+          <Icon name="eye-off" size={13} /> Oculto
+        </span>
+      )}
+      {v.featured && (
+        <span class="flag flag-gold">
+          <Icon name="star" size={13} /> Destaque
+        </span>
+      )}
+      {v.isOffer && (
+        <span class:list={['flag', offerActive ? 'flag-gold' : '']}>
+          <Icon name="tag" size={13} /> Oferta{offerActive ? '' : ' (inativa)'}
+        </span>
+      )}
+      {v.commercialType === 'repasse' && (
+        <span class="flag flag-silver">
+          <Icon name="repasse" size={13} /> Repasse
+        </span>
+      )}
+    </div>
+  </div>
+
+  <div class="row-price text-right">
+    {price.previous !== null && <p class="text-xs text-mist-500 line-through tabular">{formatBRL(price.previous)}</p>}
+    <p class="font-bold text-white tabular">{price.current ? formatBRL(price.current) : 'Sob consulta'}</p>
+    <p class="text-xs text-mist-500" title={v.updatedAt}>
+      {formatRelative(v.updatedAt)}
+    </p>
+  </div>
+
+  <div class="row-actions">
+    <VehicleActions vehicle={v} returnTo={returnTo} />
+  </div>
+</li>
+
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    grid-template-areas:
+      'thumb info'
+      'price actions';
+    align-items: center;
+    gap: 0.9rem 1rem;
+    padding: 0.9rem;
+    border-radius: 1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 900px) {
+    .row {
+      grid-template-columns: 6.5rem minmax(0, 1fr) 9.5rem auto;
+      grid-template-areas: 'thumb info price actions';
+    }
+  }
+  .row-thumb {
+    grid-area: thumb;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: var(--color-ink-800);
+  }
+  .row-price {
+    grid-area: price;
+    text-align: left;
+  }
+  @media (min-width: 900px) {
+    .row-price {
+      text-align: right;
+    }
+  }
+  .row-actions {
+    grid-area: actions;
+    justify-self: end;
+  }
+  .flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.4rem;
+    background: color-mix(in oklab, white 6%, transparent);
+    color: var(--color-mist-300);
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .flag-on {
+    color: #86efac;
+  }
+  .flag-gold {
+    background: color-mix(in oklab, var(--color-gold-500) 15%, transparent);
+    color: var(--color-gold-300);
+  }
+  .flag-silver {
+    background: color-mix(in oklab, var(--color-silver-300) 12%, transparent);
+    color: var(--color-silver-300);
+  }
+</style>

@@ -1,0 +1,154 @@
+---
+import AdminVehicleRow from '@/components/admin/AdminVehicleRow.astro';
+import Pagination from '@/components/inventory/Pagination.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { VEHICLE_STATUS_LABELS, VEHICLE_STATUSES, type VehicleStatus } from '@/config/catalog';
+import { SITE_CONSTANTS } from '@/config/site';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import type { AdminVehicleFilters } from '@/repositories/vehicle-repository';
+
+const params = Astro.url.searchParams;
+const statusParam = params.get('status');
+const status = VEHICLE_STATUSES.includes(statusParam as VehicleStatus) ? (statusParam as VehicleStatus) : undefined;
+const filtro = params.get('filtro') ?? '';
+const q = (params.get('q') ?? '').trim().slice(0, 80);
+const page = Math.max(1, Number(params.get('pagina')) || 1);
+
+const filters: AdminVehicleFilters = {
+  page,
+  pageSize: SITE_CONSTANTS.adminPageSize,
+  ...(status ? { status } : {}),
+  ...(q ? { q } : {}),
+  offersOnly: filtro === 'ofertas',
+  repasseOnly: filtro === 'repasses',
+  featuredOnly: filtro === 'destaques',
+  unpublishedOnly: filtro === 'nao-publicados',
+};
+
+const { container } = Astro.locals;
+const [result, stats] = await Promise.all([container.vehicles.listAdmin(filters), container.vehicles.stats()]);
+
+function href(overrides: Record<string, string | number | undefined>) {
+  const next = new URLSearchParams();
+  const merged: Record<string, string | number | undefined> = {
+    status,
+    filtro: filtro || undefined,
+    q: q || undefined,
+    ...overrides,
+  };
+  for (const [key, value] of Object.entries(merged))
+    if (value !== undefined && value !== '' && value !== 1) next.set(key, String(value));
+  const qs = next.toString();
+  return qs ? `/admin/veiculos?${qs}` : '/admin/veiculos';
+}
+
+const statusTabs: { label: string; value?: VehicleStatus; count: number }[] = [
+  { label: 'Todos', count: stats.total - stats.archived },
+  ...VEHICLE_STATUSES.map((s) => ({
+    label: VEHICLE_STATUS_LABELS[s],
+    value: s,
+    count: {
+      draft: stats.drafts,
+      available: stats.available,
+      reserved: stats.reserved,
+      sold: stats.sold,
+      archived: stats.archived,
+    }[s],
+  })),
+];
+const quickFilters = [
+  { key: 'ofertas', label: 'Ofertas', icon: 'tag' as const },
+  { key: 'repasses', label: 'Repasses', icon: 'repasse' as const },
+  { key: 'destaques', label: 'Destaques', icon: 'star' as const },
+  { key: 'nao-publicados', label: 'Não publicados', icon: 'eye-off' as const },
+];
+const section = filtro === 'ofertas' ? 'ofertas' : filtro === 'repasses' ? 'repasses' : 'veiculos';
+const heading = filtro === 'ofertas' ? 'Ofertas' : filtro === 'repasses' ? 'Repasses' : 'Veículos';
+const returnTo = `${Astro.url.pathname}${Astro.url.search}`;
+---
+
+<AdminLayout title={heading} section={section}>
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="heading text-3xl text-white">{heading}</h1>
+      <p class="mt-1 text-sm text-mist-400">
+        {filtro === 'ofertas'
+          ? 'Veículos marcados como oferta. Oferta, destaque e repasse são independentes entre si.'
+          : filtro === 'repasses'
+            ? 'Veículos com tipo comercial "repasse".'
+            : 'Cadastre, edite e controle o que aparece no site.'}
+      </p>
+    </div>
+    <a href="/admin/veiculos/novo" class="btn btn-gold">
+      <Icon name="plus" size={18} /> Novo veículo
+    </a>
+  </div>
+
+  <div class="scrollbar-none -mx-4 mt-6 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+    {statusTabs.map((tab) => (
+      <a
+        href={href({ status: tab.value, pagina: undefined })}
+        class:list={['chip shrink-0', { 'is-active': tab.value === status }]}
+        aria-current={tab.value === status ? 'page' : undefined}
+      >
+        {tab.label}
+        <span class="text-xs opacity-70 tabular">{tab.count}</span>
+      </a>
+    ))}
+  </div>
+
+  <form method="get" action="/admin/veiculos" class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+    {status && <input type="hidden" name="status" value={status} />}
+    {filtro && <input type="hidden" name="filtro" value={filtro} />}
+    <label for="admin-q" class="sr-only">
+      Buscar veículos
+    </label>
+    <div class="relative flex-1">
+      <Icon
+        name="search"
+        size={18}
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist-400"
+      />
+      <input
+        id="admin-q"
+        name="q"
+        type="search"
+        value={q}
+        placeholder="Buscar por marca, modelo, versão, cor..."
+        class="input pl-10"
+      />
+    </div>
+    <div class="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      {quickFilters.map((f) => (
+        <a
+          href={href({ filtro: filtro === f.key ? undefined : f.key, pagina: undefined })}
+          class:list={['chip shrink-0', { 'is-active': filtro === f.key }]}
+        >
+          <Icon name={f.icon} size={14} /> {f.label}
+        </a>
+      ))}
+    </div>
+  </form>
+
+  <p class="mt-6 text-sm text-mist-400">
+    <strong class="text-white tabular">{result.total}</strong> veículo(s)
+  </p>
+
+  {result.items.length > 0 ? (
+    <ul class="mt-3 grid gap-2.5">
+      {result.items.map((vehicle) => (
+        <AdminVehicleRow vehicle={vehicle} returnTo={returnTo} />
+      ))}
+    </ul>
+  ) : (
+    <div class="surface mt-3 px-6 py-14 text-center">
+      <p class="text-lg font-semibold text-white">Nenhum veículo encontrado</p>
+      <p class="mt-2 text-sm text-mist-400">Ajuste os filtros ou cadastre um novo veículo.</p>
+      <a href="/admin/veiculos/novo" class="btn btn-gold mt-6">
+        <Icon name="plus" size={18} /> Cadastrar veículo
+      </a>
+    </div>
+  )}
+
+  <Pagination page={result.page} totalPages={result.totalPages} hrefFor={(p) => href({ pagina: p })} />
+</AdminLayout>

@@ -1,0 +1,25 @@
+---
+/**
+ * Fragmento HTML (partial) com os cards dos favoritos, carregado pela página /favoritos.
+ * Renderizado no servidor pelo mesmo componente de card — sem duplicar markup no cliente.
+ */
+import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
+
+export const partial = true;
+
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const ids = (Astro.url.searchParams.get('ids') ?? '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter((id) => uuid.test(id))
+  .slice(0, 60);
+
+const { container } = Astro.locals;
+const settings = await container.settings.get();
+const vehicles = ids.length ? await container.vehicles.listPublicByIds(ids, settings) : [];
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+---
+
+<div data-fav-found={vehicles.map((v) => v.id).join(',')}>
+  {vehicles.length > 0 && <VehicleGrid vehicles={vehicles} />}
+</div>

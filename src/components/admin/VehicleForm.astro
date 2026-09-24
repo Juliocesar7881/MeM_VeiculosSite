@@ -1,0 +1,517 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import {
+  BODY_TYPE_SUGGESTIONS,
+  BRAZIL_STATES,
+  CATEGORY_INFO,
+  COLOR_SUGGESTIONS,
+  FEATURE_SUGGESTIONS,
+  FUEL_LABELS,
+  FUELS,
+  TRANSMISSION_LABELS,
+  TRANSMISSIONS,
+  VEHICLE_CATEGORIES,
+  VEHICLE_STATUS_LABELS,
+  VEHICLE_STATUSES,
+} from '@/config/catalog';
+import type { FieldErrors } from '@/schemas/common';
+import type { FormValues } from '@/server/vehicle-form';
+
+interface Props {
+  values: FormValues;
+  errors?: FieldErrors;
+  brands: string[];
+  mode: 'create' | 'edit';
+}
+
+const { values, errors = {}, brands, mode } = Astro.props;
+const val = (name: string) => {
+  const v = values[name];
+  return typeof v === 'string' ? v : '';
+};
+const checked = (name: string) => values[name] === 'on' || values[name] === 'true';
+const selectedFeatures = new Set((Array.isArray(values.features) ? values.features : []).map((f) => f.toLowerCase()));
+const err = (name: string) => errors[name];
+const errorCount = Object.keys(errors).length;
+---
+
+<form method="post" class="vehicle-form grid gap-6" novalidate>
+  {errorCount > 0 && (
+    <div class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-red-200" role="alert">
+      <p class="font-semibold">
+        Revise {errorCount === 1 ? 'o campo destacado' : `os ${errorCount} campos destacados`}.
+      </p>
+      {err('_form') && <p class="mt-1">{err('_form')}</p>}
+    </div>
+  )}
+
+  <section class="panel">
+    <h2 class="panel-title">Identificação</h2>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div>
+        <label for="v-category" class="field-label">
+          Categoria <span class="req">*</span>
+        </label>
+        <select id="v-category" name="category" class="input" required>
+          {VEHICLE_CATEGORIES.map((c) => (
+            <option value={c} selected={val('category') === c}>
+              {CATEGORY_INFO[c].label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label for="v-brand" class="field-label">
+          Marca <span class="req">*</span>
+        </label>
+        <input
+          id="v-brand"
+          name="brand"
+          class="input"
+          list="brand-list"
+          value={val('brand')}
+          required
+          maxlength="40"
+          aria-invalid={err('brand') ? 'true' : undefined}
+        />
+        <datalist id="brand-list">
+          {brands.map((b) => (
+            <option value={b} />
+          ))}
+        </datalist>
+        {err('brand') && <p class="field-error">{err('brand')}</p>}
+      </div>
+      <div>
+        <label for="v-model" class="field-label">
+          Modelo <span class="req">*</span>
+        </label>
+        <input
+          id="v-model"
+          name="model"
+          class="input"
+          value={val('model')}
+          required
+          maxlength="60"
+          aria-invalid={err('model') ? 'true' : undefined}
+        />
+        {err('model') && <p class="field-error">{err('model')}</p>}
+      </div>
+      <div class="sm:col-span-2 xl:col-span-1">
+        <label for="v-version" class="field-label">
+          Versão
+        </label>
+        <input
+          id="v-version"
+          name="version"
+          class="input"
+          value={val('version')}
+          maxlength="80"
+          placeholder="Ex.: XEi 2.0 Flex"
+        />
+        {err('version') && <p class="field-error">{err('version')}</p>}
+      </div>
+      <div>
+        <label for="v-fab" class="field-label">
+          Ano de fabricação
+        </label>
+        <input
+          id="v-fab"
+          name="manufactureYear"
+          class="input"
+          value={val('manufactureYear')}
+          inputmode="numeric"
+          maxlength="4"
+          aria-invalid={err('manufactureYear') ? 'true' : undefined}
+        />
+        {err('manufactureYear') && <p class="field-error">{err('manufactureYear')}</p>}
+      </div>
+      <div>
+        <label for="v-mod" class="field-label">
+          Ano modelo
+        </label>
+        <input
+          id="v-mod"
+          name="modelYear"
+          class="input"
+          value={val('modelYear')}
+          inputmode="numeric"
+          maxlength="4"
+          aria-invalid={err('modelYear') ? 'true' : undefined}
+        />
+        {err('modelYear') && <p class="field-error">{err('modelYear')}</p>}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Preço e condição comercial</h2>
+    <div class="grid gap-5 lg:grid-cols-2">
+      <div>
+        <label for="v-price" class="field-label">
+          Preço (R$)
+        </label>
+        <input
+          id="v-price"
+          name="price"
+          class="input text-lg font-semibold tabular"
+          value={val('price')}
+          inputmode="decimal"
+          placeholder="Ex.: 89.900"
+          aria-invalid={err('price') ? 'true' : undefined}
+          data-money-input
+        />
+        <p class="field-hint">Deixe em branco para exibir “Preço sob consulta”.</p>
+        {err('price') && <p class="field-error">{err('price')}</p>}
+      </div>
+      <div class="grid content-start gap-3">
+        <label class="check toggle-row">
+          <input type="checkbox" name="featured" checked={checked('featured')} />
+          <span>
+            <strong class="text-white">Destaque</strong>
+            <span class="block text-sm text-mist-400">Aparece na seção “Destaques” da Home.</span>
+          </span>
+        </label>
+        <label class="check toggle-row">
+          <input type="checkbox" name="isOffer" checked={checked('isOffer')} data-offer-toggle />
+          <span>
+            <strong class="text-white">Oferta</strong>
+            <span class="block text-sm text-mist-400">Aparece em /ofertas com selo “Oferta”.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="offer-fields mt-5 grid gap-4 rounded-xl border border-gold-500/25 bg-gold-500/[0.05] p-4 sm:grid-cols-3">
+      <div>
+        <label for="v-prev" class="field-label">
+          Preço anterior (R$)
+        </label>
+        <input
+          id="v-prev"
+          name="previousPrice"
+          class="input tabular"
+          value={val('previousPrice')}
+          inputmode="decimal"
+          placeholder="Opcional"
+          aria-invalid={err('previousPrice') ? 'true' : undefined}
+          data-money-input
+        />
+        <p class="field-hint">Exibe “De R$ X por R$ Y” quando maior que o preço atual.</p>
+        {err('previousPrice') && <p class="field-error">{err('previousPrice')}</p>}
+      </div>
+      <div>
+        <label for="v-ostart" class="field-label">
+          Início da oferta
+        </label>
+        <input id="v-ostart" name="offerStartDate" type="date" class="input" value={val('offerStartDate')} />
+        <p class="field-hint">Opcional.</p>
+      </div>
+      <div>
+        <label for="v-oend" class="field-label">
+          Fim da oferta
+        </label>
+        <input
+          id="v-oend"
+          name="offerEndDate"
+          type="date"
+          class="input"
+          value={val('offerEndDate')}
+          aria-invalid={err('offerEndDate') ? 'true' : undefined}
+        />
+        <p class="field-hint">Opcional. Após a data, o selo sai sozinho.</p>
+        {err('offerEndDate') && <p class="field-error">{err('offerEndDate')}</p>}
+      </div>
+    </div>
+
+    <fieldset class="mt-5">
+      <legend class="field-label">Tipo comercial</legend>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="choice">
+          <input type="radio" name="commercialType" value="normal" checked={val('commercialType') !== 'repasse'} />
+          <span>
+            <strong class="text-white">Normal</strong>
+            <span class="block text-sm text-mist-400">Veículo do estoque da loja.</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="commercialType" value="repasse" checked={val('commercialType') === 'repasse'} />
+          <span>
+            <strong class="text-white">Repasse</strong>
+            <span class="block text-sm text-mist-400">Aparece em /repasses com selo “Repasse”.</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Características</h2>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div>
+        <label for="v-km" class="field-label">
+          Quilometragem
+        </label>
+        <input
+          id="v-km"
+          name="mileage"
+          class="input tabular"
+          value={val('mileage')}
+          inputmode="numeric"
+          placeholder="Ex.: 45.000"
+          aria-invalid={err('mileage') ? 'true' : undefined}
+          data-int-input
+        />
+        {err('mileage') && <p class="field-error">{err('mileage')}</p>}
+      </div>
+      <div>
+        <label for="v-hours" class="field-label">
+          Horas de uso
+        </label>
+        <input
+          id="v-hours"
+          name="usageHours"
+          class="input tabular"
+          value={val('usageHours')}
+          inputmode="numeric"
+          placeholder="Máquinas agrícolas"
+          aria-invalid={err('usageHours') ? 'true' : undefined}
+          data-int-input
+        />
+        {err('usageHours') && <p class="field-error">{err('usageHours')}</p>}
+      </div>
+      <div>
+        <label for="v-fuel" class="field-label">
+          Combustível
+        </label>
+        <select id="v-fuel" name="fuel" class="input">
+          <option value="">—</option>
+          {FUELS.map((f) => (
+            <option value={f} selected={val('fuel') === f}>
+              {FUEL_LABELS[f]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label for="v-trans" class="field-label">
+          Câmbio
+        </label>
+        <select id="v-trans" name="transmission" class="input">
+          <option value="">—</option>
+          {TRANSMISSIONS.map((t) => (
+            <option value={t} selected={val('transmission') === t}>
+              {TRANSMISSION_LABELS[t]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label for="v-color" class="field-label">
+          Cor
+        </label>
+        <input id="v-color" name="color" class="input" list="color-list" value={val('color')} maxlength="30" />
+        <datalist id="color-list">
+          {COLOR_SUGGESTIONS.map((c) => (
+            <option value={c} />
+          ))}
+        </datalist>
+      </div>
+      <div>
+        <label for="v-body" class="field-label">
+          Carroceria
+        </label>
+        <input id="v-body" name="bodyType" class="input" list="body-list" value={val('bodyType')} maxlength="40" />
+        <datalist id="body-list">
+          {BODY_TYPE_SUGGESTIONS.map((b) => (
+            <option value={b} />
+          ))}
+        </datalist>
+      </div>
+      <div>
+        <label for="v-city" class="field-label">
+          Cidade
+        </label>
+        <input id="v-city" name="city" class="input" value={val('city')} maxlength="60" />
+      </div>
+      <div>
+        <label for="v-state" class="field-label">
+          Estado
+        </label>
+        <select id="v-state" name="state" class="input">
+          <option value="">—</option>
+          {BRAZIL_STATES.map((uf) => (
+            <option value={uf} selected={val('state') === uf}>
+              {uf}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+    <div class="mt-4">
+      <label for="v-desc" class="field-label">
+        Descrição
+      </label>
+      <textarea
+        id="v-desc"
+        name="description"
+        class="input"
+        rows="6"
+        maxlength="5000"
+        placeholder="Estado de conservação, revisões, diferenciais..."
+      >{val('description')}</textarea>
+      {err('description') && <p class="field-error">{err('description')}</p>}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Opcionais</h2>
+    <div class="grid gap-x-4 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {FEATURE_SUGGESTIONS.map((feature) => (
+        <label class="check text-sm">
+          <input
+            type="checkbox"
+            name="features"
+            value={feature}
+            checked={selectedFeatures.has(feature.toLowerCase())}
+          />
+          <span>{feature}</span>
+        </label>
+      ))}
+    </div>
+    <div class="mt-5">
+      <label for="v-extra" class="field-label">
+        Outros opcionais (um por linha)
+      </label>
+      <textarea
+        id="v-extra"
+        name="featuresExtra"
+        class="input"
+        rows="3"
+        placeholder="Ex.: Kit gás GNV 5ª geração"
+      >{val('featuresExtra')}</textarea>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Publicação</h2>
+    <div class="grid gap-5 lg:grid-cols-2">
+      <div>
+        <label for="v-status" class="field-label">
+          Status
+        </label>
+        <select id="v-status" name="status" class="input">
+          {VEHICLE_STATUSES.map((s) => (
+            <option value={s} selected={val('status') === s}>
+              {VEHICLE_STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+        <p class="field-hint">Vendidos continuam acessíveis pelo link (com opção “Procurando algo parecido?”).</p>
+      </div>
+      <label class="check toggle-row self-start">
+        <input type="checkbox" name="published" checked={checked('published')} />
+        <span>
+          <strong class="text-white">Publicado no site</strong>
+          <span class="block text-sm text-mist-400">
+            Desmarcado, o veículo fica visível apenas no painel. Publicar um rascunho o torna “Disponível”.
+          </span>
+        </span>
+      </label>
+    </div>
+    {err('published') && <p class="field-error">{err('published')}</p>}
+  </section>
+
+  <div class="save-bar">
+    <a href="/admin/veiculos" class="btn btn-ghost">
+      Cancelar
+    </a>
+    {mode === 'create' ? (
+      <button type="submit" class="btn btn-gold">
+        <Icon name="image" size={18} /> Salvar e adicionar fotos
+      </button>
+    ) : (
+      <button type="submit" class="btn btn-gold">
+        <Icon name="check" size={18} /> Salvar alterações
+      </button>
+    )}
+  </div>
+</form>
+
+<style>
+  .panel {
+    padding: 1.25rem;
+    border-radius: 1.1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .panel {
+      padding: 1.6rem;
+    }
+  }
+  .panel-title {
+    margin-bottom: 1.1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .offer-fields {
+    display: none;
+  }
+  .vehicle-form:has([data-offer-toggle]:checked) .offer-fields {
+    display: grid;
+  }
+  .toggle-row {
+    padding: 0.85rem 1rem;
+    border-radius: 0.8rem;
+    border: 1px solid color-mix(in oklab, white 9%, transparent);
+    background: var(--color-ink-900);
+  }
+  .choice {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.8rem;
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    background: var(--color-ink-900);
+    cursor: pointer;
+  }
+  .choice input {
+    margin-top: 0.3rem;
+    accent-color: var(--color-gold-500);
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .choice:has(input:checked) {
+    border-color: var(--color-gold-500);
+    background: color-mix(in oklab, var(--color-gold-500) 8%, var(--color-ink-900));
+  }
+  .save-bar {
+    position: sticky;
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--color-ink-800) 94%, transparent);
+    border: 1px solid color-mix(in oklab, white 9%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  @media (min-width: 1024px) {
+    .save-bar {
+      bottom: 1rem;
+    }
+  }
+</style>
+
+<script>
+  // Formatação leve dos campos numéricos (o servidor aceita os dois formatos).
+  document.querySelectorAll<HTMLInputElement>('[data-int-input]').forEach((input) => {
+    input.addEventListener('input', () => {
+      const digits = input.value.replace(/\D/g, '').slice(0, 9);
+      input.value = digits ? Number(digits).toLocaleString('pt-BR') : '';
+    });
+  });
+</script>

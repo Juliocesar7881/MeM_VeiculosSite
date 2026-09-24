@@ -1,0 +1,119 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import { CATEGORY_INFO, type VehicleCategory } from '@/config/catalog';
+
+interface Props {
+  counts: Record<VehicleCategory, number>;
+  offersTotal: number;
+  repassesTotal: number;
+}
+
+const { counts, offersTotal, repassesTotal } = Astro.props;
+
+const icons: Record<VehicleCategory, IconName> = {
+  carro: 'car',
+  moto: 'moto',
+  scooter: 'scooter',
+  pesado: 'truck',
+  maquina_agricola: 'tractor',
+};
+
+const items: { label: string; href: string; icon: IconName; count: number; accent?: 'gold' | 'silver' }[] = [
+  ...(Object.keys(icons) as VehicleCategory[]).map((category) => ({
+    label: CATEGORY_INFO[category].plural,
+    href: `/estoque?categoria=${CATEGORY_INFO[category].slug}`,
+    icon: icons[category],
+    count: counts[category],
+  })),
+  { label: 'Repasses', href: '/repasses', icon: 'repasse', count: repassesTotal, accent: 'silver' },
+  { label: 'Ofertas', href: '/ofertas', icon: 'tag', count: offersTotal, accent: 'gold' },
+];
+---
+
+<section aria-labelledby="atalhos-title" class="container-site">
+  <h2 id="atalhos-title" class="sr-only">
+    Navegue por categoria
+  </h2>
+  <ul
+    class="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7"
+    role="list"
+  >
+    {items.map((item) => (
+      <li class="snap-start">
+        <a href={item.href} class:list={['shortcut', item.accent && `shortcut-${item.accent}`]}>
+          <span class="shortcut-icon">
+            <Icon name={item.icon} size={30} strokeWidth={1.5} />
+          </span>
+          <span class="shortcut-label">{item.label}</span>
+          <span class="shortcut-count tabular">
+            {item.count > 0 ? `${item.count} ${item.count === 1 ? 'veículo' : 'veículos'}` : 'Consulte'}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .shortcut {
+    display: flex;
+    width: 8.6rem;
+    height: 100%;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      transform 200ms var(--ease-out-soft);
+  }
+  @media (min-width: 640px) {
+    .shortcut {
+      width: auto;
+    }
+  }
+  .shortcut:hover {
+    border-color: color-mix(in oklab, var(--color-gold-500) 50%, transparent);
+    background: var(--color-ink-800);
+    transform: translateY(-2px);
+  }
+  .shortcut-icon {
+    display: inline-flex;
+    width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.4rem;
+    border-radius: 0.8rem;
+    background: color-mix(in oklab, white 5%, transparent);
+    color: var(--color-gold-400);
+    transition:
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+  .shortcut:hover .shortcut-icon {
+    background: var(--color-gold-500);
+    color: #111;
+  }
+  .shortcut-silver .shortcut-icon {
+    color: var(--color-silver-300);
+  }
+  .shortcut-gold .shortcut-icon {
+    background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+  }
+  .shortcut-label {
+    font-weight: 700;
+    font-stretch: 108%;
+    font-size: 0.98rem;
+    color: #fff;
+    line-height: 1.15;
+  }
+  .shortcut-count {
+    font-size: 0.78rem;
+    color: var(--color-mist-400);
+  }
+</style>

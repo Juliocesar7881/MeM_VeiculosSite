@@ -1,0 +1,57 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import { instagramUrl } from '@/lib/seo';
+import type { SiteSettings } from '@/types/settings';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const services: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'handshake', title: 'Compra', text: 'Avaliamos o seu veículo para compra.' },
+  { icon: 'car', title: 'Venda', text: 'Estoque com carros, motos, pesados e máquinas.' },
+  { icon: 'shield', title: 'Financiamento', text: 'Consulte as condições pelo WhatsApp.' },
+  { icon: 'repasse', title: 'Repasses', text: 'Oportunidades de repasse quando disponíveis.' },
+];
+---
+
+<section class="container-site" aria-labelledby="sobre-title">
+  <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+    <div>
+      <p class="eyebrow">
+        {settings.city} - {settings.state}
+      </p>
+      <h2 id="sobre-title" class="display mt-4 text-4xl text-white sm:text-5xl">
+        {settings.businessName}
+      </h2>
+      <p class="mt-5 text-2xl font-semibold leading-snug text-gold-300 [font-stretch:108%]">“{settings.slogan}”</p>
+      <p class="mt-5 max-w-lg text-mist-300">
+        Atuamos com compra, venda, financiamento e repasse de veículos. Fale com a nossa equipe pelo WhatsApp ou
+        acompanhe as novidades nas nossas redes sociais.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+        <a href="/empresa" class="btn btn-ghost">
+          Conheça a empresa
+        </a>
+        {settings.instagram && (
+          <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+            <Icon name="instagram" size={18} class="text-gold-400" />@{settings.instagram}
+          </a>
+        )}
+      </div>
+    </div>
+    <ul class="grid gap-3 sm:grid-cols-2" role="list">
+      {services.map((s) => (
+        <li class="surface p-5 sm:p-6">
+          <span class="inline-flex size-11 items-center justify-center rounded-xl bg-white/5 text-gold-400">
+            <Icon name={s.icon} size={24} strokeWidth={1.6} />
+          </span>
+          <h3 class="mt-4 text-lg font-bold text-white [font-stretch:108%]">{s.title}</h3>
+          <p class="mt-1 text-sm text-mist-300">{s.text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

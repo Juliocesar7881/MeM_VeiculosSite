@@ -1,0 +1,198 @@
+---
+import Logo from '@/components/brand/Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { instagramUrl } from '@/lib/seo';
+import type { SiteSettings } from '@/types/settings';
+import { telHref } from '@/utils/phone';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const year = new Date().getFullYear();
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+---
+
+<footer class="relative mt-24 border-t hairline bg-ink-900">
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent"
+  ></div>
+  <div class="container-site grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr] lg:py-16">
+    <div class="max-w-sm">
+      <Logo height={44} class="h-11 w-auto" />
+      {settings.slogan && <p class="mt-5 text-lg font-semibold text-paper">{settings.slogan}</p>}
+      <p class="mt-3 text-sm leading-relaxed text-mist-400">
+        Compra, venda, financiamento e repasse de veículos em {settings.city} - {settings.state}.
+      </p>
+      <div class="mt-6 flex items-center gap-2">
+        {settings.instagram && (
+          <a
+            href={instagramUrl(settings.instagram)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn"
+            aria-label={`Instagram @${settings.instagram} (abre em nova aba)`}
+          >
+            <Icon name="instagram" size={20} />
+          </a>
+        )}
+        {settings.facebook && (
+          <a
+            href={settings.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn"
+            aria-label="Facebook da M&M Veículos (abre em nova aba)"
+          >
+            <Icon name="facebook" size={20} />
+          </a>
+        )}
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-btn"
+          aria-label="WhatsApp (abre em nova aba)"
+        >
+          <Icon name="whatsapp" size={20} />
+        </a>
+      </div>
+    </div>
+
+    <nav aria-label="Veículos">
+      <h2 class="footer-title">Veículos</h2>
+      <ul class="footer-list">
+        <li>
+          <a href="/estoque">Estoque completo</a>
+        </li>
+        <li>
+          <a href="/ofertas">Ofertas</a>
+        </li>
+        <li>
+          <a href="/repasses">Repasses</a>
+        </li>
+        <li>
+          <a href="/favoritos">Favoritos</a>
+        </li>
+        <li>
+          <a href="/anuncie-seu-veiculo">{settings.sellVehicleCta}</a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav aria-label="Institucional">
+      <h2 class="footer-title">Institucional</h2>
+      <ul class="footer-list">
+        <li>
+          <a href="/empresa">A empresa</a>
+        </li>
+        <li>
+          <a href="/contato">Contato</a>
+        </li>
+        <li>
+          <a href="/politica-de-privacidade">Política de privacidade</a>
+        </li>
+      </ul>
+    </nav>
+
+    <div>
+      <h2 class="footer-title">Atendimento</h2>
+      <ul class="footer-list">
+        <li>
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2">
+            <Icon name="whatsapp" size={18} class="text-whatsapp" />
+            {settings.phone}
+          </a>
+        </li>
+        <li>
+          <a href={telHref(settings.phone)} class="inline-flex items-center gap-2">
+            <Icon name="phone" size={18} class="text-mist-400" />
+            Ligar
+          </a>
+        </li>
+        {settings.email && (
+          <li>
+            <a href={`mailto:${settings.email}`} class="inline-flex items-center gap-2 break-all">
+              <Icon name="mail" size={18} class="shrink-0 text-mist-400" />
+              {settings.email}
+            </a>
+          </li>
+        )}
+        <li class="inline-flex items-start gap-2 text-mist-300">
+          <Icon name="map-pin" size={18} class="mt-0.5 shrink-0 text-mist-400" />
+          <span>
+            {settings.address && (
+              <>
+                {settings.address}
+                <br />
+              </>
+            )}
+            {settings.city} - {settings.state}
+          </span>
+        </li>
+        {settings.openingHours && (
+          <li class="inline-flex items-start gap-2 text-mist-300">
+            <Icon name="clock" size={18} class="mt-0.5 shrink-0 text-mist-400" />
+            <span class="whitespace-pre-line">{settings.openingHours}</span>
+          </li>
+        )}
+      </ul>
+    </div>
+  </div>
+  <div class="border-t hairline">
+    <div class="container-site flex flex-col gap-2 py-6 text-xs text-mist-500 sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        © {year} {settings.businessName}. Todos os direitos reservados.
+      </p>
+      <p>Preços e disponibilidade sujeitos a alteração. Confirme as condições pelo WhatsApp.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-title {
+    margin-bottom: 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold-400);
+  }
+  .footer-list {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.93rem;
+    color: var(--color-mist-200);
+  }
+  .footer-list a {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    transition: color 140ms ease;
+  }
+  .footer-list a:hover {
+    color: #fff;
+  }
+  .social-btn {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    color: var(--color-mist-100);
+    transition:
+      border-color 140ms ease,
+      color 140ms ease,
+      background-color 140ms ease;
+  }
+  .social-btn:hover {
+    border-color: var(--color-gold-500);
+    color: var(--color-gold-300);
+    background: color-mix(in oklab, var(--color-gold-500) 8%, transparent);
+  }
+</style>

@@ -1,0 +1,80 @@
+---
+import { formatBRL } from '@/utils/money';
+import { getPriceDisplay, type PriceFields } from '@/utils/offer';
+
+interface Props {
+  vehicle: PriceFields & { status: string };
+  size?: 'md' | 'lg';
+  class?: string;
+}
+
+const { vehicle, size = 'md', class: className } = Astro.props;
+const price = getPriceDisplay(vehicle);
+const sold = vehicle.status === 'sold';
+---
+
+<div class:list={['price-tag', `price-${size}`, className]}>
+  {sold ? (
+    <p class="price-main text-mist-400">Vendido</p>
+  ) : price.current === null || price.current === 0 ? (
+    <p class="price-main text-mist-100">Preço sob consulta</p>
+  ) : price.previous !== null ? (
+    <>
+      <p class="price-prev tabular">
+        <span class="sr-only">Preço anterior: </span>De <s>{formatBRL(price.previous)}</s>
+        {price.discountPercent !== null && <span class="price-off">−{price.discountPercent}%</span>}
+      </p>
+      <p class="price-main tabular text-gold-400">
+        <span class="price-por">por</span>
+        <span class="sr-only">Preço atual: </span>
+        {formatBRL(price.current)}
+      </p>
+    </>
+  ) : (
+    <p class="price-main tabular text-paper">{formatBRL(price.current)}</p>
+  )}
+</div>
+
+<style>
+  .price-main {
+    font-weight: 800;
+    font-stretch: 108%;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .price-md .price-main {
+    font-size: 1.3rem;
+  }
+  .price-lg .price-main {
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+  }
+  .price-prev {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--color-mist-400);
+  }
+  .price-lg .price-prev {
+    font-size: 0.95rem;
+  }
+  .price-prev s {
+    text-decoration-thickness: 1px;
+  }
+  .price-off {
+    padding: 0.08rem 0.35rem;
+    border-radius: 0.3rem;
+    background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+    color: var(--color-gold-300);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .price-por {
+    margin-right: 0.3rem;
+    font-size: 0.55em;
+    font-weight: 600;
+    color: var(--color-mist-300);
+    letter-spacing: 0;
+  }
+</style>

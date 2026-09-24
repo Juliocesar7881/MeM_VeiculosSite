@@ -1,0 +1,289 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { mediaUrl } from '@/lib/storage/keys';
+import type { VehicleImage } from '@/types/domain';
+import PhotoPlaceholder from './PhotoPlaceholder.astro';
+
+interface Props {
+  images: VehicleImage[];
+  alt: string;
+  sold?: boolean;
+}
+
+const { images, alt, sold = false } = Astro.props;
+const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
+---
+
+{images.length === 0 ? (
+  <div class="aspect-[4/3] overflow-hidden rounded-2xl border hairline">
+    <PhotoPlaceholder label="Fotos em breve" />
+  </div>
+) : (
+  <div class="gallery" data-gallery data-count={images.length}>
+    <div class:list={['gallery-main', { 'is-sold': sold }]}>
+      <div
+        class="gallery-track scrollbar-none"
+        data-track
+        tabindex="0"
+        aria-label={`Galeria de fotos: ${alt}`}
+        role="region"
+      >
+        {images.map((image, index) => (
+          <figure class="gallery-slide" data-slide={index}>
+            <button
+              type="button"
+              class="block h-full w-full cursor-zoom-in"
+              data-open-lightbox={index}
+              aria-label={`Ampliar foto ${index + 1} de ${images.length}`}
+            >
+              <img
+                src={mediaUrl(image.largeKey)}
+                srcset={`${mediaUrl(image.thumbKey)} ${image.thumbWidth}w, ${mediaUrl(image.largeKey)} ${image.width}w`}
+                sizes={sizes}
+                width={image.width}
+                height={image.height}
+                alt={`${alt} — foto ${index + 1} de ${images.length}`}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : undefined}
+                decoding="async"
+                class="h-full w-full object-cover"
+              />
+            </button>
+          </figure>
+        ))}
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button type="button" class="gallery-arrow left-3" data-prev aria-label="Foto anterior">
+            <Icon name="chevron-left" size={22} />
+          </button>
+          <button type="button" class="gallery-arrow right-3" data-next aria-label="Próxima foto">
+            <Icon name="chevron-right" size={22} />
+          </button>
+        </>
+      )}
+      <div class="gallery-meta">
+        <span class="tabular" data-counter aria-live="polite">
+          1 / {images.length}
+        </span>
+      </div>
+      <button type="button" class="gallery-expand" data-open-lightbox="current" aria-label="Ver fotos em tela cheia">
+        <Icon name="expand" size={18} />
+        <span class="hidden sm:inline">Tela cheia</span>
+      </button>
+    </div>
+
+    {images.length > 1 && (
+      <div
+        class="scrollbar-none mt-3 flex gap-2 overflow-x-auto pb-1"
+        data-thumbs
+        role="tablist"
+        aria-label="Miniaturas"
+      >
+        {images.map((image, index) => (
+          <button
+            type="button"
+            class="gallery-thumb"
+            data-thumb={index}
+            role="tab"
+            aria-selected={index === 0 ? 'true' : 'false'}
+            aria-label={`Foto ${index + 1}`}
+          >
+            <img
+              src={mediaUrl(image.thumbKey)}
+              width={image.thumbWidth}
+              height={image.thumbHeight}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
+    )}
+
+    <dialog class="lightbox" data-lightbox aria-label="Fotos em tela cheia">
+      <div class="lightbox-track scrollbar-none" data-lb-track>
+        {images.map((image, index) => (
+          <figure class="lightbox-slide">
+            <img
+              data-src={mediaUrl(image.largeKey)}
+              width={image.width}
+              height={image.height}
+              alt={`${alt} — foto ${index + 1} de ${images.length}`}
+              decoding="async"
+              class="max-h-full max-w-full object-contain"
+            />
+          </figure>
+        ))}
+      </div>
+      <div class="lightbox-bar">
+        <span class="tabular text-sm text-mist-200" data-lb-counter>
+          1 / {images.length}
+        </span>
+        <button type="button" class="icon-link" data-lb-close aria-label="Fechar">
+          <Icon name="x" size={26} />
+        </button>
+      </div>
+      {images.length > 1 && (
+        <>
+          <button type="button" class="gallery-arrow lb-arrow left-3" data-lb-prev aria-label="Foto anterior">
+            <Icon name="chevron-left" size={24} />
+          </button>
+          <button type="button" class="gallery-arrow lb-arrow right-3" data-lb-next aria-label="Próxima foto">
+            <Icon name="chevron-right" size={24} />
+          </button>
+        </>
+      )}
+    </dialog>
+  </div>
+)}
+
+<style>
+  .gallery-main {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (max-width: 639.98px) {
+    .gallery-main {
+      margin-inline: -1rem;
+      border-radius: 0;
+      border-inline: 0;
+    }
+  }
+  .gallery-main.is-sold img {
+    filter: grayscale(0.7) brightness(0.8);
+  }
+  .gallery-track {
+    display: flex;
+    aspect-ratio: 4 / 3;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+  }
+  .gallery-track:focus-visible {
+    outline-offset: -3px;
+  }
+  .gallery-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+  .gallery-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: none;
+    width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgb(8 9 10 / 0.6);
+    color: #fff;
+    backdrop-filter: blur(8px);
+    transform: translateY(-50%);
+    transition: background-color 140ms ease;
+  }
+  .gallery-arrow:hover {
+    background: rgb(8 9 10 / 0.85);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .gallery-arrow {
+      display: inline-flex;
+    }
+  }
+  .gallery-meta {
+    position: absolute;
+    left: 0.9rem;
+    bottom: 0.9rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.5rem;
+    background: rgb(8 9 10 / 0.65);
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+  }
+  .gallery-expand {
+    position: absolute;
+    right: 0.9rem;
+    bottom: 0.9rem;
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.8rem;
+    border-radius: 0.6rem;
+    background: rgb(8 9 10 / 0.65);
+    font-size: 0.82rem;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+  }
+  .gallery-thumb {
+    flex: none;
+    width: 6.2rem;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    opacity: 0.55;
+    outline-offset: 2px;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, white 10%, transparent);
+    transition: opacity 160ms ease;
+  }
+  .gallery-thumb:hover {
+    opacity: 0.85;
+  }
+  .gallery-thumb[aria-selected='true'] {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--color-gold-500);
+  }
+  .lightbox {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #000;
+    color: #fff;
+  }
+  .lightbox::backdrop {
+    background: #000;
+  }
+  .lightbox-track {
+    display: flex;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .lightbox-slide {
+    display: flex;
+    flex: 0 0 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 0 1rem;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+  .lightbox-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem 0.5rem 1.25rem;
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent);
+  }
+</style>
+
+<script>
+  import { initGalleries } from '@/features/gallery';
+  initGalleries();
+</script>

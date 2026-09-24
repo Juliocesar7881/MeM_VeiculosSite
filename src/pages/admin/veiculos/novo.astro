@@ -1,0 +1,44 @@
+---
+import VehicleForm from '@/components/admin/VehicleForm.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { isAppError } from '@/lib/errors';
+import { emptyVehicleValues, parseVehicleForm, type FormValues } from '@/server/vehicle-form';
+import type { FieldErrors } from '@/schemas/common';
+
+const { container, admin } = Astro.locals;
+const settings = await container.settings.get();
+let values: FormValues = emptyVehicleValues(settings);
+let errors: FieldErrors = {};
+
+if (Astro.request.method === 'POST' && admin) {
+  const parsed = parseVehicleForm(await Astro.request.formData());
+  values = parsed.values;
+  if (parsed.ok) {
+    try {
+      const vehicle = await container.vehicles.create(parsed.data, admin);
+      return Astro.redirect(
+        `/admin/veiculos/${vehicle.id}?ok=${encodeURIComponent('Veículo cadastrado! Agora adicione as fotos.')}#fotos`,
+        303,
+      );
+    } catch (error) {
+      errors = { _form: isAppError(error) ? error.message : 'Não foi possível salvar. Tente novamente.' };
+      if (!isAppError(error)) console.error('[admin] criar veículo', error);
+    }
+  } else {
+    errors = parsed.errors;
+  }
+}
+
+const brands = await container.vehicles.distinctBrands();
+---
+
+<AdminLayout title="Novo veículo" section="novo">
+  <div class="mb-6">
+    <a href="/admin/veiculos" class="text-sm text-mist-400 hover:text-white">
+      ← Veículos
+    </a>
+    <h1 class="heading mt-2 text-3xl text-white">Novo veículo</h1>
+    <p class="mt-1 text-sm text-mist-400">Preencha os dados principais. As fotos são adicionadas no próximo passo.</p>
+  </div>
+  <VehicleForm values={values} errors={errors} brands={brands} mode="create" />
+</AdminLayout>

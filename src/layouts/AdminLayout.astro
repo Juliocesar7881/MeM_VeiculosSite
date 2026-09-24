@@ -1,0 +1,251 @@
+---
+import '@/styles/global.css';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import Logo from '@/components/brand/Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+
+interface Props {
+  title: string;
+  /** Item ativo do menu. */
+  section: 'dashboard' | 'veiculos' | 'novo' | 'propostas' | 'ofertas' | 'repasses' | 'configuracoes';
+}
+
+const { title, section } = Astro.props;
+const { container, admin } = Astro.locals;
+const leadCounts = await container.leads.countByStatus();
+const newLeads = leadCounts.new;
+const ok = Astro.url.searchParams.get('ok');
+const erro = Astro.url.searchParams.get('erro');
+
+const nav: { key: Props['section']; label: string; href: string; icon: IconName; badge?: number }[] = [
+  { key: 'dashboard', label: 'Dashboard', href: '/admin', icon: 'dashboard' },
+  { key: 'veiculos', label: 'Veículos', href: '/admin/veiculos', icon: 'car' },
+  { key: 'novo', label: 'Novo veículo', href: '/admin/veiculos/novo', icon: 'plus' },
+  { key: 'propostas', label: 'Propostas', href: '/admin/propostas', icon: 'inbox', badge: newLeads },
+  { key: 'ofertas', label: 'Ofertas', href: '/admin/veiculos?filtro=ofertas', icon: 'tag' },
+  { key: 'repasses', label: 'Repasses', href: '/admin/veiculos?filtro=repasses', icon: 'repasse' },
+  { key: 'configuracoes', label: 'Configurações', href: '/admin/configuracoes', icon: 'settings' },
+];
+const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas', 'configuracoes'].includes(n.key));
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#08090a" />
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title} · Painel M&M</title>
+  </head>
+  <body class="min-h-dvh bg-ink-950 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <a href="#conteudo" class="skip-link">
+      Pular para o conteúdo
+    </a>
+    <div class="lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+      <aside class="admin-sidebar hidden lg:flex" aria-label="Menu do painel">
+        <a href="/admin" class="px-5 pt-6" aria-label="Painel M&M Veículos">
+          <Logo height={36} class="h-9 w-auto" />
+        </a>
+        <p class="mt-2 px-5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-mist-500">
+          Painel administrativo
+        </p>
+        <nav class="mt-6 flex-1 px-3">
+          <ul class="grid gap-1">
+            {nav.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={['side-link', { 'is-active': item.key === section }]}
+                  aria-current={item.key === section ? 'page' : undefined}
+                >
+                  <Icon name={item.icon} size={19} />
+                  <span class="flex-1">{item.label}</span>
+                  {item.badge ? <span class="side-badge tabular">{item.badge}</span> : null}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div class="grid gap-1 border-t hairline p-3">
+          <a href="/" target="_blank" rel="noopener" class="side-link">
+            <Icon name="external" size={19} />
+            <span>Ver site</span>
+          </a>
+          <form method="post" action="/admin/logout">
+            <button type="submit" class="side-link w-full">
+              <Icon name="logout" size={19} />
+              <span>Sair</span>
+            </button>
+          </form>
+          <p class="truncate px-3 pt-2 text-xs text-mist-500" title={admin?.label}>
+            {admin?.label}
+          </p>
+        </div>
+      </aside>
+
+      <div class="min-w-0">
+        <header class="sticky top-0 z-30 flex h-14 items-center gap-3 border-b hairline bg-ink-950/90 px-4 backdrop-blur lg:hidden">
+          <a href="/admin" aria-label="Painel">
+            <Logo height={28} class="h-7 w-auto" />
+          </a>
+          <a href="/" target="_blank" rel="noopener" class="ml-auto text-sm text-mist-300">
+            Ver site
+          </a>
+          <form method="post" action="/admin/logout">
+            <button type="submit" class="icon-link" aria-label="Sair">
+              <Icon name="logout" size={20} />
+            </button>
+          </form>
+        </header>
+
+        <main id="conteudo" class="mx-auto w-full max-w-[84rem] px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+          {ok && (
+            <div class="flash flash-ok" role="status">
+              <Icon name="check-circle" size={20} />
+              <span>{ok}</span>
+            </div>
+          )}
+          {erro && (
+            <div class="flash flash-error" role="alert">
+              <Icon name="alert" size={20} />
+              <span>{erro}</span>
+            </div>
+          )}
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <nav class="admin-tabbar lg:hidden" aria-label="Menu do painel">
+      <ul class="grid grid-cols-5">
+        {mobileNav.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class:list={['admin-tab', { 'is-active': item.key === section }]}
+              aria-current={item.key === section ? 'page' : undefined}
+            >
+              <span class="relative">
+                <Icon name={item.icon} size={21} />
+                {item.badge ? <span class="tab-dot tabular">{item.badge}</span> : null}
+              </span>
+              <span>
+                {item.label === 'Novo veículo' ? 'Novo' : item.label === 'Configurações' ? 'Ajustes' : item.label}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <script>
+      import { initAdminUi } from '@/features/admin/ui';
+      initAdminUi();
+    </script>
+  </body>
+</html>
+
+<style>
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    flex-direction: column;
+    border-right: 1px solid color-mix(in oklab, white 7%, transparent);
+    background: var(--color-ink-900);
+  }
+  .side-link {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.85rem;
+    border-radius: 0.7rem;
+    font-size: 0.93rem;
+    font-weight: 550;
+    color: var(--color-mist-300);
+    transition:
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+  .side-link:hover {
+    background: color-mix(in oklab, white 5%, transparent);
+    color: #fff;
+  }
+  .side-link.is-active {
+    background: color-mix(in oklab, var(--color-gold-500) 13%, transparent);
+    color: var(--color-gold-200);
+  }
+  .side-badge {
+    min-width: 1.4rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--color-gold-500);
+    color: #111;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-align: center;
+  }
+  .flash {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 0.9rem;
+    font-size: 0.93rem;
+  }
+  .flash-ok {
+    background: color-mix(in oklab, var(--color-success) 13%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-success) 35%, transparent);
+    color: #bbf7d0;
+  }
+  .flash-error {
+    background: color-mix(in oklab, var(--color-danger) 13%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 35%, transparent);
+    color: #fecaca;
+  }
+  .admin-tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid color-mix(in oklab, white 8%, transparent);
+    background: color-mix(in oklab, var(--color-ink-950) 94%, transparent);
+    backdrop-filter: blur(14px);
+  }
+  .admin-tab {
+    display: flex;
+    min-height: 3.8rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-mist-400);
+  }
+  .admin-tab.is-active {
+    color: var(--color-gold-400);
+  }
+  .tab-dot {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.7rem;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--color-gold-500);
+    color: #111;
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1rem;
+    text-align: center;
+  }
+</style>

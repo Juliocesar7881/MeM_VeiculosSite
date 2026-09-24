@@ -1,0 +1,68 @@
+---
+import { LEAD_STATUS_LABELS, VEHICLE_STATUS_LABELS, type LeadStatus, type VehicleStatus } from '@/config/catalog';
+
+type Props = { kind: 'vehicle'; status: VehicleStatus } | { kind: 'lead'; status: LeadStatus };
+
+const props = Astro.props;
+const label = props.kind === 'vehicle' ? VEHICLE_STATUS_LABELS[props.status] : LEAD_STATUS_LABELS[props.status];
+const tone: Record<string, string> = {
+  draft: 'tone-muted',
+  available: 'tone-green',
+  reserved: 'tone-orange',
+  sold: 'tone-red',
+  archived: 'tone-muted',
+  new: 'tone-gold',
+  reviewing: 'tone-blue',
+  contacted: 'tone-blue',
+  negotiating: 'tone-orange',
+  accepted: 'tone-green',
+  rejected: 'tone-red',
+  converted: 'tone-green',
+};
+---
+
+<span class:list={['pill', tone[props.status] ?? 'tone-muted']}>{label}</span>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+  .pill::before {
+    content: '';
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .tone-muted {
+    background: color-mix(in oklab, white 7%, transparent);
+    color: var(--color-mist-300);
+  }
+  .tone-green {
+    background: color-mix(in oklab, var(--color-success) 15%, transparent);
+    color: #86efac;
+  }
+  .tone-orange {
+    background: color-mix(in oklab, var(--color-reserved) 16%, transparent);
+    color: #fdba74;
+  }
+  .tone-red {
+    background: color-mix(in oklab, var(--color-sold) 20%, transparent);
+    color: #fca5a5;
+  }
+  .tone-gold {
+    background: color-mix(in oklab, var(--color-gold-500) 18%, transparent);
+    color: var(--color-gold-300);
+  }
+  .tone-blue {
+    background: color-mix(in oklab, #60a5fa 16%, transparent);
+    color: #93c5fd;
+  }
+</style>

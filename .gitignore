@@ -1,0 +1,28 @@
+# dependências e build
+node_modules/
+dist/
+.astro/
+.vercel/
+.output/
+
+# dados locais (banco SQLite de desenvolvimento, uploads, backups)
+.data/
+backups/
+
+# variáveis de ambiente — NUNCA versionar segredos
+.env
+.env.*
+!.env.example
+
+# testes
+playwright-report/
+test-results/
+coverage/
+
+# ferramentas locais
+.claude/
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log

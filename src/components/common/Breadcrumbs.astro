@@ -1,0 +1,34 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+
+interface Props {
+  items: { name: string; path: string }[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+---
+
+<nav aria-label="Você está em" class:list={['text-sm text-mist-400', className]}>
+  <ol class="flex flex-wrap items-center gap-1.5">
+    {items.map((item, index) => {
+      const last = index === items.length - 1;
+      return (
+        <li class="inline-flex items-center gap-1.5">
+          {last ? (
+            <span aria-current="page" class="max-w-[16rem] truncate text-mist-200">
+              {item.name}
+            </span>
+          ) : (
+            <>
+              <a href={item.path} class="hover:text-white">
+                {item.name}
+              </a>
+              <Icon name="chevron-right" size={14} class="text-mist-500" />
+            </>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>

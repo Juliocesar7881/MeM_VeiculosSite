@@ -1,0 +1,291 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { BRAZIL_STATES } from '@/config/catalog';
+import { formDataToObject, toFieldErrors, type FieldErrors } from '@/schemas/common';
+import { settingsInputSchema } from '@/schemas/settings';
+import type { SiteSettings } from '@/types/settings';
+
+const { container, admin } = Astro.locals;
+let values: Record<string, string | boolean> = { ...(await container.settings.get()) };
+let errors: FieldErrors = {};
+
+if (Astro.request.method === 'POST' && admin) {
+  const raw = formDataToObject(await Astro.request.formData());
+  const parsed = settingsInputSchema.safeParse(raw);
+  if (parsed.success) {
+    await container.settings.update(parsed.data, admin);
+    return Astro.redirect(
+      `/admin/configuracoes?ok=${encodeURIComponent('Configurações salvas. O site é atualizado em até 1 minuto.')}`,
+      303,
+    );
+  }
+  errors = toFieldErrors(parsed.error);
+  values = { ...raw, showSoldVehicles: raw.showSoldVehicles === 'on' } as Record<string, string | boolean>;
+}
+
+const v = (key: keyof SiteSettings) => {
+  const value = values[key];
+  return typeof value === 'string' ? value : '';
+};
+const e = (key: keyof SiteSettings) => errors[key];
+---
+
+<AdminLayout title="Configurações" section="configuracoes">
+  <h1 class="heading text-3xl text-white">Configurações</h1>
+  <p class="mt-1 text-sm text-mist-400">
+    Dados exibidos no site: contatos, redes sociais e textos. Senhas e chaves técnicas não ficam aqui.
+  </p>
+
+  <form method="post" class="mt-8 grid gap-6" novalidate>
+    {Object.keys(errors).length > 0 && (
+      <div class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-red-200" role="alert">
+        Revise os campos destacados.
+      </div>
+    )}
+
+    <section class="panel">
+      <h2 class="panel-title">Empresa</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="s-name" class="field-label">
+            Nome
+          </label>
+          <input
+            id="s-name"
+            name="businessName"
+            class="input"
+            value={v('businessName')}
+            maxlength="80"
+            required
+            aria-invalid={e('businessName') ? 'true' : undefined}
+          />
+          {e('businessName') && <p class="field-error">{e('businessName')}</p>}
+        </div>
+        <div>
+          <label for="s-slogan" class="field-label">
+            Slogan
+          </label>
+          <input id="s-slogan" name="slogan" class="input" value={v('slogan')} maxlength="160" />
+          {e('slogan') && <p class="field-error">{e('slogan')}</p>}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Contato</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label for="s-wa" class="field-label">
+            WhatsApp (somente números, com 55)
+          </label>
+          <input
+            id="s-wa"
+            name="whatsapp"
+            class="input tabular"
+            value={v('whatsapp')}
+            inputmode="numeric"
+            maxlength="16"
+            aria-invalid={e('whatsapp') ? 'true' : undefined}
+          />
+          <p class="field-hint">Usado nos links wa.me. Ex.: 554896410338</p>
+          {e('whatsapp') && <p class="field-error">{e('whatsapp')}</p>}
+        </div>
+        <div>
+          <label for="s-phone" class="field-label">
+            Telefone (como aparece no site)
+          </label>
+          <input
+            id="s-phone"
+            name="phone"
+            class="input"
+            value={v('phone')}
+            maxlength="30"
+            aria-invalid={e('phone') ? 'true' : undefined}
+          />
+          {e('phone') && <p class="field-error">{e('phone')}</p>}
+        </div>
+        <div>
+          <label for="s-email" class="field-label">
+            E-mail
+          </label>
+          <input
+            id="s-email"
+            name="email"
+            type="email"
+            class="input"
+            value={v('email')}
+            maxlength="120"
+            aria-invalid={e('email') ? 'true' : undefined}
+          />
+          {e('email') && <p class="field-error">{e('email')}</p>}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Redes sociais</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="s-ig" class="field-label">
+            Instagram (usuário)
+          </label>
+          <div class="relative">
+            <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mist-400">@</span>
+            <input
+              id="s-ig"
+              name="instagram"
+              class="input pl-8"
+              value={v('instagram')}
+              maxlength="60"
+              aria-invalid={e('instagram') ? 'true' : undefined}
+            />
+          </div>
+          {e('instagram') && <p class="field-error">{e('instagram')}</p>}
+        </div>
+        <div>
+          <label for="s-fb" class="field-label">
+            Facebook (link da página)
+          </label>
+          <input
+            id="s-fb"
+            name="facebook"
+            type="url"
+            class="input"
+            value={v('facebook')}
+            maxlength="200"
+            aria-invalid={e('facebook') ? 'true' : undefined}
+          />
+          {e('facebook') && <p class="field-error">{e('facebook')}</p>}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Localização e horário</h2>
+      <div class="grid gap-4 sm:grid-cols-[1fr_8rem]">
+        <div>
+          <label for="s-city" class="field-label">
+            Cidade
+          </label>
+          <input
+            id="s-city"
+            name="city"
+            class="input"
+            value={v('city')}
+            maxlength="60"
+            aria-invalid={e('city') ? 'true' : undefined}
+          />
+          {e('city') && <p class="field-error">{e('city')}</p>}
+        </div>
+        <div>
+          <label for="s-state" class="field-label">
+            Estado
+          </label>
+          <select id="s-state" name="state" class="input">
+            {BRAZIL_STATES.map((uf) => (
+              <option value={uf} selected={v('state') === uf}>
+                {uf}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label for="s-address" class="field-label">
+            Endereço
+          </label>
+          <input
+            id="s-address"
+            name="address"
+            class="input"
+            value={v('address')}
+            maxlength="200"
+            placeholder="Deixe em branco para não exibir"
+          />
+        </div>
+        <div class="sm:col-span-2">
+          <label for="s-hours" class="field-label">
+            Horário de funcionamento
+          </label>
+          <textarea
+            id="s-hours"
+            name="openingHours"
+            class="input"
+            rows="3"
+            maxlength="400"
+            placeholder="Ex.: Segunda a sexta: 8h às 18h&#10;Sábado: 8h às 12h"
+          >{v('openingHours')}</textarea>
+          <p class="field-hint">Deixe em branco para não exibir.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Site</h2>
+      <div class="grid gap-5">
+        <label class="check">
+          <input type="checkbox" name="showSoldVehicles" checked={values.showSoldVehicles === true} />
+          <span>
+            <strong class="text-white">Mostrar veículos vendidos no estoque</strong>
+            <span class="block text-sm text-mist-400">
+              Aparecem no fim da lista com o selo “Vendido”. O link direto de um vendido sempre funciona.
+            </span>
+          </span>
+        </label>
+        <div class="max-w-md">
+          <label for="s-cta" class="field-label">
+            Texto do botão “Anuncie seu veículo”
+          </label>
+          <input
+            id="s-cta"
+            name="sellVehicleCta"
+            class="input"
+            value={v('sellVehicleCta')}
+            maxlength="40"
+            aria-invalid={e('sellVehicleCta') ? 'true' : undefined}
+          />
+          {e('sellVehicleCta') && <p class="field-error">{e('sellVehicleCta')}</p>}
+        </div>
+        <div>
+          <label for="s-repasse" class="field-label">
+            Texto informativo sobre repasses
+          </label>
+          <textarea
+            id="s-repasse"
+            name="repasseDescription"
+            class="input"
+            rows="4"
+            maxlength="1500"
+            placeholder="Condições gerais dos repasses (opcional). Aparece em /repasses e nos veículos de repasse."
+          >{v('repasseDescription')}</textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="flex justify-end">
+      <button type="submit" class="btn btn-gold">
+        <Icon name="check" size={18} /> Salvar configurações
+      </button>
+    </div>
+  </form>
+</AdminLayout>
+
+<style>
+  .panel {
+    padding: 1.25rem;
+    border-radius: 1.1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .panel {
+      padding: 1.6rem;
+    }
+  }
+  .panel-title {
+    margin-bottom: 1.1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+  }
+</style>

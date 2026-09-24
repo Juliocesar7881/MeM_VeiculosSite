@@ -1,0 +1,51 @@
+---
+import Breadcrumbs from './Breadcrumbs.astro';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  breadcrumbs: { name: string; path: string }[];
+  tone?: 'default' | 'gold' | 'silver';
+}
+
+const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
+---
+
+<header class:list={['page-header relative overflow-hidden border-b hairline', `tone-${tone}`]}>
+  <div class="container-site pb-8 pt-6 sm:pb-10 sm:pt-8">
+    <Breadcrumbs items={breadcrumbs} />
+    {eyebrow && <p class="eyebrow mt-6">{eyebrow}</p>}
+    <h1 class="display mt-3 text-4xl text-white sm:text-5xl lg:text-6xl">{title}</h1>
+    {subtitle && <p class="mt-4 max-w-2xl text-base text-mist-300 sm:text-lg">{subtitle}</p>}
+    <slot />
+  </div>
+</header>
+
+<style>
+  .page-header {
+    background: var(--color-ink-950);
+  }
+  .tone-default {
+    background:
+      radial-gradient(60% 120% at 90% 0%, color-mix(in oklab, white 5%, transparent), transparent 70%),
+      var(--color-ink-950);
+  }
+  .tone-gold {
+    background:
+      radial-gradient(60% 140% at 90% 0%, color-mix(in oklab, var(--color-gold-500) 13%, transparent), transparent 70%),
+      var(--color-ink-950);
+  }
+  .tone-silver {
+    background:
+      radial-gradient(
+        60% 140% at 90% 0%,
+        color-mix(in oklab, var(--color-silver-300) 9%, transparent),
+        transparent 70%
+      ),
+      var(--color-ink-950);
+  }
+  .tone-silver :global(.eyebrow) {
+    color: var(--color-silver-300);
+  }
+</style>

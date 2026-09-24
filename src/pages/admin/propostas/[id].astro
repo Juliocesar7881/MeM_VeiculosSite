@@ -1,0 +1,235 @@
+---
+import StatusPill from '@/components/admin/StatusPill.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { CATEGORY_INFO, type LeadStatus } from '@/config/catalog';
+import { leadMediaUrl } from '@/lib/storage/keys';
+import { formatDateTime } from '@/utils/dates';
+import { formatBRL } from '@/utils/money';
+import { formatBrazilPhone } from '@/utils/phone';
+import {
+  fuelLabel,
+  hoursLabel,
+  locationLabel,
+  mileageLabel,
+  transmissionLabel,
+  yearLabel,
+} from '@/utils/vehicle-format';
+import { buildWhatsAppUrl, leadContactMessage } from '@/utils/whatsapp';
+
+const { container } = Astro.locals;
+const lead = await container.leads.getDetail(Astro.params.id ?? '');
+if (!lead) return Astro.redirect('/admin/propostas?erro=' + encodeURIComponent('Proposta não encontrada.'), 303);
+
+const settings = await container.settings.get();
+const whatsappUrl = buildWhatsAppUrl(lead.whatsapp, leadContactMessage(lead, settings.businessName));
+const convertedVehicle = lead.convertedVehicleId ? await container.vehicles.getDetail(lead.convertedVehicleId) : null;
+
+const data: [string, string][] = (
+  [
+    ['Categoria', CATEGORY_INFO[lead.category].label],
+    ['Marca', lead.brand],
+    ['Modelo', lead.model],
+    ['Versão', lead.version ?? ''],
+    ['Ano', yearLabel(lead)],
+    ['Quilometragem', mileageLabel(lead.mileage)],
+    ['Horas de uso', hoursLabel(lead.usageHours)],
+    ['Combustível', fuelLabel(lead.fuel)],
+    ['Câmbio', transmissionLabel(lead.transmission)],
+    ['Cor', lead.color ?? ''],
+    ['Localização', locationLabel(lead.city, lead.state)],
+  ] as [string, string][]
+).filter(([, v]) => v);
+
+const statusActions: { status: LeadStatus; label: string; icon: IconName; confirm?: string }[] = [
+  { status: 'reviewing', label: 'Em análise', icon: 'search' },
+  { status: 'contacted', label: 'Contatado', icon: 'whatsapp' },
+  { status: 'negotiating', label: 'Em negociação', icon: 'handshake' },
+  { status: 'accepted', label: 'Aceitar', icon: 'check-circle' },
+  { status: 'rejected', label: 'Recusar', icon: 'x', confirm: 'Marcar esta proposta como recusada?' },
+  { status: 'archived', label: 'Arquivar', icon: 'archive' },
+];
+const action = `/admin/propostas/${lead.id}/acao`;
+---
+
+<AdminLayout title={`Proposta: ${lead.brand} ${lead.model}`} section="propostas">
+  <a href="/admin/propostas" class="text-sm text-mist-400 hover:text-white">
+    ← Propostas
+  </a>
+  <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="heading text-2xl text-white sm:text-3xl">
+        {lead.brand} {lead.model} <span class="text-mist-400">{yearLabel(lead)}</span>
+      </h1>
+      <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-mist-400">
+        <StatusPill kind="lead" status={lead.status} />
+        <span>Recebida em {formatDateTime(lead.createdAt)}</span>
+      </div>
+    </div>
+    {convertedVehicle ? (
+      <a href={`/admin/veiculos/${convertedVehicle.id}`} class="btn btn-outline-gold">
+        <Icon name="car" size={18} /> Ver veículo criado
+      </a>
+    ) : (
+      <form
+        method="post"
+        action={action}
+        data-confirm="Criar um RASCUNHO de veículo com os dados e fotos desta proposta? Nada será publicado automaticamente."
+      >
+        <input type="hidden" name="action" value="convert" />
+        <button type="submit" class="btn btn-gold">
+          <Icon name="car" size={18} /> Transformar em veículo
+        </button>
+      </form>
+    )}
+  </div>
+
+  <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+    <div class="grid content-start gap-6">
+      <section class="surface p-5 sm:p-6" aria-labelledby="fotos-lead">
+        <h2 id="fotos-lead" class="text-lg font-bold text-white">
+          Fotos ({lead.images.length})
+        </h2>
+        {lead.images.length ? (
+          <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {lead.images.map((image, index) => (
+              <li>
+                <a
+                  href={leadMediaUrl(image.largeKey)}
+                  target="_blank"
+                  rel="noopener"
+                  class="block overflow-hidden rounded-lg border hairline"
+                  aria-label={`Abrir foto ${index + 1} em tamanho real`}
+                >
+                  <img
+                    src={leadMediaUrl(image.thumbKey)}
+                    alt={`Foto ${index + 1} enviada pelo cliente`}
+                    width={image.thumbWidth}
+                    height={image.thumbHeight}
+                    loading="lazy"
+                    class="aspect-[4/3] w-full object-cover transition-transform hover:scale-105"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="mt-3 text-sm text-mist-400">O cliente não enviou fotos.</p>
+        )}
+      </section>
+
+      <section class="surface p-5 sm:p-6" aria-labelledby="dados-veiculo">
+        <h2 id="dados-veiculo" class="text-lg font-bold text-white">
+          Dados do veículo
+        </h2>
+        <dl class="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {data.map(([label, value]) => (
+            <div class="border-b hairline pb-2">
+              <dt class="text-xs uppercase tracking-wider text-mist-500">{label}</dt>
+              <dd class="mt-0.5 text-white">{value}</dd>
+            </div>
+          ))}
+          <div class="border-b hairline pb-2">
+            <dt class="text-xs uppercase tracking-wider text-mist-500">Preço pretendido</dt>
+            <dd class="mt-0.5 font-semibold text-gold-300">
+              {lead.desiredPrice ? formatBRL(lead.desiredPrice) : 'Não informado'}
+            </dd>
+          </div>
+        </dl>
+        {lead.description && (
+          <div class="mt-5">
+            <h3 class="text-xs uppercase tracking-wider text-mist-500">Descrição do cliente</h3>
+            <p class="mt-1 whitespace-pre-line text-mist-100">{lead.description}</p>
+          </div>
+        )}
+      </section>
+    </div>
+
+    <div class="grid content-start gap-6">
+      <section class="surface p-5 sm:p-6" aria-labelledby="cliente">
+        <h2 id="cliente" class="text-lg font-bold text-white">
+          Cliente
+        </h2>
+        <p class="mt-3 text-xl font-semibold text-white">{lead.name}</p>
+        <p class="mt-1 text-mist-300 tabular">{formatBrazilPhone(lead.whatsapp)}</p>
+        {lead.email && (
+          <a href={`mailto:${lead.email}`} class="mt-1 block break-all text-sm text-gold-300 hover:text-gold-200">
+            {lead.email}
+          </a>
+        )}
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp mt-5 w-full">
+          <Icon name="whatsapp" size={19} /> Chamar no WhatsApp
+        </a>
+        <p class="mt-3 text-xs text-mist-500">
+          Consentimento registrado em {formatDateTime(lead.consentAt)}: “{lead.consentText}”
+        </p>
+      </section>
+
+      <section class="surface p-5 sm:p-6" aria-labelledby="status-lead">
+        <h2 id="status-lead" class="text-lg font-bold text-white">
+          Andamento
+        </h2>
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          {statusActions.map((item) => (
+            <form method="post" action={action} data-confirm={item.confirm}>
+              <input type="hidden" name="action" value="status" />
+              <input type="hidden" name="status" value={item.status} />
+              <button
+                type="submit"
+                class:list={['btn btn-sm w-full', lead.status === item.status ? 'btn-outline-gold' : 'btn-ghost']}
+                disabled={lead.status === item.status || lead.status === 'converted'}
+              >
+                <Icon name={item.icon} size={16} /> {item.label}
+              </button>
+            </form>
+          ))}
+        </div>
+        {lead.status === 'converted' && <p class="mt-3 text-sm text-mist-400">Proposta convertida em veículo.</p>}
+      </section>
+
+      <section class="surface p-5 sm:p-6" aria-labelledby="notas">
+        <h2 id="notas" class="text-lg font-bold text-white">
+          Anotações internas
+        </h2>
+        <form method="post" action={action} class="mt-3 grid gap-3">
+          <input type="hidden" name="action" value="notes" />
+          <label for="lead-notes" class="sr-only">
+            Anotações
+          </label>
+          <textarea
+            id="lead-notes"
+            name="adminNotes"
+            class="input"
+            rows="4"
+            maxlength="4000"
+            placeholder="Valor avaliado, condições, próximos passos..."
+          >{lead.adminNotes ?? ''}</textarea>
+          <button type="submit" class="btn btn-ghost btn-sm justify-self-start">
+            Salvar anotações
+          </button>
+        </form>
+      </section>
+
+      <section class="rounded-2xl border border-danger/25 p-5 sm:p-6" aria-labelledby="lgpd">
+        <h2 id="lgpd" class="font-bold text-white">
+          Excluir dados (LGPD)
+        </h2>
+        <p class="mt-1 text-sm text-mist-400">
+          Remove definitivamente a proposta e as fotos enviadas pelo cliente. Use quando o titular pedir a exclusão.
+        </p>
+        <form
+          method="post"
+          action={action}
+          class="mt-4"
+          data-confirm="Excluir DEFINITIVAMENTE esta proposta e todas as fotos? Esta ação não pode ser desfeita."
+        >
+          <input type="hidden" name="action" value="delete" />
+          <button type="submit" class="btn btn-danger btn-sm">
+            <Icon name="trash" size={16} /> Excluir definitivamente
+          </button>
+        </form>
+      </section>
+    </div>
+  </div>
+</AdminLayout>

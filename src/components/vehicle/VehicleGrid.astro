@@ -1,0 +1,35 @@
+---
+import type { VehicleCard as Card } from '@/types/domain';
+import VehicleCard from './VehicleCard.astro';
+
+interface Props {
+  vehicles: Card[];
+  eagerCount?: number;
+  hideFeatured?: boolean;
+  columns?: 3 | 4;
+  class?: string;
+}
+
+const { vehicles, eagerCount = 0, hideFeatured = false, columns = 3, class: className } = Astro.props;
+---
+
+<ul
+  class:list={[
+    'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-6',
+    columns === 4 ? 'lg:grid-cols-3 2xl:grid-cols-4' : 'lg:grid-cols-3',
+    className,
+  ]}
+  role="list"
+>
+  {vehicles.map((vehicle, index) => (
+    <li class="flex">
+      <VehicleCard vehicle={vehicle} eager={index < eagerCount} hideFeatured={hideFeatured} />
+    </li>
+  ))}
+</ul>
+
+<style>
+  li > :global(.vcard) {
+    width: 100%;
+  }
+</style>
