@@ -32,22 +32,30 @@ const items: { label: string; href: string; icon: IconName; count: number; accen
 ---
 
 <section aria-labelledby="atalhos-title" class="container-site">
-  <h2 id="atalhos-title" class="sr-only">
-    Navegue por categoria
-  </h2>
+  <div class="mb-5 flex items-end justify-between gap-4">
+    <h2 id="atalhos-title" class="heading text-xl text-white sm:text-2xl">
+      Navegue por categoria
+    </h2>
+    <a href="/estoque" class="hidden text-sm font-semibold text-gold-300 hover:text-gold-200 sm:inline-flex">
+      Ver tudo
+    </a>
+  </div>
   <ul
     class="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7"
     role="list"
   >
     {items.map((item) => (
       <li class="snap-start">
-        <a href={item.href} class:list={['shortcut', item.accent && `shortcut-${item.accent}`]}>
+        <a href={item.href} class:list={['shortcut group', item.accent && `shortcut-${item.accent}`]}>
           <span class="shortcut-icon">
             <Icon name={item.icon} size={30} strokeWidth={1.5} />
           </span>
           <span class="shortcut-label">{item.label}</span>
           <span class="shortcut-count tabular">
             {item.count > 0 ? `${item.count} ${item.count === 1 ? 'veículo' : 'veículos'}` : 'Consulte'}
+          </span>
+          <span class="shortcut-go" aria-hidden="true">
+            <Icon name="arrow-up-right" size={16} />
           </span>
         </a>
       </li>
@@ -57,19 +65,23 @@ const items: { label: string; href: string; icon: IconName; count: number; accen
 
 <style>
   .shortcut {
+    position: relative;
     display: flex;
-    width: 8.6rem;
+    width: 8.8rem;
     height: 100%;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem;
-    border-radius: 1rem;
-    background: var(--color-ink-850);
+    gap: 0.3rem;
+    padding: 1.1rem 1rem 1rem;
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, white 5%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--color-ink-800), var(--color-ink-850));
     border: 1px solid color-mix(in oklab, white 7%, transparent);
+    overflow: hidden;
     transition:
       border-color 180ms ease,
-      background-color 180ms ease,
-      transform 200ms var(--ease-out-soft);
+      transform 220ms var(--ease-out-soft),
+      box-shadow 220ms var(--ease-out-soft);
   }
   @media (min-width: 640px) {
     .shortcut {
@@ -77,26 +89,26 @@ const items: { label: string; href: string; icon: IconName; count: number; accen
     }
   }
   .shortcut:hover {
-    border-color: color-mix(in oklab, var(--color-gold-500) 50%, transparent);
-    background: var(--color-ink-800);
-    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--color-gold-500) 55%, transparent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
   }
   .shortcut-icon {
     display: inline-flex;
-    width: 3rem;
-    height: 3rem;
+    width: 3.1rem;
+    height: 3.1rem;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.4rem;
-    border-radius: 0.8rem;
-    background: color-mix(in oklab, white 5%, transparent);
+    margin-bottom: 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, white 6%, transparent);
     color: var(--color-gold-400);
     transition:
       background-color 180ms ease,
       color 180ms ease;
   }
   .shortcut:hover .shortcut-icon {
-    background: var(--color-gold-500);
+    background: var(--gold-button);
     color: #111;
   }
   .shortcut-silver .shortcut-icon {
@@ -115,5 +127,22 @@ const items: { label: string; href: string; icon: IconName; count: number; accen
   .shortcut-count {
     font-size: 0.78rem;
     color: var(--color-mist-400);
+  }
+  .shortcut-go {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    color: var(--color-mist-500);
+    opacity: 0;
+    transform: translate(-4px, 4px);
+    transition:
+      opacity 200ms ease,
+      transform 220ms var(--ease-out-soft),
+      color 200ms ease;
+  }
+  .shortcut:hover .shortcut-go {
+    opacity: 1;
+    transform: none;
+    color: var(--color-gold-300);
   }
 </style>

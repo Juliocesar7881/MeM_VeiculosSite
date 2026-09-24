@@ -10,11 +10,13 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "cf:setup": "tsx scripts/cf-setup.ts",
     "cf:build": "tsx scripts/cf.ts build",
     "cf:deploy": "tsx scripts/cf.ts deploy",
     "cf:dev": "tsx scripts/cf.ts dev",
     "cf:migrate": "tsx scripts/cf.ts migrate",
     "cf:migrate:local": "tsx scripts/cf.ts migrate:local",
+    "cf:secrets": "tsx scripts/cf-secrets.ts",
     "cf:backup": "tsx scripts/cf-backup.ts backup",
     "cf:restore": "tsx scripts/cf-backup.ts restore",
     "vercel-build": "npm run db:migrate && DEPLOY_TARGET=vercel astro build",

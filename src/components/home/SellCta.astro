@@ -15,86 +15,109 @@ const steps = [
 ];
 ---
 
-<section class="container-site" aria-labelledby="venda-title">
-  <div class="sell-cta relative overflow-hidden rounded-[1.75rem] p-7 sm:p-10 lg:p-14">
-    <svg viewBox={LOGO_VIEWBOX} class="sell-art" aria-hidden="true">
-      {LOGO_GOLD_PATHS.map((d) => (
-        <path d={d} fill="currentColor" />
-      ))}
-    </svg>
-    <div class="relative grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-      <div>
-        <p class="eyebrow">Venda com a M&M</p>
-        <h2 id="venda-title" class="display mt-4 text-4xl text-white sm:text-5xl">
-          Quer vender seu veículo?
-        </h2>
-        <p class="mt-4 max-w-md text-lg text-mist-200">Envie os dados do seu veículo para nossa equipe avaliar.</p>
-        <div class="mt-8 flex flex-col gap-3 xs:flex-row">
-          <a href="/anuncie-seu-veiculo" class="btn btn-gold btn-lg">
-            Quero vender meu veículo
-            <Icon name="arrow-right" size={18} />
-          </a>
-        </div>
-        <p class="mt-4 text-sm text-mist-400">Sem compromisso. O envio não garante a compra do veículo.</p>
+<section class="theme-light sell relative isolate overflow-hidden py-16 sm:py-24" aria-labelledby="venda-title">
+  <svg viewBox={LOGO_VIEWBOX} class="sell-art" aria-hidden="true">
+    {LOGO_GOLD_PATHS.map((d) => (
+      <path d={d} fill="currentColor" />
+    ))}
+  </svg>
+  <div class="container-site relative grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16">
+    <div class="reveal">
+      <p class="eyebrow">Venda com a M&M</p>
+      <h2 id="venda-title" class="display mt-4 text-4xl text-ink-950 sm:text-6xl">
+        Quer vender seu <span class="sell-highlight">veículo?</span>
+      </h2>
+      <p class="mt-5 max-w-md text-lg text-ink-600">
+        Envie os dados e as fotos do seu veículo. Nossa equipe avalia e retorna pelo WhatsApp.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+        <a href="/anuncie-seu-veiculo" class="btn btn-dark btn-lg">
+          Quero vender meu veículo
+          <Icon name="arrow-right" size={18} class="text-gold-400" />
+        </a>
       </div>
-      <ol class="grid gap-3">
-        {steps.map((step, index) => (
-          <li class="step">
-            <span class="step-num tabular">{index + 1}</span>
-            <div>
-              <p class="flex items-center gap-2 font-semibold text-white">
-                <Icon name={step.icon} size={17} class="text-gold-400" />
-                {step.title}
-              </p>
-              <p class="mt-1 text-sm text-mist-300">{step.text}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <p class="mt-4 text-sm text-ink-500">Sem compromisso. O envio não garante a compra do veículo.</p>
     </div>
-    <span class="sr-only">{settings.sellVehicleCta}</span>
+    <ol class="grid gap-3.5">
+      {steps.map((step, index) => (
+        <li class="step reveal">
+          <span class="step-num tabular">{String(index + 1).padStart(2, '0')}</span>
+          <div class="min-w-0">
+            <p class="flex items-center gap-2 text-lg font-bold text-ink-950 [font-stretch:106%]">{step.title}</p>
+            <p class="mt-1 text-ink-600">{step.text}</p>
+          </div>
+          <span class="step-icon" aria-hidden="true">
+            <Icon name={step.icon} size={20} />
+          </span>
+        </li>
+      ))}
+    </ol>
   </div>
+  <span class="sr-only">{settings.sellVehicleCta}</span>
 </section>
 
 <style>
-  .sell-cta {
+  .sell {
     background:
-      radial-gradient(
-        80% 120% at 100% 0%,
-        color-mix(in oklab, var(--color-gold-500) 14%, transparent),
-        transparent 60%
-      ),
-      linear-gradient(160deg, #15181b, #0c0d0f);
-    border: 1px solid color-mix(in oklab, var(--color-gold-500) 22%, transparent);
+      radial-gradient(70% 90% at 100% 0%, rgb(242 193 46 / 0.22), transparent 60%),
+      radial-gradient(60% 80% at 0% 100%, rgb(242 193 46 / 0.1), transparent 60%), #f3f2ee;
   }
   .sell-art {
     position: absolute;
-    right: -6%;
-    bottom: -18%;
-    width: 70%;
-    color: color-mix(in oklab, var(--color-gold-500) 9%, transparent);
+    right: -8%;
+    bottom: -22%;
+    z-index: -1;
+    width: min(62rem, 90%);
+    color: rgb(168 130 12 / 0.09);
     pointer-events: none;
+  }
+  .sell-highlight {
+    position: relative;
+    white-space: nowrap;
+  }
+  .sell-highlight::after {
+    content: '';
+    position: absolute;
+    left: -0.04em;
+    right: -0.04em;
+    bottom: 0.04em;
+    z-index: -1;
+    height: 0.34em;
+    border-radius: 0.1em;
+    background: var(--gold-button);
   }
   .step {
     display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    padding: 1.1rem 1.2rem;
-    border-radius: 1rem;
-    background: rgb(8 9 10 / 0.55);
-    border: 1px solid color-mix(in oklab, white 8%, transparent);
-    backdrop-filter: blur(4px);
+    gap: 1.1rem;
+    align-items: center;
+    padding: 1.2rem 1.3rem;
+    border-radius: 1.25rem;
+    background: #fff;
+    border: 1px solid rgb(21 23 26 / 0.07);
+    box-shadow: 0 18px 40px -28px rgb(21 23 26 / 0.45);
   }
   .step-num {
-    display: inline-flex;
-    width: 2.2rem;
-    height: 2.2rem;
     flex: none;
+    font-size: 1.9rem;
+    font-weight: 800;
+    font-stretch: 115%;
+    line-height: 1;
+    background: var(--gold-metal);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 1px 0 rgb(168 130 12 / 0.35));
+  }
+  .step-icon {
+    display: inline-flex;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex: none;
+    margin-left: auto;
     align-items: center;
     justify-content: center;
-    border-radius: 0.65rem;
-    background: var(--color-gold-500);
-    color: #111;
-    font-weight: 800;
+    border-radius: 999px;
+    background: var(--color-ink-950);
+    color: var(--color-gold-400);
   }
 </style>

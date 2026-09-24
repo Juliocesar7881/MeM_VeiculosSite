@@ -3,19 +3,25 @@
 ## Visão geral
 
 ```
-┌──────────────┐    ┌───────────────────────── Vercel ─────────────────────────┐
-│  Navegador   │───►│ CDN  (HTML 60 s + stale 10 min · /media 1 ano · /_astro)  │
-│ (JS mínimo)  │    │   │                                                        │
-└──────────────┘    │   ▼                                                        │
-                    │ Function Node (Astro SSR)                                  │
-                    │   middleware.ts ─ CSRF · auth /admin · headers · cache     │
-                    │   pages/ ─ apresentação (sem SQL)                          │
-                    │   services/ ─ regras de negócio                            │
-                    │   repositories/ ─ SQL parametrizado   lib/storage/ ─ fotos │
-                    └──────────┬───────────────────────────────────┬────────────┘
-                               ▼                                   ▼
-                     Turso (libSQL/SQLite)              Vercel Blob privado | R2
+┌──────────────┐    ┌──────────────────── Cloudflare (produção) ────────────────────┐
+│  Navegador   │───►│ Borda: arquivos estáticos /_astro (imutáveis) · Turnstile     │
+│ (JS mínimo)  │    │   │                                                           │
+└──────────────┘    │   ▼                                                           │
+                    │ Worker (Astro SSR, @astrojs/cloudflare)                       │
+                    │   middleware.ts ─ CSRF · auth /admin · headers · cache        │
+                    │   pages/ ─ apresentação (sem SQL)                             │
+                    │   services/ ─ regras de negócio                               │
+                    │   repositories/ ─ SQL parametrizado   lib/storage/ ─ fotos    │
+                    └──────────┬──────────────────────────────────────┬─────────────┘
+                               ▼                                      ▼
+                         D1 (SQLite)                        Workers KV  |  R2
+
+Alternativa (mesmo código): Vercel/Node → libSQL (arquivo local ou Turso) + local | Vercel Blob | S3
 ```
+
+O módulo `@/server/platform` é trocado no build (`astro.config.mjs`, alias por `DEPLOY_TARGET`):
+`platform/cloudflare.ts` usa os bindings `DB`, `MEDIA_KV`/`MEDIA` e nunca carrega libSQL, `sharp` ou `fs`;
+`platform/node.ts` usa libSQL e os drivers de storage do Node.
 
 Princípios aplicados:
 
@@ -36,8 +42,9 @@ Princípios aplicados:
 | `src/services` | `VehicleService`, `MediaService`, `LeadService` (inclui conversão proposta→veículo), `SettingsService` (cache 30 s), `RateLimiter`, `AuditService`, notificação opcional por e-mail |
 | `src/repositories` | SQL de cada agregado + mapeamento linha → domínio |
 | `src/schemas` | Zod (veículo, proposta, configurações) e parser tolerante dos filtros de URL |
-| `src/lib/db` | Interface `Database` + implementação libSQL + migrador compatível com D1 |
-| `src/lib/storage` | Interface `ObjectStorage` + drivers `local`, `vercel-blob`, `s3` (R2) + convenção de chaves |
+| `src/lib/db` | Interface `Database` + implementações libSQL e **D1** + migrador compatível com D1 |
+| `src/lib/storage` | Interface `ObjectStorage` + drivers `kv`, `r2`, `local`, `vercel-blob`, `s3` + convenção de chaves |
+| `src/server/platform` | Escolha de banco/storage por runtime (Workers × Node) |
 | `src/lib/auth` | PBKDF2, sessão HMAC, validação do Cloudflare Access (JWT) |
 | `src/features` | Scripts de navegador (TypeScript, sem framework) |
 | `src/components` | Componentes Astro (design system, cards, galeria, formulários, painel) |
@@ -107,41 +114,40 @@ Detalhes e resultado da verificação em [AUDITORIA.md](AUDITORIA.md).
 
 Configurações ficam em cache de memória por 30 s por instância. Resultado: alterações aparecem em até ~1 minuto.
 
+No **Cloudflare Workers** o `s-maxage` não coloca o HTML em cache automaticamente: cada página é gerada pelo Worker
+(consultas ao D1 na mesma região, graças ao *Smart Placement*). As fotos (`/media/*`) são lidas do KV com cache na
+borda (`cacheTtl` de 1 dia — as chaves nunca mudam de conteúdo) e ficam 1 ano no cache do navegador.
+
 ## Portabilidade
 
-### Banco: libSQL → Cloudflare D1
+### Banco: D1 ⇄ libSQL/Turso
 
-- As migrations já são SQLite puro e usam a tabela `d1_migrations` do Wrangler.
-- Criar `src/lib/db/d1.ts` implementando `Database` com `env.DB.prepare(sql).bind(...args).all()/.first()/.run()` e
-  `env.DB.batch()` (≈40 linhas). Nenhum repositório muda.
-- Dados: `npm run db:backup` gera `database.sql`, importável com `wrangler d1 execute <db> --remote --file=...`
-  (depois de `wrangler d1 migrations apply`).
+- Migrations em SQLite puro, controladas pela tabela `d1_migrations` (formato do Wrangler) — as mesmas no D1
+  (`npm run cf:migrate`) e no libSQL (`npm run db:migrate`).
+- `src/lib/db/d1.ts` e `src/lib/db/libsql.ts` implementam a mesma interface `Database`; nenhum repositório muda.
+- Dados entre plataformas: `npm run db:backup` gera `database.sql`; `npm run cf:backup` gera `d1.sql`.
 
 ### Banco: → PostgreSQL
 
 - A interface `Database` isola o driver; os repositórios usam SQL simples. Ajustes necessários: placeholders `$1`,
   `INSERT OR REPLACE`/`ON CONFLICT` equivalentes, `COLLATE NOCASE` → `ILIKE`/`citext`, booleanos nativos.
 
-### Fotos: → qualquer object storage
+### Fotos
 
-- Trocar `STORAGE_DRIVER` (já há `s3`, compatível com R2, B2, S3, MinIO). Para mover arquivos existentes, use
-  `db:backup --with-media` e `db:restore --with-media`.
+- Cloudflare: `STORAGE_DRIVER=kv` (padrão, grátis sem cartão) ou `r2`. Node/Vercel: `local`, `vercel-blob` ou `s3`
+  (R2, B2, S3, MinIO).
+- No Workers não há `sharp`: a imagem de compartilhamento (Open Graph, JPEG 1200×630) é gerada **no navegador** durante
+  o upload e validada no servidor; no Node ela é gerada com `sharp`.
 
-## Migração para Cloudflare
+## Cloudflare (produção)
 
-Caminho recomendado quando for para produção comercial sem custo de hospedagem:
+Passo a passo em [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md). Resumo das decisões:
 
-1. **Hospedagem:** instalar `@astrojs/cloudflare` e trocar o adapter em `astro.config.mjs` (Workers + assets).
-   O limite gratuito de CPU (10 ms por requisição) é suficiente para as páginas (HTML simples + poucas consultas).
-2. **Banco:** criar o D1, aplicar migrations (`wrangler d1 migrations apply`), importar o `database.sql` do backup e
-   usar o adaptador D1 (acima). Binding `DB` no `wrangler.jsonc`.
-3. **Fotos:** R2 com o driver `s3` (sem mudança de código) ou um driver nativo com binding R2.
-4. **Imagem Open Graph:** o Workers não roda `sharp`; a rota já faz fallback automático para a foto WebP original.
-   Opcional: usar Cloudflare Images/Image Resizing para gerar o JPEG.
-5. **Admin:** Cloudflare Zero Trust → Access → aplicação *self-hosted* protegendo `/admin*` e `/api/admin/*`
-   (política por e-mail). Variáveis: `AUTH_MODE=cloudflare-access`, `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`,
-   `ADMIN_EMAILS`. O backend valida o JWT em toda requisição do painel.
-6. **Turnstile:** sem mudanças.
-7. **DNS/domínio:** Cloudflare DNS; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true`.
-8. Rodar `npm run verify` e os testes E2E contra a URL nova (`E2E_BASE_URL=https://... npm run test:e2e`, após
-   popular o banco de teste).
+1. **Hospedagem:** Workers com `@astrojs/cloudflare`; CPU gratuita de 10 ms por requisição é suficiente (HTML simples +
+   poucas consultas). PBKDF2 do login usa 50 mil iterações (limite do WebCrypto do Workers), compensado pelo rate limit.
+2. **Banco:** D1 (binding `DB`), migrations aplicadas a cada deploy (`npm run cf:deploy` / GitHub Actions).
+3. **Fotos:** Workers KV (binding `MEDIA_KV`) com leitura cacheada na borda; R2 quando o volume crescer.
+4. **Segredos:** `npm run cf:secrets` (senha do painel, sessão, sal do IP, Turnstile, Resend).
+5. **Admin:** senha + sessão, ou Cloudflare Access (`AUTH_MODE=cloudflare-access`, o backend valida o JWT).
+6. **IP do cliente** (rate limit): somente `CF-Connecting-IP`, definido pela Cloudflare.
+7. **DNS/domínio:** Cloudflare DNS + Custom Domain no Worker; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true`.

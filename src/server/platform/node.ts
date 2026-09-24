@@ -16,6 +16,8 @@ export const createPlatform: CreatePlatform = async (config) => {
     name: 'node',
     db,
     storage,
+    // Na Vercel o IP vem do header definido pela própria plataforma; localmente, do socket.
+    ipSource: process.env.VERCEL ? 'vercel' : 'direct',
     renderOgImage: async (body) => {
       const { renderOgImage } = await import('@/server/og-image');
       return new Uint8Array(await renderOgImage(body));

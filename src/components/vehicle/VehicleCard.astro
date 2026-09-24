@@ -65,30 +65,30 @@ const sold = v.status === 'sold';
     )}
   </div>
 
-  <div class="flex flex-1 flex-col p-4 sm:p-5">
-    <p class="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mist-400">{v.brand}</p>
-    <Heading class="mt-1 text-lg leading-tight font-bold text-white [font-stretch:108%]">
+  <div class="flex flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5">
+    <p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold-400/90">{v.brand}</p>
+    <Heading class="mt-1 text-xl leading-tight font-bold text-white [font-stretch:108%]">
       <a href={href} class="vcard-link" data-astro-prefetch>
         {v.model}
       </a>
     </Heading>
     <p class="mt-0.5 truncate text-sm text-mist-300" title={v.version ?? undefined}>
-      {v.version || ' '}
+      {v.version || ' '}
     </p>
 
     {specs.length > 0 && (
-      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[0.82rem] text-mist-200">
+      <ul class="vcard-specs">
         {specs.map((spec) => (
-          <li class="inline-flex items-center gap-1.5">
-            <Icon name={spec.icon} size={15} class="text-mist-500" label={spec.label} />
-            <span class="tabular">{spec.value}</span>
+          <li>
+            <Icon name={spec.icon} size={15} class="shrink-0 text-mist-500" label={spec.label} />
+            <span class="truncate tabular">{spec.value}</span>
           </li>
         ))}
       </ul>
     )}
 
-    <div class="min-h-4 flex-1" aria-hidden="true"></div>
-    <div class="flex items-end justify-between gap-3 border-t hairline pt-4">
+    <div class="min-h-3 flex-1" aria-hidden="true"></div>
+    <div class="vcard-foot">
       <PriceTag vehicle={v} />
       <span class="vcard-arrow" aria-hidden="true">
         <Icon name="arrow-up-right" size={18} />
@@ -103,27 +103,31 @@ const sold = v.status === 'sold';
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--radius-card);
-    background: var(--color-ink-850);
+    padding: 0.45rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(180deg, var(--color-ink-800), var(--color-ink-850) 55%);
     border: 1px solid color-mix(in oklab, white 7%, transparent);
     transition:
-      border-color 200ms ease,
-      transform 240ms var(--ease-out-soft),
-      box-shadow 240ms var(--ease-out-soft);
+      border-color 220ms ease,
+      transform 260ms var(--ease-out-soft),
+      box-shadow 260ms var(--ease-out-soft);
   }
   @media (hover: hover) {
     .vcard:hover {
-      border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-lift);
+      border-color: color-mix(in oklab, var(--color-gold-500) 50%, transparent);
+      transform: translateY(-4px);
+      box-shadow:
+        var(--shadow-lift),
+        0 0 0 1px color-mix(in oklab, var(--color-gold-500) 12%, transparent);
     }
     .vcard:hover .vcard-img {
-      transform: scale(1.035);
+      transform: scale(1.045);
     }
     .vcard:hover .vcard-arrow {
-      background: var(--color-gold-500);
+      background: var(--gold-button);
       color: #111;
-      border-color: var(--color-gold-500);
+      border-color: transparent;
+      transform: rotate(45deg);
     }
   }
   .vcard:focus-within {
@@ -133,18 +137,19 @@ const sold = v.status === 'sold';
     position: relative;
     aspect-ratio: 4 / 3;
     overflow: hidden;
+    border-radius: 1.1rem;
     background: var(--color-ink-800);
   }
   .vcard-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 500ms var(--ease-out-soft);
+    transition: transform 600ms var(--ease-out-soft);
   }
   .vcard-shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 28%, transparent 78%, rgb(0 0 0 / 0.35));
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0.38), transparent 30%, transparent 72%, rgb(0 0 0 / 0.42));
     pointer-events: none;
   }
   .is-sold .vcard-img {
@@ -152,18 +157,43 @@ const sold = v.status === 'sold';
   }
   .vcard-count {
     position: absolute;
-    left: 0.75rem;
-    bottom: 0.7rem;
+    left: 0.7rem;
+    bottom: 0.65rem;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.45rem;
-    background: rgb(8 9 10 / 0.6);
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(8 9 10 / 0.62);
     backdrop-filter: blur(6px);
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--color-mist-100);
+  }
+  .vcard-specs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem 0.9rem;
+    margin-top: 0.95rem;
+    font-size: 0.82rem;
+    color: var(--color-mist-200);
+  }
+  .vcard-specs li {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .vcard-foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--color-ink-950) 55%, transparent);
+    border: 1px solid color-mix(in oklab, white 5%, transparent);
   }
   /* Link "esticado": o card inteiro é clicável, sem aninhar o botão de favorito no link. */
   .vcard-link::after {
@@ -186,8 +216,9 @@ const sold = v.status === 'sold';
     border: 1px solid color-mix(in oklab, white 14%, transparent);
     color: var(--color-mist-200);
     transition:
-      background-color 200ms ease,
-      color 200ms ease,
-      border-color 200ms ease;
+      background-color 220ms ease,
+      color 220ms ease,
+      border-color 220ms ease,
+      transform 300ms var(--ease-out-soft);
   }
 </style>

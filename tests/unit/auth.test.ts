@@ -4,6 +4,7 @@ import { createSessionToken, SESSION_TTL_SECONDS, verifySessionToken } from '@/l
 import { splitSqlStatements } from '@/lib/db/migrator';
 import { buildCsp } from '@/server/security-headers';
 import { safeAdminRedirect } from '@/server/admin-auth';
+import { clientIp } from '@/server/http';
 
 describe('senha (PBKDF2)', () => {
   it('gera hash verificável e rejeita senha errada', async () => {
@@ -88,5 +89,31 @@ describe('splitSqlStatements', () => {
       "INSERT INTO a VALUES ('um;dois')",
       "INSERT INTO a VALUES ('it''s')",
     ]);
+  });
+});
+
+describe('IP do cliente (rate limit)', () => {
+  const req = (headers: Record<string, string>) => new Request('https://example.com/', { headers });
+  const socket = () => '10.0.0.9';
+
+  it('Cloudflare: usa CF-Connecting-IP', () => {
+    expect(clientIp(req({ 'cf-connecting-ip': '1.1.1.1', 'x-real-ip': '2.2.2.2' }), 'cloudflare', socket)).toBe(
+      '1.1.1.1',
+    );
+  });
+
+  it('Vercel: ignora CF-Connecting-IP forjado pelo cliente', () => {
+    expect(clientIp(req({ 'cf-connecting-ip': '6.6.6.6', 'x-real-ip': '2.2.2.2' }), 'vercel', socket)).toBe('2.2.2.2');
+    expect(clientIp(req({ 'x-forwarded-for': '3.3.3.3, 4.4.4.4' }), 'vercel', socket)).toBe('3.3.3.3');
+  });
+
+  it('Servidor direto: usa só o endereço do socket', () => {
+    expect(clientIp(req({ 'cf-connecting-ip': '6.6.6.6', 'x-forwarded-for': '7.7.7.7' }), 'direct', socket)).toBe(
+      '10.0.0.9',
+    );
+    const throwing = () => {
+      throw new Error('indisponível');
+    };
+    expect(clientIp(req({}), 'direct', throwing)).toBe('unknown');
   });
 });

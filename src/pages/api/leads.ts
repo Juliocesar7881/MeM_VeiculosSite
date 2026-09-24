@@ -23,13 +23,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     const type = request.headers.get('content-type') ?? '';
     if (!type.startsWith('multipart/form-data')) return jsonError(415, 'Formato de envio inválido.');
 
-    let fallbackIp: string | undefined;
-    try {
-      fallbackIp = clientAddress;
-    } catch {
-      fallbackIp = undefined;
-    }
-    const ip = clientIp(request, fallbackIp);
+    const ip = clientIp(request, container.platform.ipSource, () => clientAddress);
     for (const rule of [RATE_LIMITS.leadHourly, RATE_LIMITS.leadDaily]) {
       const limit = await container.rateLimiter.check(rule, ip);
       if (!limit.allowed) {

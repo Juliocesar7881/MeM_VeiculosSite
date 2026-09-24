@@ -4,7 +4,8 @@
  *   - todas as fotos (KV ou R2) referenciadas no banco
  *
  *   npm run cf:backup
- *   npm run cf:restore -- backups/cf-2026-09-24T12-00-00      (restaura banco + fotos)
+ *   npm run cf:restore -- backups/cf-2026-09-24T12-00-00      (restaura banco + fotos num D1 vazio)
+ *   npm run cf:restore -- backups/cf-... --media-only         (só as fotos — ex.: migrar do KV para o R2)
  *
  * Saída: backups/cf-AAAA-MM-DDTHH-MM-SS/{d1.sql, media/...}
  */
@@ -14,6 +15,11 @@ import path from 'node:path';
 
 const DB_NAME = 'mm-veiculos';
 const shell = process.platform === 'win32';
+
+/** Com shell (Windows) o argumento precisa de aspas; sem shell, vai literalmente. */
+function shellArg(value: string): string {
+  return shell ? `"${value}"` : value;
+}
 
 function wrangler(args: string[], capture = false): string {
   const result = spawnSync('npx', ['wrangler', ...args], {
@@ -51,7 +57,7 @@ function mediaKeys(): string[] {
     'SELECT large_key AS k FROM vehicle_images UNION SELECT thumb_key FROM vehicle_images ' +
     'UNION SELECT og_key FROM vehicle_images WHERE og_key IS NOT NULL ' +
     'UNION SELECT large_key FROM vehicle_lead_images UNION SELECT thumb_key FROM vehicle_lead_images';
-  const out = wrangler(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', `"${sql}"`], true);
+  const out = wrangler(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', shellArg(sql)], true);
   const parsed = JSON.parse(out.slice(out.indexOf('['))) as { results: { k: string }[] }[];
   return parsed.flatMap((r) => r.results.map((row) => row.k)).filter(Boolean);
 }
@@ -85,10 +91,37 @@ function listFiles(dir: string): string[] {
   });
 }
 
-function restore(source: string) {
+function databaseHasTables(): boolean {
+  const out = wrangler(
+    [
+      'd1',
+      'execute',
+      DB_NAME,
+      '--remote',
+      '--json',
+      '--command',
+      shellArg("SELECT name FROM sqlite_master WHERE name = 'vehicles'"),
+    ],
+    true,
+  );
+  const parsed = JSON.parse(out.slice(out.indexOf('['))) as { results: unknown[] }[];
+  return parsed.some((r) => r.results.length > 0);
+}
+
+function restore(source: string, mediaOnly: boolean) {
   const { kvId, r2Bucket, driver } = readConfig();
   const dir = path.resolve(source);
-  wrangler(['d1', 'execute', DB_NAME, '--remote', '--file', path.join(dir, 'd1.sql')]);
+  if (!mediaOnly) {
+    if (databaseHasTables()) {
+      console.error(
+        '✖ O D1 "mm-veiculos" já tem dados. O SQL do backup recria as tabelas e só pode ser aplicado num banco vazio.\n' +
+          '  • Para voltar no tempo, use o Time Travel: npx wrangler d1 time-travel restore mm-veiculos --timestamp=<ISO>\n' +
+          '  • Para copiar só as fotos, rode de novo com --media-only.',
+      );
+      process.exit(1);
+    }
+    wrangler(['d1', 'execute', DB_NAME, '--remote', '--file', path.join(dir, 'd1.sql')]);
+  }
   const mediaDir = path.join(dir, 'media');
   const files = listFiles(mediaDir);
   for (const file of files) {
@@ -96,16 +129,23 @@ function restore(source: string) {
     if (driver === 'r2' && r2Bucket) {
       wrangler(['r2', 'object', 'put', `${r2Bucket}/${key}`, '--remote', '--file', file]);
     } else if (kvId) {
-      wrangler(['kv', 'key', 'put', key, '--namespace-id', kvId, '--remote', '--path', file]);
+      const metadata = shellArg(JSON.stringify({ contentType: contentType(key), size: statSync(file).size }));
+      wrangler(['kv', 'key', 'put', key, '--namespace-id', kvId, '--remote', '--path', file, '--metadata', metadata]);
     }
   }
-  console.log(`\n✔ Restaurado: banco + ${files.length} arquivos de foto.`);
+  console.log(`\n✔ Restaurado: ${mediaOnly ? '' : 'banco + '}${files.length} arquivos de foto.`);
+}
+
+function contentType(key: string): string {
+  if (key.endsWith('.webp')) return 'image/webp';
+  if (key.endsWith('.png')) return 'image/png';
+  return 'image/jpeg';
 }
 
 const [task, arg] = process.argv.slice(2);
 if (task === 'backup') backup();
-else if (task === 'restore' && arg) restore(arg);
+else if (task === 'restore' && arg) restore(arg, process.argv.includes('--media-only'));
 else {
-  console.error('Uso: tsx scripts/cf-backup.ts backup | restore <pasta>');
+  console.error('Uso: tsx scripts/cf-backup.ts backup | restore <pasta> [--media-only]');
   process.exit(1);
 }

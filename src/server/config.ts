@@ -24,6 +24,8 @@ import {
   TURNSTILE_SECRET_KEY,
   TURNSTILE_SITE_KEY,
 } from 'astro:env/server';
+import { DEV_ADMIN_PASSWORD_HASH } from '@/config/dev-auth';
+import { toBase64Url } from '@/lib/auth/password';
 import { TURNSTILE_TEST_KEYS } from '@/lib/turnstile';
 import type { StorageDriver } from '@/lib/storage';
 
@@ -56,6 +58,8 @@ export interface ServerConfig {
     accessTeamDomain?: string | undefined;
     accessAudience?: string | undefined;
     allowedEmails: string[];
+    /** Desenvolvimento local sem ADMIN_PASSWORD_HASH: senha padrão de dev (src/config/dev-auth.ts). */
+    usingDevPassword: boolean;
   };
   turnstile: { siteKey: string; secretKey: string; usingTestKeys: boolean; configured: boolean };
   ipHashSalt: string;
@@ -69,6 +73,7 @@ export function getServerConfig(): ServerConfig {
   const isProduction = import.meta.env.PROD;
   const hasTurnstile = Boolean(TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
   const useTestKeys = !hasTurnstile && !isProduction;
+  const usingDevPassword = !isProduction && !ADMIN_PASSWORD_HASH;
 
   cached = {
     isProduction,
@@ -89,14 +94,17 @@ export function getServerConfig(): ServerConfig {
     },
     auth: {
       mode: AUTH_MODE,
-      passwordHash: ADMIN_PASSWORD_HASH,
-      sessionSecret: SESSION_SECRET,
+      passwordHash: usingDevPassword ? DEV_ADMIN_PASSWORD_HASH : ADMIN_PASSWORD_HASH,
+      // Em dev sem segredo configurado, as sessões valem só até reiniciar o servidor.
+      sessionSecret:
+        SESSION_SECRET ?? (usingDevPassword ? toBase64Url(crypto.getRandomValues(new Uint8Array(32))) : undefined),
       accessTeamDomain: CF_ACCESS_TEAM_DOMAIN,
       accessAudience: CF_ACCESS_AUD,
       allowedEmails: (ADMIN_EMAILS ?? '')
         .split(',')
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean),
+      usingDevPassword,
     },
     turnstile: {
       siteKey: hasTurnstile ? (TURNSTILE_SITE_KEY as string) : useTestKeys ? TURNSTILE_TEST_KEYS.siteKey : '',

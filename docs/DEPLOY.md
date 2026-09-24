@@ -1,11 +1,13 @@
-# Publicação (Vercel + Turso + Blob + Turnstile)
+# Publicação alternativa: Vercel + Turso + Blob + Turnstile
 
-Guia passo a passo para colocar o site no ar. **O domínio só é necessário no final** — tudo funciona antes com a URL
-gratuita `*.vercel.app`, usada para validar com o cliente.
+> **A produção recomendada é o Cloudflare** (plano gratuito com uso comercial): veja
+> **[DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md)**. Este guia fica como alternativa — por exemplo, para previews.
+
+Guia passo a passo para colocar o site no ar na Vercel. **O domínio só é necessário no final** — tudo funciona antes
+com a URL gratuita `*.vercel.app`.
 
 > ⚠️ O plano **Hobby** da Vercel é para uso **pessoal/não comercial**. Use-o para preview e validação. Para a produção
-> comercial, escolha **Vercel Pro** ou a **migração para Cloudflare** (plano gratuito sem essa restrição) descrita em
-> [ARQUITETURA.md](ARQUITETURA.md#migração-para-cloudflare).
+> comercial na Vercel seria preciso o **Vercel Pro** — ou use o Cloudflare, que é gratuito.
 
 ## Sumário
 
@@ -96,8 +98,9 @@ No seu computador:
 npm run admin:hash-password
 ```
 
-Digite uma senha forte (12+ caracteres). O comando imprime `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` e `IP_HASH_SALT`
-para colar na Vercel. Guarde a senha num gerenciador de senhas — o hash não permite recuperá-la. Para trocar a senha
+Digite uma senha forte (12+ caracteres) — ou, para validação, a senha de desenvolvimento:
+`npm run admin:hash-password -- MeM_admin78812`. O comando imprime `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` e
+`IP_HASH_SALT` para colar na Vercel (use o bloco “Vercel”, sem barras invertidas). Guarde a senha num gerenciador de senhas — o hash não permite recuperá-la. Para trocar a senha
 depois, gere um novo hash e atualize a variável (todas as sessões abertas são encerradas).
 
 ## 7. Turnstile
@@ -203,4 +206,4 @@ proposta no painel. Sem essas variáveis, nada é enviado.
 - [ ] Domínio com HTTPS; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true` em Production
 - [ ] Sitemap enviado ao Google Search Console
 - [ ] Primeiro backup feito (`npm run db:backup -- --with-media`)
-- [ ] Decisão sobre o plano: Vercel Pro ou migração para Cloudflare (uso comercial)
+- [ ] Decisão sobre o plano: Vercel Pro ou Cloudflare (gratuito, uso comercial — [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md))

@@ -42,8 +42,9 @@
   --color-danger: #ef4444;
   --color-whatsapp: #25d366;
 
-  --radius-card: 1rem;
-  --shadow-lift: 0 18px 40px -18px rgb(0 0 0 / 0.7);
+  --radius-card: 1.25rem;
+  --shadow-lift: 0 24px 50px -24px rgb(0 0 0 / 0.85);
+  --shadow-gold: 0 18px 44px -22px rgb(242 193 46 / 0.55);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   --breakpoint-xs: 400px;
@@ -53,6 +54,9 @@
   :root {
     color-scheme: dark;
     --header-h: 4.5rem;
+    /* Dourado metálico da logo (reflexo claro → dourado → âmbar). */
+    --gold-metal: linear-gradient(135deg, #fbe7a6 0%, #f5cb45 30%, #f2c12e 52%, #d8a813 78%, #f8d970 100%);
+    --gold-button: linear-gradient(180deg, #f9dd7a 0%, #f2c12e 48%, #e2b01a 100%);
   }
 
   html {
@@ -188,9 +192,9 @@
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    min-height: 2.9rem;
-    padding: 0.7rem 1.25rem;
-    border-radius: 0.75rem;
+    min-height: 3rem;
+    padding: 0.72rem 1.4rem;
+    border-radius: 999px;
     font-weight: 650;
     font-size: 0.95rem;
     line-height: 1.1;
@@ -200,6 +204,8 @@
       background-color 160ms var(--ease-out-soft),
       border-color 160ms var(--ease-out-soft),
       color 160ms var(--ease-out-soft),
+      box-shadow 200ms var(--ease-out-soft),
+      filter 160ms var(--ease-out-soft),
       transform 160ms var(--ease-out-soft);
     white-space: nowrap;
     user-select: none;
@@ -213,11 +219,26 @@
     cursor: not-allowed;
   }
   .btn-gold {
-    background: var(--color-gold-500);
-    color: #111;
+    background: var(--gold-button);
+    color: #141005;
+    border-color: color-mix(in oklab, var(--color-gold-300) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      0 10px 26px -14px rgb(242 193 46 / 0.75);
   }
   .btn-gold:hover:not(:disabled) {
-    background: var(--color-gold-400);
+    filter: brightness(1.06) saturate(1.05);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 16px 34px -14px rgb(242 193 46 / 0.9);
+  }
+  .btn-dark {
+    background: var(--color-ink-950);
+    color: #fff;
+    box-shadow: 0 12px 28px -16px rgb(0 0 0 / 0.8);
+  }
+  .btn-dark:hover:not(:disabled) {
+    background: var(--color-ink-700);
   }
   .btn-outline-gold {
     border-color: color-mix(in oklab, var(--color-gold-500) 70%, transparent);
@@ -241,6 +262,9 @@
   .btn-whatsapp {
     background: var(--color-whatsapp);
     color: #06180d;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 10px 26px -14px rgb(37 211 102 / 0.7);
   }
   .btn-whatsapp:hover:not(:disabled) {
     background: #3be07a;
@@ -254,14 +278,13 @@
     background: color-mix(in oklab, var(--color-danger) 26%, transparent);
   }
   .btn-sm {
-    min-height: 2.35rem;
-    padding: 0.45rem 0.85rem;
+    min-height: 2.4rem;
+    padding: 0.45rem 1rem;
     font-size: 0.85rem;
-    border-radius: 0.6rem;
   }
   .btn-lg {
-    min-height: 3.35rem;
-    padding: 0.9rem 1.6rem;
+    min-height: 3.4rem;
+    padding: 0.9rem 1.75rem;
     font-size: 1rem;
   }
   .btn-icon {
@@ -290,9 +313,21 @@
 
   /* Superfícies */
   .surface {
-    background: var(--color-ink-850);
+    background: linear-gradient(180deg, var(--color-ink-800), var(--color-ink-850));
     border: 1px solid color-mix(in oklab, white 7%, transparent);
     border-radius: var(--radius-card);
+  }
+  .glass {
+    background: color-mix(in oklab, var(--color-ink-900) 62%, transparent);
+    border: 1px solid color-mix(in oklab, white 12%, transparent);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+  }
+  .text-gold-metal {
+    background: var(--gold-metal);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .hairline {
     border-color: color-mix(in oklab, white 8%, transparent);
@@ -312,9 +347,9 @@
   .input {
     display: block;
     width: 100%;
-    min-height: 2.9rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: 0.7rem;
+    min-height: 2.95rem;
+    padding: 0.65rem 0.95rem;
+    border-radius: 0.8rem;
     background: var(--color-ink-900);
     border: 1px solid color-mix(in oklab, white 12%, transparent);
     color: var(--color-paper);
@@ -550,5 +585,32 @@
       linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse at 70% 30%, black 20%, transparent 70%);
+  }
+
+  /* Seção clara (papel) — quebra o fundo escuro com o preto/dourado da marca. */
+  .theme-light {
+    color-scheme: light;
+    background: #f3f2ee;
+    color: #15171a;
+  }
+  .theme-light .eyebrow {
+    color: var(--color-gold-700);
+  }
+
+  /* Entrada suave dos blocos ao rolar (CSS puro; ignorado em navegadores sem suporte). */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        animation: reveal-up linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 45%;
+      }
+    }
+  }
+  @keyframes reveal-up {
+    from {
+      opacity: 0.001;
+      transform: translateY(18px);
+    }
   }
 }

@@ -1,0 +1,108 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/components/ui/icons';
+
+/** Faixa com os serviços da loja (sem números inventados: só o que a M&M realmente faz). */
+const items: { icon: IconName; title: string; text: string; href: string }[] = [
+  { icon: 'car', title: 'Estoque variado', text: 'Carros, motos, pesados e máquinas', href: '/estoque' },
+  { icon: 'shield', title: 'Financiamento', text: 'Consulte as condições', href: '/contato' },
+  {
+    icon: 'handshake',
+    title: 'Compramos seu veículo',
+    text: 'Envie os dados para avaliação',
+    href: '/anuncie-seu-veiculo',
+  },
+  { icon: 'repasse', title: 'Repasses', text: 'Oportunidades selecionadas', href: '/repasses' },
+];
+---
+
+<section class="container-site" aria-label="Serviços">
+  <ul class="strip" role="list">
+    {items.map((item) => (
+      <li>
+        <a href={item.href} class="strip-item group">
+          <span class="strip-icon">
+            <Icon name={item.icon} size={22} strokeWidth={1.6} />
+          </span>
+          <span class="min-w-0">
+            <span class="block font-semibold text-white [font-stretch:106%]">{item.title}</span>
+            <span class="block text-sm text-mist-400">{item.text}</span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid color-mix(in oklab, white 8%, transparent);
+    background: linear-gradient(180deg, var(--color-ink-850), var(--color-ink-900));
+  }
+  @media (min-width: 640px) {
+    .strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .strip {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .strip li + li {
+    border-top: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .strip li + li {
+      border-top: 0;
+    }
+    .strip li:nth-child(even) {
+      border-left: 1px solid color-mix(in oklab, white 7%, transparent);
+    }
+    .strip li:nth-child(n + 3) {
+      border-top: 1px solid color-mix(in oklab, white 7%, transparent);
+    }
+  }
+  @media (min-width: 1024px) {
+    .strip li + li {
+      border-left: 1px solid color-mix(in oklab, white 7%, transparent);
+    }
+    .strip li:nth-child(n + 3) {
+      border-top: 0;
+    }
+  }
+  .strip-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    height: 100%;
+    padding: 1.1rem 1.25rem;
+    transition: background-color 180ms ease;
+  }
+  .strip-item:hover {
+    background: color-mix(in oklab, var(--color-gold-500) 6%, transparent);
+  }
+  .strip-icon {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--color-gold-300);
+    background: color-mix(in oklab, var(--color-gold-500) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 30%, transparent);
+    transition:
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+  .strip-item:hover .strip-icon {
+    background: var(--gold-button);
+    color: #111;
+  }
+</style>

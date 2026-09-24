@@ -1,0 +1,54 @@
+# Publica no Cloudflare Workers a cada push na main (migrations do D1 + build + deploy).
+#
+# Configure uma vez em GitHub → Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN   token com o modelo "Edit Cloudflare Workers" + permissão "D1: Edit"
+#   CLOUDFLARE_ACCOUNT_ID  ID da conta (painel do Cloudflare → Workers & Pages → lado direito)
+# Os segredos do site (senha do painel etc.) ficam no próprio Worker: `npm run cf:secrets`.
+name: Deploy Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloudflare
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Conferir credenciais
+        id: creds
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Deploy ignorado: defina CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID nos secrets do repositório."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.ok == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.ok == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: steps.creds.outputs.ok == 'true'
+      - name: Verificar (lint, tipos, testes)
+        if: steps.creds.outputs.ok == 'true'
+        run: npm run lint && npm run typecheck && npm test
+      - name: Migrations D1 + build + deploy
+        if: steps.creds.outputs.ok == 'true'
+        run: npm run cf:deploy

@@ -31,12 +31,18 @@ async function main() {
   const hash = await hashPassword(password, cloudflare ? WORKERS_ITERATIONS : DEFAULT_ITERATIONS);
   const secret = toBase64Url(crypto.getRandomValues(new Uint8Array(48)));
   const salt = toBase64Url(crypto.getRandomValues(new Uint8Array(24)));
-  console.log(
-    cloudflare
-      ? '\nCloudflare: grave cada valor com `npx wrangler secret put <NOME>` (ou no painel do Worker):\n'
-      : '\nAdicione nas variáveis de ambiente (ex.: Vercel → Settings → Environment Variables):\n',
-  );
+  if (cloudflare) {
+    console.log('\nCloudflare: prefira `npm run cf:secrets` (grava tudo de uma vez). Ou grave cada valor com');
+    console.log('`npx wrangler secret put <NOME>` / painel do Worker:\n');
+  } else {
+    console.log('\nVercel (Settings → Environment Variables) — cole os valores exatamente assim:\n');
+  }
   console.log(`ADMIN_PASSWORD_HASH=${hash}`);
+  console.log(`SESSION_SECRET=${secret}`);
+  console.log(`IP_HASH_SALT=${salt}`);
+  // O Vite expande "$NOME" em arquivos .env: no .env local cada "$" do hash precisa de barra invertida.
+  console.log('\nArquivo .env local (os "$" do hash precisam de barra invertida):\n');
+  console.log(`ADMIN_PASSWORD_HASH=${hash.replaceAll('$', '\\$')}`);
   console.log(`SESSION_SECRET=${secret}`);
   console.log(`IP_HASH_SALT=${salt}`);
   console.log('\nGuarde a senha em local seguro. O hash não permite recuperar a senha.');

@@ -79,44 +79,77 @@ const SHAPES: Record<DemoShape, { body: string; windows: string; wheels: [number
 export function demoPhotoSvg(options: { shape: DemoShape; color: string; label: string; variant: number }): string {
   const { shape, color, label, variant } = options;
   const s = SHAPES[shape];
-  const angle = [0, -6, 6, -3][variant % 4] ?? 0;
-  const spot = ['50%', '35%', '65%', '45%'][variant % 4] ?? '50%';
+  // Variações de enquadramento entre as fotos do mesmo veículo.
+  const scale = [1.02, 1.12, 0.96, 1.07][variant % 4] ?? 1;
+  const shift = [0, -70, 60, -30][variant % 4] ?? 0;
+  const light = ['50%', '32%', '68%', '44%'][variant % 4] ?? '50%';
   const wheels = s.wheels
     .map(
       ([cx, cy, r]) => `
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#0b0c0d"/>
-      <circle cx="${cx}" cy="${cy}" r="${r * 0.62}" fill="#2b2f34"/>
-      <circle cx="${cx}" cy="${cy}" r="${r * 0.5}" fill="none" stroke="#9aa0a8" stroke-width="${r * 0.08}"/>
-      <circle cx="${cx}" cy="${cy}" r="${r * 0.14}" fill="#c9cdd2"/>`,
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#101113"/>
+      <circle cx="${cx}" cy="${cy}" r="${r * 0.66}" fill="url(#rim)"/>
+      <circle cx="${cx}" cy="${cy}" r="${r * 0.52}" fill="none" stroke="#e7e9ec" stroke-opacity="0.55" stroke-width="${r * 0.05}"/>
+      <circle cx="${cx}" cy="${cy}" r="${r * 0.15}" fill="#2a2d31" stroke="#d4d7db" stroke-width="${r * 0.04}"/>`,
     )
     .join('');
+  // Linha do chão: a parte de baixo das rodas encosta nela; o reflexo espelha a partir dela.
+  const ground = 850;
+  const bottom = Math.max(...s.wheels.map(([, cy, r]) => cy + r));
+  const place = (flip: boolean) =>
+    `translate(${800 + shift} ${ground}) scale(${scale} ${flip ? -scale : scale}) translate(-800 -${bottom})`;
+  const vehicle = `
+    <path d="${s.body}" fill="url(#paint)"/>
+    <path d="${s.body}" fill="url(#sheen)"/>
+    <path d="${s.windows}" fill="url(#glass)"/>
+    ${wheels}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
   <defs>
-    <radialGradient id="bg" cx="${spot}" cy="30%" r="80%">
-      <stop offset="0" stop-color="#3a3f46"/><stop offset="0.55" stop-color="#16181b"/><stop offset="1" stop-color="#08090a"/>
+    <radialGradient id="bg" cx="${light}" cy="18%" r="95%">
+      <stop offset="0" stop-color="#f1f2f3"/><stop offset="0.45" stop-color="#c9cdd2"/><stop offset="1" stop-color="#7c828a"/>
     </radialGradient>
     <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1d2024"/><stop offset="1" stop-color="#050506"/>
+      <stop offset="0" stop-color="#9aa0a7"/><stop offset="0.5" stop-color="#6c727a"/><stop offset="1" stop-color="#3b4046"/>
     </linearGradient>
     <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
-      <stop offset="0.18" stop-color="${color}"/>
-      <stop offset="0.75" stop-color="${color}"/>
-      <stop offset="1" stop-color="#000" stop-opacity="0.6"/>
+      <stop offset="0" stop-color="${color}"/>
+      <stop offset="0.55" stop-color="${color}"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.6"/>
+      <stop offset="0.22" stop-color="#fff" stop-opacity="0.12"/>
+      <stop offset="0.4" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.62" stop-color="#000" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.3"/>
     </linearGradient>
     <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9fb4c8" stop-opacity="0.85"/><stop offset="1" stop-color="#1b2530"/>
+      <stop offset="0" stop-color="#dfe8f0" stop-opacity="0.95"/><stop offset="0.45" stop-color="#6f8397"/><stop offset="1" stop-color="#1c252e"/>
     </linearGradient>
+    <radialGradient id="rim" cx="40%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#f4f5f6"/><stop offset="0.6" stop-color="#8e949b"/><stop offset="1" stop-color="#3a3e43"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000" stop-opacity="0.55"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="reflection-mask"><rect x="0" y="${ground}" width="1600" height="${1200 - ground}" fill="url(#fade)"/></mask>
   </defs>
   <rect width="1600" height="1200" fill="url(#bg)"/>
-  <rect y="740" width="1600" height="460" fill="url(#floor)"/>
-  <ellipse cx="800" cy="760" rx="720" ry="46" fill="#000" opacity="0.65"/>
-  <g transform="translate(0 110) rotate(${angle} 800 600)">
-    <path d="${s.body}" fill="url(#paint)"/>
-    <path d="${s.windows}" fill="url(#glass)"/>
-    ${wheels}
+  <rect y="760" width="1600" height="440" fill="url(#floor)"/>
+  <rect y="758" width="1600" height="4" fill="#fff" opacity="0.18"/>
+  <ellipse cx="${800 + shift}" cy="${ground}" rx="${660 * scale}" ry="30" fill="url(#shadow)"/>
+  <g transform="${place(false)}">
+    ${vehicle}
   </g>
-  <text x="800" y="1080" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" fill="#f2c12e" letter-spacing="10">FOTO DEMONSTRATIVA</text>
-  <text x="800" y="1130" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#8b929b">${label}</text>
+  <g mask="url(#reflection-mask)">
+    <g transform="${place(true)}" opacity="0.5">
+      ${vehicle}
+    </g>
+  </g>
+  <rect x="40" y="1100" width="${Math.max(620, label.length * 13 + 450)}" height="64" rx="32" fill="#0b0c0e" fill-opacity="0.72"/>
+  <text x="72" y="1142" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#f2c12e" letter-spacing="4">FOTO DEMONSTRATIVA</text>
+  <text x="${72 + 405}" y="1142" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#c9cdd2">${label}</text>
 </svg>`;
 }

@@ -2,7 +2,7 @@
 import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
 import Icon from '@/components/ui/Icon.astro';
 import PriceTag from '@/components/vehicle/PriceTag.astro';
-import { CATEGORY_INFO, VEHICLE_CATEGORIES } from '@/config/catalog';
+import { CATEGORY_INFO, VEHICLE_CATEGORIES, type VehicleCategory } from '@/config/catalog';
 import { mediaUrl } from '@/lib/storage/keys';
 import type { VehicleCard } from '@/types/domain';
 import type { SiteSettings } from '@/types/settings';
@@ -19,31 +19,80 @@ interface Props {
 const { settings, spotlight, availableCount, suggestions } = Astro.props;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
 const cover = spotlight?.cover ?? null;
+
+/** Rótulos curtos para os filtros rápidos da busca. */
+const SHORT: Record<VehicleCategory, string> = {
+  carro: 'Carros',
+  moto: 'Motos',
+  scooter: 'Scooters',
+  pesado: 'Pesados',
+  maquina_agricola: 'Máquinas',
+};
+const spotlightSpecs = spotlight
+  ? [spotlight.version, yearLabel(spotlight), usageLabel(spotlight)].filter(Boolean).join(' · ')
+  : '';
 ---
 
-<section class="hero relative isolate overflow-hidden" aria-labelledby="hero-title">
+<section class:list={['hero relative isolate overflow-hidden', { 'has-media': cover }]} aria-labelledby="hero-title">
+  {spotlight && cover ? (
+    <div class="hero-media">
+      <img
+        src={mediaUrl(cover.largeKey)}
+        srcset={`${mediaUrl(cover.thumbKey)} ${cover.thumbWidth}w, ${mediaUrl(cover.largeKey)} ${cover.width}w`}
+        sizes="(min-width: 1024px) 64vw, 100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={`${vehicleName(spotlight)} ${spotlight.version ?? ''}`.trim()}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="hero-img"
+      />
+      {/* Celular: resumo do destaque sobre a foto */}
+      <a href={`/veiculo/${spotlight.slug}`} class="spot-chip glass">
+        <span class="min-w-0">
+          <span class="block text-[0.62rem] font-bold uppercase tracking-[0.18em] text-gold-300">Em destaque</span>
+          <span class="block truncate font-bold text-white [font-stretch:108%]">{vehicleName(spotlight)}</span>
+        </span>
+        <PriceTag vehicle={spotlight} class="spot-chip-price shrink-0" />
+        <span class="spot-arrow" aria-hidden="true">
+          <Icon name="arrow-up-right" size={18} />
+        </span>
+      </a>
+    </div>
+  ) : (
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox={LOGO_VIEWBOX} class="w-full">
+        {LOGO_GOLD_PATHS.map((d) => (
+          <path d={d} fill="var(--color-gold-500)" />
+        ))}
+        <path d={LOGO_SILVER_PATH} fill="var(--color-silver-300)" />
+      </svg>
+    </div>
+  )}
+  <div class="hero-veil" aria-hidden="true"></div>
   <div class="bg-grid-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
-  <div class="hero-glow pointer-events-none absolute -z-10" aria-hidden="true"></div>
 
-  <div class="container-site grid items-center gap-10 pb-12 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20 lg:pt-20">
-    <div class="relative">
-      <p class="eyebrow">
+  <div class="container-site hero-inner">
+    <div class="hero-copy">
+      <p class="hero-kicker">
+        <span class="kicker-dot" aria-hidden="true"></span>
         {settings.businessName} · {settings.city} - {settings.state}
       </p>
-      <h1 id="hero-title" class="display mt-5 text-[2.6rem] text-white xs:text-5xl sm:text-6xl xl:text-[4.6rem]">
-        Seu próximo veículo <span class="text-gold-400">começa aqui.</span>
+      <h1 id="hero-title" class="display hero-title">
+        Seu próximo veículo <span class="text-gold-metal">começa aqui.</span>
       </h1>
       <p class="mt-5 max-w-xl text-lg text-mist-200 sm:text-xl">
         {settings.slogan}
         <span class="block text-base text-mist-400 sm:text-lg">Compra, venda, financiamento e repasses.</span>
       </p>
 
-      <form action="/estoque" method="get" role="search" class="search-box mt-8" aria-label="Buscar veículos">
-        <label for="hero-q" class="sr-only">
-          Qual veículo você procura?
-        </label>
-        <div class="flex flex-1 items-center gap-3 px-4">
-          <Icon name="search" size={20} class="shrink-0 text-gold-400" />
+      <form action="/estoque" method="get" role="search" class="search-console glass" aria-label="Buscar veículos">
+        <div class="search-row">
+          <label for="hero-q" class="sr-only">
+            Qual veículo você procura?
+          </label>
+          <Icon name="search" size={20} class="ml-4 shrink-0 text-gold-400" />
           <input
             id="hero-q"
             name="q"
@@ -60,24 +109,28 @@ const cover = spotlight?.cover ?? null;
               <option value={s} />
             ))}
           </datalist>
+          <button type="submit" class="btn btn-gold m-1.5 h-12 shrink-0 px-5 sm:px-7">
+            <span class="hidden xs:inline">Buscar</span>
+            <Icon name="arrow-right" size={18} class="xs:hidden" />
+            <span class="sr-only xs:hidden">Buscar</span>
+          </button>
         </div>
-        <label for="hero-cat" class="sr-only">
-          Categoria
-        </label>
-        <select id="hero-cat" name="categoria" class="hero-select hidden sm:block">
-          <option value="">Todas as categorias</option>
+        <fieldset class="seg scrollbar-none">
+          <legend class="sr-only">Categoria</legend>
+          <label class="seg-item">
+            <input type="radio" name="categoria" value="" checked />
+            <span>Todos</span>
+          </label>
           {VEHICLE_CATEGORIES.map((c) => (
-            <option value={CATEGORY_INFO[c].slug}>{CATEGORY_INFO[c].plural}</option>
+            <label class="seg-item">
+              <input type="radio" name="categoria" value={CATEGORY_INFO[c].slug} />
+              <span>{SHORT[c]}</span>
+            </label>
           ))}
-        </select>
-        <button type="submit" class="btn btn-gold m-1.5 h-12 px-5 sm:px-6">
-          <span class="hidden xs:inline">Buscar</span>
-          <Icon name="arrow-right" size={18} class="xs:hidden" />
-        </button>
+        </fieldset>
       </form>
-      <p class="mt-3 text-sm text-mist-400">Busque por marca, modelo ou versão.</p>
 
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+      <div class="mt-7 flex flex-col gap-3 xs:flex-row">
         <a href="/estoque" class="btn btn-outline-gold btn-lg">
           Ver estoque
           <Icon name="arrow-right" size={18} />
@@ -89,7 +142,7 @@ const cover = spotlight?.cover ?? null;
       </div>
 
       {availableCount > 0 && (
-        <p class="mt-8 inline-flex items-center gap-2 text-sm text-mist-300">
+        <p class="mt-7 inline-flex items-center gap-2 text-sm text-mist-300">
           <span class="relative flex size-2.5">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60" />
             <span class="relative inline-flex size-2.5 rounded-full bg-success" />
@@ -100,134 +153,308 @@ const cover = spotlight?.cover ?? null;
       )}
     </div>
 
-    <div class="relative">
-      {spotlight && cover ? (
-        <a href={`/veiculo/${spotlight.slug}`} class="spotlight group" aria-label={`Ver ${vehicleName(spotlight)}`}>
-          <img
-            src={mediaUrl(cover.largeKey)}
-            srcset={`${mediaUrl(cover.thumbKey)} ${cover.thumbWidth}w, ${mediaUrl(cover.largeKey)} ${cover.width}w`}
-            sizes="(min-width: 1024px) 46vw, 94vw"
-            width={cover.width}
-            height={cover.height}
-            alt={`${vehicleName(spotlight)} ${spotlight.version ?? ''}`.trim()}
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-            class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-          />
-          <div class="spotlight-info">
-            <p class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-gold-400">Em destaque</p>
-            <p class="mt-1 text-xl font-bold text-white [font-stretch:110%] sm:text-2xl">{vehicleName(spotlight)}</p>
-            <p class="text-sm text-mist-300">
-              {[spotlight.version, yearLabel(spotlight), usageLabel(spotlight)].filter(Boolean).join(' · ')}
-            </p>
-            <div class="mt-3 flex items-end justify-between gap-4">
-              <PriceTag vehicle={spotlight} />
-              <span class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-gold-500 text-ink-950 transition-transform group-hover:translate-x-1">
-                <Icon name="arrow-up-right" size={20} />
-              </span>
-            </div>
-          </div>
-        </a>
-      ) : (
-        <div class="hero-art" aria-hidden="true">
-          <svg viewBox={LOGO_VIEWBOX} class="w-full">
-            {LOGO_GOLD_PATHS.map((d) => (
-              <path d={d} fill="var(--color-gold-500)" />
-            ))}
-            <path d={LOGO_SILVER_PATH} fill="var(--color-silver-300)" />
-          </svg>
+    {spotlight && cover && (
+      <a
+        href={`/veiculo/${spotlight.slug}`}
+        class="spot-card glass group hidden lg:flex"
+        aria-label={`Em destaque: ${vehicleName(spotlight)}`}
+      >
+        <div class="min-w-0 flex-1">
+          <p class="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-gold-300">Em destaque</p>
+          <p class="mt-1.5 line-clamp-2 text-2xl leading-tight font-bold text-white [font-stretch:110%]">
+            {vehicleName(spotlight)}
+          </p>
+          {spotlightSpecs && <p class="mt-0.5 truncate text-sm text-mist-300">{spotlightSpecs}</p>}
+          <PriceTag vehicle={spotlight} class="mt-4" />
         </div>
-      )}
-    </div>
+        <span class="spot-arrow spot-arrow-lg" aria-hidden="true">
+          <Icon name="arrow-up-right" size={22} />
+        </span>
+      </a>
+    )}
   </div>
 </section>
 
 <style>
-  .hero-glow {
-    top: -20%;
-    right: -10%;
-    width: 60rem;
-    height: 40rem;
-    background: radial-gradient(closest-side, color-mix(in oklab, var(--color-gold-500) 11%, transparent), transparent);
-    filter: blur(10px);
+  .hero {
+    --hero-min: 0px;
   }
-  .search-box {
+  @media (min-width: 1024px) {
+    .hero {
+      --hero-min: min(46rem, calc(100svh - var(--header-h)));
+    }
+  }
+
+  /* ---------- Foto do destaque ---------- */
+  .hero-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    max-height: 62svh;
+    width: 100%;
+    overflow: hidden;
+    background: var(--color-ink-900);
+  }
+  @media (min-width: 640px) {
+    .hero-media {
+      aspect-ratio: 16 / 9;
+    }
+  }
+  .hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: hero-zoom 1.4s var(--ease-out-soft) both;
+  }
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.06);
+      opacity: 0.4;
+    }
+  }
+  /* Celular: a foto funde com o fundo na parte de baixo. */
+  .hero-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, var(--color-ink-950) 0%, rgb(8 9 10 / 0.55) 30%, transparent 58%),
+      linear-gradient(to bottom, rgb(8 9 10 / 0.45), transparent 22%);
+    pointer-events: none;
+  }
+  .spot-chip {
+    position: absolute;
+    z-index: 2;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
     display: flex;
     align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0.7rem 0.7rem 1rem;
+    border-radius: 1.1rem;
+  }
+  .spot-chip :global(.price-main) {
+    font-size: 1.05rem;
+  }
+  .spot-chip :global(.price-prev) {
+    display: none;
+  }
+  .spot-chip :global(.price-por) {
+    display: none;
+  }
+  .spot-chip-price {
+    margin-left: auto;
+  }
+  .spot-arrow {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--gold-button);
+    color: #111;
+    box-shadow: var(--shadow-gold);
+    transition: transform 240ms var(--ease-out-soft);
+  }
+  .spot-arrow-lg {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  .hero-veil {
+    display: none;
+  }
+
+  /* ---------- Texto e busca ---------- */
+  .hero-inner {
+    position: relative;
+    padding-bottom: 3rem;
+  }
+  .has-media .hero-inner {
+    padding-top: 1.75rem;
+  }
+  .hero:not(.has-media) .hero-inner {
+    padding-top: 2.75rem;
+  }
+  .hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.4rem 0.85rem 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-ink-900) 70%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 35%, transparent);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-gold-300);
+    backdrop-filter: blur(8px);
+  }
+  .kicker-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--color-gold-400);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-gold-500) 22%, transparent);
+  }
+  .hero-title {
+    margin-top: 1.25rem;
+    font-size: clamp(2.5rem, 9vw, 4.9rem);
+    color: #fff;
+  }
+
+  .search-console {
+    margin-top: 2rem;
     max-width: 40rem;
-    border-radius: 1rem;
-    background: color-mix(in oklab, var(--color-ink-800) 92%, transparent);
-    border: 1px solid color-mix(in oklab, white 12%, transparent);
-    box-shadow: 0 20px 50px -25px rgb(0 0 0 / 0.8);
+    padding: 0.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 30px 70px -35px rgb(0 0 0 / 0.95);
     transition:
       border-color 160ms ease,
       box-shadow 160ms ease;
   }
-  .search-box:focus-within {
-    border-color: var(--color-gold-500);
+  .search-console:focus-within {
+    border-color: color-mix(in oklab, var(--color-gold-500) 70%, transparent);
     box-shadow:
-      0 0 0 3px color-mix(in oklab, var(--color-gold-500) 20%, transparent),
-      0 20px 50px -25px rgb(0 0 0 / 0.8);
+      0 0 0 3px color-mix(in oklab, var(--color-gold-500) 16%, transparent),
+      0 30px 70px -35px rgb(0 0 0 / 0.95);
   }
-  .hero-select {
-    height: 3rem;
-    max-width: 13rem;
-    padding: 0 2.2rem 0 1rem;
-    border-left: 1px solid color-mix(in oklab, white 10%, transparent);
-    background-color: transparent;
-    color: var(--color-mist-100);
-    font-size: 0.92rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23b3b8bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.8rem center;
+  .seg {
+    display: flex;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.55rem 0.15rem 0.15rem;
+    border: 0;
+    overflow-x: auto;
   }
-  .hero-select:focus {
-    outline: none;
-    color: #fff;
-  }
-  .hero-select option {
-    background: var(--color-ink-850);
-  }
-  .spotlight {
+  .seg-item {
     position: relative;
-    display: block;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    border-radius: 1.5rem;
-    border: 1px solid color-mix(in oklab, white 10%, transparent);
-    background: var(--color-ink-800);
-    box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.9);
+    flex: none;
+    cursor: pointer;
   }
-  .spotlight::before {
-    content: '';
+  .seg-item input {
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(to top, rgb(8 9 10 / 0.95) 0%, rgb(8 9 10 / 0.35) 38%, transparent 60%);
+    opacity: 0;
     pointer-events: none;
   }
-  .spotlight-info {
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 2;
-    padding: 1.25rem;
+  .seg-item span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.95rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-mist-300);
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
   }
-  @media (min-width: 640px) {
-    .spotlight-info {
-      padding: 1.75rem;
-    }
+  .seg-item:hover span {
+    color: #fff;
+    background: color-mix(in oklab, white 7%, transparent);
   }
-  .hero-art {
-    position: relative;
-    display: grid;
-    aspect-ratio: 4 / 3;
-    place-items: center;
-    padding: 2rem;
-    border-radius: 1.5rem;
+  .seg-item input:checked + span {
+    background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+    color: var(--color-gold-200);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 55%, transparent);
+  }
+  .seg-item input:focus-visible + span {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
+  }
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 1.1rem;
+    background: color-mix(in oklab, var(--color-ink-950) 75%, transparent);
     border: 1px solid color-mix(in oklab, white 8%, transparent);
-    background: radial-gradient(90% 70% at 50% 35%, #1b1e22, #0b0c0e 75%);
+  }
+
+  /* ---------- Desktop: foto ocupa o lado direito, em tela cheia ---------- */
+  @media (min-width: 1024px) {
+    .hero {
+      min-height: var(--hero-min);
+      display: flex;
+      align-items: center;
+    }
+    .hero-media {
+      position: absolute;
+      inset: 0 0 0 30%;
+      z-index: -2;
+      aspect-ratio: auto;
+      max-height: none;
+      width: auto;
+    }
+    .hero-media::after {
+      background:
+        linear-gradient(to right, var(--color-ink-950) 0%, rgb(8 9 10 / 0.7) 22%, transparent 55%),
+        linear-gradient(to top, var(--color-ink-950) 0%, transparent 30%),
+        linear-gradient(to bottom, rgb(8 9 10 / 0.5), transparent 25%);
+    }
+    .hero-veil {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(60% 80% at 12% 50%, rgb(8 9 10 / 0.85), transparent 70%);
+      pointer-events: none;
+    }
+    .hero-art {
+      display: grid;
+      position: absolute;
+      top: 50%;
+      right: 4%;
+      z-index: -2;
+      width: min(40vw, 38rem);
+      transform: translateY(-50%);
+      opacity: 0.9;
+      filter: drop-shadow(0 30px 60px rgb(242 193 46 / 0.18));
+    }
+    .hero-inner,
+    .has-media .hero-inner {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 3rem;
+      margin-top: 0;
+      padding-block: 4.5rem 4rem;
+    }
+    .hero:not(.has-media) .hero-inner {
+      padding-top: 4.5rem;
+    }
+    .hero-copy {
+      max-width: 44rem;
+    }
+    .spot-chip {
+      display: none;
+    }
+    .spot-card {
+      width: 24rem;
+      align-items: flex-end;
+      gap: 1rem;
+      padding: 1.4rem 1.4rem 1.4rem 1.6rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 30px 70px -30px rgb(0 0 0 / 0.9);
+      transition:
+        border-color 200ms ease,
+        transform 240ms var(--ease-out-soft);
+    }
+    .spot-card:hover {
+      border-color: color-mix(in oklab, var(--color-gold-500) 55%, transparent);
+      transform: translateY(-3px);
+    }
+    .spot-card:hover .spot-arrow {
+      transform: translate(2px, -2px);
+    }
   }
 </style>

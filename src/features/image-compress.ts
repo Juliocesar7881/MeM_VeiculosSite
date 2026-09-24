@@ -141,9 +141,8 @@ async function renderOg(source: ImageBitmap | HTMLImageElement): Promise<Blob> {
   ctx.fillStyle = '#f2c12e';
   ctx.fillRect(0, H - 8, W, 8);
 
-  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } = await import(
-    '@/components/brand/logo-data'
-  );
+  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } =
+    await import('@/components/brand/logo-data');
   const [vx = 0, vy = 0, vw = 1, vh = 1] = LOGO_VIEWBOX.split(' ').map(Number);
   const logoWidth = 300;
   const s = logoWidth / vw;

@@ -24,12 +24,7 @@ if (config.auth.mode === 'cloudflare-access') {
   }
 
   if (Astro.request.method === 'POST') {
-    let ip: string;
-    try {
-      ip = clientIp(Astro.request, Astro.clientAddress);
-    } catch {
-      ip = clientIp(Astro.request, undefined);
-    }
+    const ip = clientIp(Astro.request, container.platform.ipSource, () => Astro.clientAddress);
     const limit = await container.rateLimiter.check(RATE_LIMITS.loginFailures, ip);
     if (!limit.allowed) {
       error = `Muitas tentativas. Aguarde ${Math.ceil(limit.retryAfterSeconds / 60)} minuto(s) e tente novamente.`;
@@ -76,8 +71,12 @@ if (config.auth.mode === 'cloudflare-access') {
           <div class="mt-4 rounded-lg bg-danger/15 p-4 text-sm text-red-200">
             <p class="font-semibold">Login não configurado.</p>
             <p class="mt-1">
-              Defina <code>ADMIN_PASSWORD_HASH</code> (gere com <code>npm run admin:hash-password</code>) e
-              <code>SESSION_SECRET</code> (32+ caracteres) nas variáveis de ambiente.
+              Defina <code>ADMIN_PASSWORD_HASH</code> (gere com <code>npm run admin:hash-password</code> ou, no
+              Cloudflare, <code>npm run cf:secrets</code>) e <code>SESSION_SECRET</code> (32+ caracteres) nas variáveis
+              de ambiente.
+            </p>
+            <p class="mt-2 text-red-200/80">
+              No arquivo <code>.env</code>, cada <code>$</code> do hash precisa de barra invertida (<code>\$</code>).
             </p>
           </div>
         ) : (
@@ -107,6 +106,12 @@ if (config.auth.mode === 'cloudflare-access') {
               <Icon name="lock" size={18} />
               Entrar
             </button>
+            {config.auth.usingDevPassword && (
+              <p class="rounded-lg border border-gold-500/30 bg-gold-500/10 p-3 text-xs text-gold-200">
+                Modo desenvolvimento: usando a senha padrão de dev (<code>src/config/dev-auth.ts</code>). Em produção a
+                senha vem do segredo <code>ADMIN_PASSWORD_HASH</code>.
+              </p>
+            )}
           </form>
         )}
       </div>

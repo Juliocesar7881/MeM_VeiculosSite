@@ -5,6 +5,7 @@ import AboutBlock from '@/components/home/AboutBlock.astro';
 import CategoryShortcuts from '@/components/home/CategoryShortcuts.astro';
 import Hero from '@/components/home/Hero.astro';
 import SellCta from '@/components/home/SellCta.astro';
+import ServiceStrip from '@/components/home/ServiceStrip.astro';
 import Icon from '@/components/ui/Icon.astro';
 import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -34,7 +35,11 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
 <BaseLayout title={title} description={description} canonicalPath="/" jsonLd={[dealerJsonLd(settings, siteUrl)]}>
   <Hero settings={settings} spotlight={spotlight} availableCount={availableCount} suggestions={suggestions} />
 
-  <CategoryShortcuts counts={counts} offersTotal={sections.offersTotal} repassesTotal={sections.repassesTotal} />
+  <ServiceStrip />
+
+  <div class="mt-14 sm:mt-16">
+    <CategoryShortcuts counts={counts} offersTotal={sections.offersTotal} repassesTotal={sections.repassesTotal} />
+  </div>
 
   <section class="container-site mt-20 sm:mt-24" aria-labelledby="destaques-title">
     {showcase.length > 0 ? (
@@ -104,7 +109,8 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
     </section>
   )}
 
-  <div class="mt-20 sm:mt-24">
+  {/* Faixas de ofertas/repasses já têm respiro próprio: a seção clara encosta nelas. */}
+  <div class={sections.offers.length > 0 || sections.repasses.length > 0 ? '' : 'mt-20 sm:mt-28'}>
     <SellCta settings={settings} />
   </div>
 
@@ -117,9 +123,14 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
   .offers-band {
     position: relative;
     background:
-      radial-gradient(70% 60% at 15% 0%, color-mix(in oklab, var(--color-gold-500) 10%, transparent), transparent 70%),
+      radial-gradient(70% 60% at 15% 0%, color-mix(in oklab, var(--color-gold-500) 13%, transparent), transparent 70%),
+      radial-gradient(
+        50% 50% at 100% 100%,
+        color-mix(in oklab, var(--color-gold-500) 6%, transparent),
+        transparent 70%
+      ),
       var(--color-ink-900);
-    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 20%, transparent);
+    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 22%, transparent);
   }
   .repasse-band {
     background:

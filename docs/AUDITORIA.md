@@ -1,5 +1,38 @@
 # Auditoria final
 
+## Revisão 24/09/2026 — Cloudflare como produção + novo visual
+
+| Verificação | Resultado |
+| --- | --- |
+| ESLint · Prettier · `astro check` | ✅ 0 problemas |
+| Vitest (unitários + integração) | ✅ 131 passando |
+| Builds Cloudflare Workers, Vercel e Node | ✅ |
+| Worker local (`wrangler dev`, D1/KV simulados): login, cadastro, upload/capa/exclusão de fotos | ✅ |
+| E2E Playwright (Node) | ✅ 28 de 29 — o envio de proposta depende do `challenges.cloudflare.com` (Turnstile), bloqueado no ambiente da revisão; roda no CI do GitHub |
+| Responsividade 320 → 1920 px | ✅ sem rolagem horizontal |
+| `npm audit` | ✅ 0 vulnerabilidades |
+
+Problemas encontrados e corrigidos:
+
+1. **Rate limit burlável na Vercel**: o IP era lido de `CF-Connecting-IP` em qualquer plataforma; na Vercel o
+   cliente pode enviar esse header e trocar de "IP" a cada tentativa de login. Agora cada plataforma só confia no
+   header que ela mesma define (`CF-Connecting-IP` no Cloudflare, `X-Real-IP` na Vercel, socket no Node) — testes
+   unitários adicionados.
+2. **Hash da senha corrompido no `.env`**: o Vite expande `$NOME` em arquivos `.env`, e o hash PBKDF2 contém `$`. O
+   `admin:hash-password` agora imprime a linha do `.env` já escapada (`\$`) e a tela de login explica o motivo.
+3. `cf:backup` passava a consulta SQL com aspas literais no Linux/macOS (quebrava no CI) e o `cf:restore` tentava
+   recriar tabelas num D1 já populado — corrigidos (`--media-only` e verificação de banco vazio).
+4. `astro check` falhava por opção inválida do adapter Cloudflare (`imagesBindingName: false`) — removida.
+5. `.dev.vars` (segredos locais do Wrangler) não estava no `.gitignore` — adicionado.
+
+Novidades de segurança/operação: senha de desenvolvimento só no `npm run dev` (`src/config/dev-auth.ts`, nunca aceita
+em build de produção); `npm run cf:secrets` grava os segredos no Worker sem tocar o disco; `npm run cf:setup` trava o
+`account_id` da conta dedicada no `wrangler.jsonc`; CI e deploy automático no GitHub Actions.
+
+---
+
+## Auditoria da versão 1.0.0
+
 Data: **24/09/2026** · Versão: 1.0.0 · Ambiente verificado: build de produção local (adapter Node, `npm run
 preview:local`) e servidor de desenvolvimento com banco de demonstração.
 

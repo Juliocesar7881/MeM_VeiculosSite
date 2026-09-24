@@ -1,6 +1,7 @@
 import type { Database } from '@/lib/db/types';
 import type { ObjectStorage } from '@/lib/storage/types';
 import type { ServerConfig } from '../config';
+import type { IpSource } from '../http';
 
 /**
  * Dependências que variam conforme onde o site roda.
@@ -12,6 +13,8 @@ export interface Platform {
   name: 'node' | 'cloudflare';
   db: Database;
   storage: ObjectStorage;
+  /** Header confiável para o IP do cliente (rate limit). */
+  ipSource: IpSource;
   /** Gera o JPEG de compartilhamento a partir da foto (somente onde há sharp). */
   renderOgImage?: (body: ReadableStream<Uint8Array> | Uint8Array) => Promise<Uint8Array>;
 }

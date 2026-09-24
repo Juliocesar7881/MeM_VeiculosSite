@@ -465,7 +465,10 @@ const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialTyp
       top: calc(var(--header-h) + 1.5rem);
       max-height: calc(100dvh - var(--header-h) - 3rem);
       overflow-y: auto;
-      padding-right: 0.5rem;
+      padding: 1.25rem;
+      border-radius: 1.5rem;
+      background: linear-gradient(180deg, var(--color-ink-850), var(--color-ink-900));
+      border: 1px solid color-mix(in oklab, white 7%, transparent);
       scrollbar-width: thin;
     }
   }

@@ -6,9 +6,10 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 > “Construindo credibilidade a cada negociação.”
 
-- Documentação de publicação: [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Publicação (produção, grátis): [docs/DEPLOY-CLOUDFLARE.md](docs/DEPLOY-CLOUDFLARE.md)**
+- Publicação alternativa na Vercel: [docs/DEPLOY.md](docs/DEPLOY.md)
 - Manual do administrador (linguagem simples): [docs/MANUAL_ADMIN.md](docs/MANUAL_ADMIN.md)
-- Arquitetura e migração futura para Cloudflare: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
+- Arquitetura: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
 - Backup e restauração: [docs/BACKUP.md](docs/BACKUP.md)
 - Auditoria final (segurança, performance, SEO, acessibilidade…): [docs/AUDITORIA.md](docs/AUDITORIA.md)
 
@@ -18,7 +19,7 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 1. [O que o sistema faz](#o-que-o-sistema-faz)
 2. [Stack](#stack)
-3. [Por que Vercel agora (e o plano Cloudflare)](#por-que-vercel-agora-e-o-plano-cloudflare)
+3. [Por que Cloudflare (e a Vercel como alternativa)](#por-que-cloudflare-e-a-vercel-como-alternativa)
 4. [Arquitetura resumida](#arquitetura-resumida)
 5. [Instalação e desenvolvimento local](#instalação-e-desenvolvimento-local)
 6. [Scripts](#scripts)
@@ -65,48 +66,49 @@ exclusão LGPD), Ofertas e Repasses (filtros da lista), Configurações (contato
 | --- | --- |
 | Front-end / SSR | **Astro 7** (Islands — JavaScript só onde há interação; ~24 KB de JS no site inteiro) |
 | Linguagem | **TypeScript strict** (`astro/tsconfigs/strictest`) |
-| CSS | **Tailwind CSS 4** + design system próprio (preto/grafite + dourado da logo) |
-| Hospedagem (agora) | **Vercel** (Functions Node.js + CDN) via `@astrojs/vercel` |
-| Banco | **libSQL/SQLite** — local em arquivo; produção no **Turso** (mesmo dialeto do Cloudflare D1) |
-| Fotos | Abstração com 3 drivers: **local**, **Vercel Blob (privado)**, **S3/Cloudflare R2** |
-| Admin/Auth | Senha única com hash PBKDF2 + sessão assinada (agora) · **Cloudflare Access** já implementado para a migração |
+| CSS | **Tailwind CSS 4** + design system próprio (preto/grafite + dourado metálico da logo, seções claras) |
+| Hospedagem (produção) | **Cloudflare Workers** via `@astrojs/cloudflare` — plano gratuito, uso comercial permitido |
+| Hospedagem (alternativas) | **Vercel** (`@astrojs/vercel`) e servidor **Node** (`@astrojs/node`, usado no desenvolvimento) |
+| Banco | **Cloudflare D1** em produção · **libSQL/SQLite** local em arquivo (ou **Turso** na Vercel) — mesmas migrations |
+| Fotos | Drivers: **Workers KV** e **R2** (Cloudflare), **local**, **Vercel Blob (privado)**, **S3** |
+| Admin/Auth | Senha única com hash PBKDF2 + sessão assinada · **Cloudflare Access** opcional (login por e-mail) |
 | Anti-spam | **Cloudflare Turnstile** + rate limit no banco + honeypot + validação no servidor |
 | Validação | **Zod 4** |
 | Testes | **Vitest** (unitários + integração com banco real em memória) e **Playwright** (E2E) |
 
-## Por que Vercel agora (e o plano Cloudflare)
+## Por que Cloudflare (e a Vercel como alternativa)
 
-O pedido original priorizava o ecossistema Cloudflare; a decisão atual foi **publicar pela Vercel por enquanto**.
-O código foi escrito para que a troca futura não exija reconstrução:
+A produção roda no **Cloudflare** porque o plano gratuito cobre tudo o que o site precisa **e permite uso comercial**
+(o Hobby da Vercel é só para uso pessoal/não comercial — [regras de uso justo](https://vercel.com/docs/limits/fair-use-guidelines)).
 
-| Peça | Agora (Vercel) | Depois (Cloudflare) | Esforço da troca |
-| --- | --- | --- | --- |
-| Hospedagem | Vercel Functions | Workers (`@astrojs/cloudflare`) | Trocar o adapter |
-| Banco | Turso (libSQL/SQLite) | D1 (SQLite) | Mesmas migrations; adaptador D1 da interface `Database` |
-| Fotos | Vercel Blob privado **ou** R2 (driver `s3` já pronto) | R2 | Nenhum código — só variáveis |
-| Admin | Senha + sessão | Cloudflare Access (`AUTH_MODE=cloudflare-access`, já implementado) | Só variáveis |
-| Anti-spam | Turnstile | Turnstile | Nenhum |
+| Peça | Cloudflare (produção) | Vercel (alternativa) |
+| --- | --- | --- |
+| Hospedagem | Workers (`npm run cf:deploy`) | Vercel Functions (`vercel-build`) |
+| Banco | D1 (binding `DB`) | Turso (libSQL) |
+| Fotos | Workers KV (grátis, sem cartão) ou R2 | Vercel Blob privado ou R2 via S3 |
+| Segredos | `npm run cf:secrets` (guardados no Worker) | Environment Variables do projeto |
+| Admin | Senha + sessão, ou Cloudflare Access | Senha + sessão |
+| Anti-spam | Turnstile | Turnstile |
 
-> ⚠️ **Importante sobre custo:** pelas [regras de uso justo da Vercel](https://vercel.com/docs/limits/fair-use-guidelines),
-> o **plano Hobby (gratuito) é apenas para uso pessoal e não comercial**. Ele serve para desenvolvimento, previews e
-> validação com o cliente. Para o site comercial em produção há duas opções: **Vercel Pro** (US$ 20/mês por membro) ou
-> **migrar para a Cloudflare**, cujo plano gratuito não tem essa restrição — veja [docs/ARQUITETURA.md](docs/ARQUITETURA.md#migração-para-cloudflare).
+O código é o mesmo: o `astro.config.mjs` escolhe o adapter por `DEPLOY_TARGET` e o módulo `@/server/platform`
+troca banco/storage (D1/KV/R2 no Workers; libSQL/local/Blob/S3 no Node). Nenhum repositório ou página muda.
 
 ## Arquitetura resumida
 
 ```
-Navegador ──► CDN (cache de páginas 60 s + fotos 1 ano)
+Navegador ──► Cloudflare (borda) ── arquivos estáticos /_astro (cache imutável)
                  │
                  ▼
+          Worker (Astro SSR)
           middleware.ts  → CSRF (origem), autenticação do /admin, headers de segurança, cache
                  │
           pages/ (Astro)  → só apresentação: chama serviços, nunca SQL
                  │
           services/       → regras de negócio (oferta ativa, publicação, conversão proposta→veículo…)
                  │
-     repositories/  +  lib/storage/        → SQL parametrizado  |  fotos (local / Blob / S3-R2)
+     repositories/  +  lib/storage/        → SQL parametrizado  |  fotos
                  │                 │
-          lib/db (libSQL/Turso)   Vercel Blob privado ou R2
+          D1 (SQLite)          Workers KV ou R2        (Node/Vercel: libSQL/Turso + local/Blob/S3)
 ```
 
 Detalhes, modelo de dados e decisões: [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
@@ -118,11 +120,16 @@ Requisitos: **Node.js 22.12+** (testado com Node 24) e npm.
 ```bash
 npm install
 cp .env.example .env              # no Windows: copy .env.example .env
-npm run admin:hash-password       # gera ADMIN_PASSWORD_HASH, SESSION_SECRET e IP_HASH_SALT -> cole no .env
 npm run db:migrate                # cria .data/dev.db
 npm run db:seed:demo              # (opcional) veículos e propostas de DEMONSTRAÇÃO, só no banco local
 npm run dev                       # http://localhost:4321  —  painel em http://localhost:4321/admin
 ```
+
+- **Senha de desenvolvimento do painel: `MeM_admin78812`.** Vale automaticamente no `npm run dev` enquanto
+  `ADMIN_PASSWORD_HASH` estiver vazio no `.env` (a tela de login avisa). Builds de produção **nunca** aceitam essa
+  senha padrão — lá ela vem do segredo `ADMIN_PASSWORD_HASH` (`npm run cf:secrets`).
+- Para usar outra senha localmente: `npm run admin:hash-password` e cole a linha “Arquivo .env local” (no `.env`
+  cada `$` do hash precisa de `\`).
 
 - Em desenvolvimento o Turnstile usa automaticamente as **chaves de teste oficiais** da Cloudflare.
 - As fotos ficam em `.data/uploads` (driver `local`). Nada disso vai para o Git.
@@ -134,7 +141,14 @@ npm run dev                       # http://localhost:4321  —  painel em http:/
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção (gera `.vercel/output`) |
+| `npm run build` | Build com o adapter Node |
+| `npm run cf:setup` | Prepara a conta Cloudflare dedicada: cria D1/KV e trava o `account_id` no `wrangler.jsonc` |
+| `npm run cf:build` | Build para o Cloudflare Workers (`dist/`) |
+| `npm run cf:deploy` | **Publica no Cloudflare**: migrations do D1 remoto + build + `wrangler deploy` |
+| `npm run cf:secrets -- <senha>` | Grava no Worker a senha do painel, `SESSION_SECRET`, `IP_HASH_SALT` (+ Turnstile/Resend se definidos) |
+| `npm run cf:dev` | Desenvolvimento dentro do runtime do Workers (D1/KV locais) |
+| `npm run cf:migrate` / `cf:migrate:local` | Migrations no D1 remoto / local |
+| `npm run cf:backup` / `cf:restore` | Backup e restauração do D1 + fotos (KV/R2) |
 | `npm run vercel-build` | Usado pela Vercel: aplica migrations e faz o build |
 | `npm run preview:local` | Build de **produção** rodando localmente (adapter Node) em http://localhost:4330 — útil para Lighthouse |
 | `npm run typecheck` | `astro check` (TypeScript + templates) |
@@ -154,12 +168,17 @@ npm run dev                       # http://localhost:4321  —  painel em http:/
 
 Todas documentadas em [`.env.example`](.env.example). Nenhum segredo vai para o navegador nem para o Git.
 
+**No Cloudflare:** variáveis públicas ficam em `wrangler.jsonc` → `vars` (`STORAGE_DRIVER`, `AUTH_MODE`,
+`ALLOW_INDEXING`, `PUBLIC_SITE_URL`, `TURNSTILE_SITE_KEY`); segredos (`ADMIN_PASSWORD_HASH`, `SESSION_SECRET`,
+`IP_HASH_SALT`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`) ficam no Worker via `npm run cf:secrets`. Banco e fotos são
+bindings (`DB`, `MEDIA_KV`/`MEDIA`), sem variáveis de conexão.
+
 | Variável | Obrigatória em produção | Descrição |
 | --- | --- | --- |
 | `PUBLIC_SITE_URL` | ao ter domínio | URL canônica (ex.: `https://www.mmveiculos.com.br`). Vazia = usa a URL da requisição |
 | `ALLOW_INDEXING` | — | `true` só no domínio definitivo. Enquanto `false`, `robots.txt` bloqueia buscadores |
-| `DATABASE_URL` / `DATABASE_AUTH_TOKEN` | sim | Turso (`libsql://…`) |
-| `STORAGE_DRIVER` | sim | `vercel-blob` ou `s3` (`local` só em desenvolvimento) |
+| `DATABASE_URL` / `DATABASE_AUTH_TOKEN` | Node/Vercel | Turso (`libsql://…`). No Cloudflare o banco é o binding `DB` |
+| `STORAGE_DRIVER` | sim | Cloudflare: `kv` ou `r2` · Vercel: `vercel-blob` ou `s3` · `local` só em desenvolvimento |
 | `BLOB_READ_WRITE_TOKEN` | não na Vercel (OIDC) | Necessário só fora da Vercel (scripts de backup) |
 | `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | se `s3` | Cloudflare R2 ou outro S3 |
 | `AUTH_MODE` | — | `password` (padrão) ou `cloudflare-access` |
@@ -192,10 +211,13 @@ Todas documentadas em [`.env.example`](.env.example). Nenhum segredo vai para o 
 
 ## Autenticação do painel
 
-- **Agora (`AUTH_MODE=password`)**: senha única com hash **PBKDF2-SHA256 (600 mil iterações)**; cookie de sessão
-  assinado (HMAC), `HttpOnly`, `Secure`, `SameSite=Strict`, 12 h. Trocar a senha ou o `SESSION_SECRET` derruba todas
-  as sessões. Tentativas de login limitadas por IP. Não existe senha no código.
-- **Depois (`AUTH_MODE=cloudflare-access`)**: o Cloudflare Access protege `/admin/*` e `/api/admin/*` na borda e o
+- **`AUTH_MODE=password` (padrão)**: senha única com hash **PBKDF2-SHA256** (600 mil iterações no Node/Vercel; 50 mil
+  no Workers, limite do runtime); cookie de sessão assinado (HMAC), `HttpOnly`, `Secure`, `SameSite=Strict`, 12 h.
+  Trocar a senha ou o `SESSION_SECRET` derruba todas as sessões. Tentativas de login limitadas por IP (o IP é lido só
+  do header garantido pela plataforma — `CF-Connecting-IP` no Cloudflare, `X-Real-IP` na Vercel — para não ser forjado).
+- A senha de desenvolvimento (`MeM_admin78812`, em `src/config/dev-auth.ts`) só existe no `npm run dev`; em produção
+  não há senha no código.
+- **`AUTH_MODE=cloudflare-access` (opcional)**: o Cloudflare Access protege `/admin/*` e `/api/admin/*` na borda e o
   servidor **também** valida o JWT (`Cf-Access-Jwt-Assertion`) — não basta esconder o link.
 
 ## Anti-spam (Turnstile + rate limit)
@@ -207,24 +229,31 @@ dados só são aceitas da própria origem (proteção CSRF).
 ## Testes
 
 ```bash
-npm test          # 128 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens,
+npm test          # 131 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens,
                   # auth/CSP + integração (veículos, propostas, conversão, fotos, configurações, rate limit)
 npm run test:e2e  # 29 testes Playwright: compra, ofertas, repasses, anunciar+proposta, admin→converter→publicar,
                   # celular, headers/CSP/CSRF e ausência de rolagem horizontal em 11 larguras (320→1920 px)
 ```
 
 - O E2E sobe um servidor próprio com banco/fotos isolados (`.data/e2e*`) e senha de teste.
-- **Pare o `npm run dev` antes do `npm run test:e2e`** (o Astro não permite dois servidores dev no mesmo projeto).
-- Usa o navegador instalado (Edge no Windows, Chrome nos demais) — não baixa navegadores.
+- O servidor E2E roda com `--ignore-lock`, então pode coexistir com um `npm run dev` aberto.
+- Usa o navegador instalado (Edge no Windows, Chrome nos demais) — não baixa navegadores. Para outro Chromium:
+  `E2E_EXECUTABLE_PATH=/caminho/do/chromium npm run test:e2e`. Contra o Worker local ou publicado:
+  `E2E_BASE_URL=http://127.0.0.1:8787 E2E_ADMIN_PASSWORD=MeM_admin78812 npm run test:e2e`.
 
 **Lighthouse** (build de produção local): desktop 100/100/100/100; mobile Acessibilidade, Boas práticas e SEO 100 e
 Performance 91–97 (sem compressão local). Detalhes e ressalvas em [docs/AUDITORIA.md](docs/AUDITORIA.md).
 
 ## Preview, produção e domínio
 
-O fluxo é: **desenvolver local → preview na Vercel → validar com o cliente → configurar produção → comprar domínio →
-publicar**. O sistema não depende do domínio: sem `PUBLIC_SITE_URL`, usa a URL da requisição. Passo a passo completo
-(Turso, Blob, Turnstile, variáveis, região, domínio, Search Console): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+Fluxo: **desenvolver local → `npm run cf:deploy` (URL `*.workers.dev`) → validar com o cliente → comprar domínio →
+domínio próprio no Worker**. O sistema não depende do domínio: sem `PUBLIC_SITE_URL`, usa a URL da requisição.
+
+- Passo a passo completo (D1, KV/R2, segredos, Turnstile, domínio, Access): **[docs/DEPLOY-CLOUDFLARE.md](docs/DEPLOY-CLOUDFLARE.md)**.
+- **Deploy automático:** `.github/workflows/deploy-cloudflare.yml` publica a cada push na `main` depois de lint, tipos
+  e testes — basta cadastrar `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` nos secrets do repositório.
+  `.github/workflows/ci.yml` verifica cada branch/PR (lint, formatação, tipos, testes, builds e E2E).
+- Alternativa Vercel: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Custos e planos gratuitos
 
@@ -233,28 +262,26 @@ permanente**; revise periodicamente.
 
 | Serviço | Plano gratuito (resumo) | Fonte |
 | --- | --- | --- |
-| Vercel Hobby | 100 GB Fast Data Transfer, 1 mi de invocações de função, 4 h de CPU ativa, 1 mi de Edge Requests /mês. **Uso não comercial.** | [vercel.com/docs/plans/hobby](https://vercel.com/docs/plans/hobby) |
-| Vercel Blob (Hobby) | 1 GB armazenado, 10 mil operações simples, 2 mil operações avançadas (uploads), 10 GB de transferência /mês | [vercel.com/docs/vercel-blob/usage-and-pricing](https://vercel.com/docs/vercel-blob/usage-and-pricing) |
-| Turso Free | 100 bancos, 5 GB, 500 mi de linhas lidas e 10 mi escritas /mês, restauração de 1 dia | [turso.tech/pricing](https://turso.tech/pricing) |
+| Cloudflare Workers | 100 mil requisições/dia, 10 ms de CPU por requisição; arquivos estáticos ilimitados. **Uso comercial permitido** | [developers.cloudflare.com/workers/platform/pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
+| Cloudflare D1 | 5 GB, 5 mi de linhas lidas/dia, 100 mil gravações/dia | [developers.cloudflare.com/d1/platform/pricing](https://developers.cloudflare.com/d1/platform/pricing/) |
+| Workers KV (fotos) | 1 GB, 100 mil leituras/dia, 1.000 gravações/dia | [developers.cloudflare.com/kv/platform/pricing](https://developers.cloudflare.com/kv/platform/pricing/) |
+| Cloudflare R2 (opcional) | 10 GB, 1 mi de operações classe A e 10 mi classe B /mês, **egress grátis** | [developers.cloudflare.com/r2/pricing](https://developers.cloudflare.com/r2/pricing/) |
 | Cloudflare Turnstile | Gratuito: até 20 widgets, desafios ilimitados | [developers.cloudflare.com/turnstile/plans](https://developers.cloudflare.com/turnstile/plans/) |
-| Cloudflare R2 (alternativa ao Blob) | 10 GB, 1 mi de operações classe A e 10 mi classe B /mês, **egress grátis** | [developers.cloudflare.com/r2/pricing](https://developers.cloudflare.com/r2/pricing/) |
-| Cloudflare Workers (futuro) | 100 mil requisições/dia, 10 ms de CPU por requisição; assets estáticos ilimitados | [developers.cloudflare.com/workers/platform/pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
-| Cloudflare D1 (futuro) | 5 mi linhas lidas/dia, 100 mil escritas/dia, 5 GB | [developers.cloudflare.com/d1/platform/pricing](https://developers.cloudflare.com/d1/platform/pricing/) |
-| Cloudflare Access (futuro) | Até 50 usuários grátis | [cloudflare.com/plans/zero-trust-services](https://www.cloudflare.com/plans/zero-trust-services/) |
+| Cloudflare Access (opcional) | Até 50 usuários grátis | [cloudflare.com/plans/zero-trust-services](https://www.cloudflare.com/plans/zero-trust-services/) |
+| Vercel Hobby (alternativa) | 100 GB de transferência, 1 mi de invocações/mês. **Somente uso não comercial** | [vercel.com/docs/plans/hobby](https://vercel.com/docs/plans/hobby) |
 
-**Estimativa de uso da M&M** (estoque de dezenas de veículos): cada foto gera 2 uploads (grande + miniatura).
-Com ~20 veículos/mês × 15 fotos = 600 uploads, mais ~50 propostas × 6 fotos = 600 → ~1.200 operações avançadas no
-Blob (limite 2.000). Se o volume crescer, use o driver **R2** (1 milhão de operações). Páginas ficam 60 s no cache da
-CDN e fotos 1 ano, o que reduz invocações e leituras de banco.
+**Estimativa de uso da M&M** (estoque de dezenas de veículos): cada foto gera 2–3 gravações no KV (grande, miniatura
+e imagem de compartilhamento). ~20 veículos/mês × 15 fotos ≈ 900 gravações **por mês** — o limite do KV é 1.000
+**por dia**. Uma página custa 1 requisição de Worker + 1 por foto exibida; as fotos ficam 1 ano no cache do navegador.
 
-**Custo obrigatório previsto:** apenas o **domínio** (ex.: `.com.br` no Registro.br) — somado à questão comercial do
-plano Hobby explicada acima.
+**Custo obrigatório previsto:** apenas o **domínio** (ex.: `.com.br` no Registro.br).
 
 ## Backup e restauração
 
-- `npm run db:backup` → banco em JSON + SQL; `-- --with-media` inclui todas as fotos.
-- `npm run db:restore -- backups/<pasta> [--with-media] [--yes]`.
-- Turso ainda oferece restauração pontual (1 dia no plano gratuito).
+- **Cloudflare:** `npm run cf:backup` (D1 em SQL + todas as fotos) e `npm run cf:restore -- backups/<pasta>
+  [--media-only]`. O D1 também tem **Time Travel** (restauração pontual dos últimos 7 dias no plano gratuito).
+- **Node/Vercel:** `npm run db:backup` → banco em JSON + SQL; `-- --with-media` inclui todas as fotos;
+  `npm run db:restore -- backups/<pasta> [--with-media] [--yes]`.
 - Procedimentos completos (produção, Blob, R2, D1): [docs/BACKUP.md](docs/BACKUP.md).
 
 ## Estrutura de pastas
@@ -269,13 +296,14 @@ src/
   repositories/ acesso ao banco (SQL parametrizado)
   schemas/      validação (Zod) e filtros de URL
   lib/          db, storage, auth, turnstile, seo, erros
-  server/       middleware helpers, config (astro:env), container de dependências
+  server/       middleware helpers, config (astro:env), container de dependências, platform/ (Node × Workers)
   config/       catálogo (categorias, combustíveis…), navegação, padrões
   types/ utils/ styles/
 migrations/     SQL (SQLite/D1)
-scripts/        migrate, seed, backup/restore, hash de senha, logo, servidor E2E
+scripts/        migrate, seed, backup/restore, hash de senha, segredos do Cloudflare, logo, servidor E2E
+.github/        CI (verificação) e deploy automático no Cloudflare
 tests/          unit/, integration/, e2e/
-docs/           DEPLOY, MANUAL_ADMIN, ARQUITETURA, BACKUP, AUDITORIA, brand/
+docs/           DEPLOY-CLOUDFLARE, DEPLOY (Vercel), MANUAL_ADMIN, ARQUITETURA, BACKUP, AUDITORIA, brand/
 public/         logo, ícones, manifest, og-default.jpg
 ```
 

@@ -39,5 +39,5 @@ export const createPlatform: CreatePlatform = async (config) => {
   }
 
   // Sem sharp no Workers: a imagem de compartilhamento é gerada no navegador durante o upload.
-  return { name: 'cloudflare', db: createD1Database(env.DB), storage };
+  return { name: 'cloudflare', db: createD1Database(env.DB), storage, ipSource: 'cloudflare' };
 };

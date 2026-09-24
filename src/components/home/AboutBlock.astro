@@ -1,39 +1,39 @@
 ---
 import Icon from '@/components/ui/Icon.astro';
-import type { IconName } from '@/components/ui/icons';
 import { instagramUrl } from '@/lib/seo';
 import type { SiteSettings } from '@/types/settings';
+import { telHref } from '@/utils/phone';
+import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
 
 interface Props {
   settings: SiteSettings;
 }
 
 const { settings } = Astro.props;
-const services: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'handshake', title: 'Compra', text: 'Avaliamos o seu veículo para compra.' },
-  { icon: 'car', title: 'Venda', text: 'Estoque com carros, motos, pesados e máquinas.' },
-  { icon: 'shield', title: 'Financiamento', text: 'Consulte as condições pelo WhatsApp.' },
-  { icon: 'repasse', title: 'Repasses', text: 'Oportunidades de repasse quando disponíveis.' },
-];
+const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+const location = [settings.address, `${settings.city} - ${settings.state}`].filter(Boolean).join(' · ');
 ---
 
 <section class="container-site" aria-labelledby="sobre-title">
-  <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
-    <div>
+  <div class="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16">
+    <div class="reveal min-w-0">
       <p class="eyebrow">
         {settings.city} - {settings.state}
       </p>
       <h2 id="sobre-title" class="display mt-4 text-4xl text-white sm:text-5xl">
         {settings.businessName}
       </h2>
-      <p class="mt-5 text-2xl font-semibold leading-snug text-gold-300 [font-stretch:108%]">“{settings.slogan}”</p>
+      <p class="mt-6 text-2xl font-semibold leading-snug [font-stretch:108%] sm:text-3xl">
+        <span class="text-gold-metal">“{settings.slogan}”</span>
+      </p>
       <p class="mt-5 max-w-lg text-mist-300">
         Atuamos com compra, venda, financiamento e repasse de veículos. Fale com a nossa equipe pelo WhatsApp ou
         acompanhe as novidades nas nossas redes sociais.
       </p>
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <a href="/empresa" class="btn btn-ghost">
           Conheça a empresa
+          <Icon name="arrow-right" size={18} />
         </a>
         {settings.instagram && (
           <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
@@ -42,16 +42,100 @@ const services: { icon: IconName; title: string; text: string }[] = [
         )}
       </div>
     </div>
-    <ul class="grid gap-3 sm:grid-cols-2" role="list">
-      {services.map((s) => (
-        <li class="surface p-5 sm:p-6">
-          <span class="inline-flex size-11 items-center justify-center rounded-xl bg-white/5 text-gold-400">
-            <Icon name={s.icon} size={24} strokeWidth={1.6} />
-          </span>
-          <h3 class="mt-4 text-lg font-bold text-white [font-stretch:108%]">{s.title}</h3>
-          <p class="mt-1 text-sm text-mist-300">{s.text}</p>
+
+    <div class="contact-card reveal min-w-0">
+      <p class="text-xs font-bold uppercase tracking-[0.2em] text-gold-300">Atendimento</p>
+      <p class="mt-2 text-2xl font-bold text-white [font-stretch:108%]">Fale com a M&M</p>
+      <ul class="mt-6 grid gap-2" role="list">
+        <li>
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="contact-row">
+            <span class="contact-icon text-whatsapp">
+              <Icon name="whatsapp" size={20} />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-xs text-mist-400">WhatsApp</span>
+              <span class="block font-semibold text-white tabular">{settings.phone}</span>
+            </span>
+            <Icon name="arrow-up-right" size={18} class="ml-auto shrink-0 text-mist-500" />
+          </a>
         </li>
-      ))}
-    </ul>
+        <li>
+          <a href={telHref(settings.phone)} class="contact-row">
+            <span class="contact-icon">
+              <Icon name="phone" size={19} />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-xs text-mist-400">Telefone</span>
+              <span class="block font-semibold text-white">Ligar agora</span>
+            </span>
+            <Icon name="arrow-up-right" size={18} class="ml-auto shrink-0 text-mist-500" />
+          </a>
+        </li>
+        <li class="contact-row">
+          <span class="contact-icon">
+            <Icon name="map-pin" size={19} />
+          </span>
+          <span class="min-w-0">
+            <span class="block text-xs text-mist-400">Localização</span>
+            <span class="block font-semibold text-white">{location}</span>
+          </span>
+        </li>
+        {settings.openingHours && (
+          <li class="contact-row">
+            <span class="contact-icon">
+              <Icon name="clock" size={19} />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-xs text-mist-400">Horário</span>
+              <span class="block whitespace-pre-line font-semibold text-white">{settings.openingHours}</span>
+            </span>
+          </li>
+        )}
+      </ul>
+    </div>
   </div>
 </section>
+
+<style>
+  .contact-card {
+    padding: 1.75rem;
+    border-radius: 1.75rem;
+    background:
+      radial-gradient(90% 70% at 100% 0%, color-mix(in oklab, var(--color-gold-500) 12%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--color-ink-800), var(--color-ink-900));
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 20%, transparent);
+    box-shadow: 0 40px 80px -50px rgb(0 0 0 / 0.9);
+  }
+  @media (min-width: 640px) {
+    .contact-card {
+      padding: 2.25rem;
+    }
+  }
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--color-ink-950) 55%, transparent);
+    border: 1px solid color-mix(in oklab, white 6%, transparent);
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease;
+  }
+  a.contact-row:hover {
+    border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+    background: color-mix(in oklab, var(--color-gold-500) 6%, var(--color-ink-950));
+  }
+  .contact-icon {
+    display: inline-flex;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: color-mix(in oklab, white 6%, transparent);
+    color: var(--color-gold-300);
+  }
+</style>

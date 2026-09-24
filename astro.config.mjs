@@ -24,9 +24,8 @@ const target = process.env.DEPLOY_TARGET ?? 'node';
 const adapters = {
   cloudflare: () =>
     cloudflare({
-      // Fotos já chegam otimizadas (WebP) — sem serviço de imagens nem binding IMAGES.
+      // Fotos já chegam otimizadas (WebP) — sem serviço de imagens (passthrough não exige binding IMAGES).
       imageService: 'passthrough',
-      imagesBindingName: false,
     }),
   vercel: () =>
     vercel({

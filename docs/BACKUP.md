@@ -8,7 +8,8 @@ O que precisa de backup: **banco** (veículos, propostas, configurações, hist�
 
 ## Rotina recomendada
 
-- **Semanal:** `npm run db:backup -- --with-media` com as variáveis de produção.
+- **Semanal (Cloudflare, produção):** `npm run cf:backup` (D1 + fotos do KV/R2).
+- **Semanal (Vercel/Turso, se usado):** `npm run db:backup -- --with-media` com as variáveis de produção.
 - **Antes de qualquer mudança grande** (migração de provedor, importação em massa): backup completo.
 - Mantenha as últimas 4 cópias semanais em um armazenamento pessoal seguro (ex.: Google Drive da empresa).
 
@@ -84,8 +85,10 @@ DATABASE_URL=file:.data/restore-test.db STORAGE_DRIVER=local LOCAL_STORAGE_DIR=.
 
 - Cópia do bucket com `rclone` (remote S3 apontando para o R2) ou o próprio `npm run db:backup -- --with-media`.
 
-### Cloudflare D1 (após migração)
+### Cloudflare D1 (produção)
 
+- `npm run cf:backup` / `npm run cf:restore -- backups/<pasta> [--media-only]` (veja
+  [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md#11-backup)). A restauração completa só roda num D1 vazio.
 - Time Travel (restauração pontual de 30 dias no plano pago; 7 dias no gratuito — confira a documentação vigente):
   `wrangler d1 time-travel restore <db> --timestamp=<ISO>`.
 - Exportação: `wrangler d1 export <db> --remote --output=backup.sql`.

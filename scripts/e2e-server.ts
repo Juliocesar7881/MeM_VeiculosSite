@@ -52,7 +52,9 @@ async function main() {
     );
   });
 
-  const server = run('npx', ['astro', 'dev', '--port', String(E2E_PORT), '--host', '127.0.0.1']);
+  // --ignore-lock: roda em primeiro plano (o Astro 7 joga o dev server para segundo plano quando detecta um agente
+  // de IA, e o Playwright acharia que o servidor caiu) e permite coexistir com um `npm run dev` em outra porta.
+  const server = run('npx', ['astro', 'dev', '--port', String(E2E_PORT), '--host', '127.0.0.1', '--ignore-lock']);
   const stop = () => server.kill();
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);

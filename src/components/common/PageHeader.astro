@@ -12,11 +12,12 @@ interface Props {
 const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
 ---
 
-<header class:list={['page-header relative overflow-hidden border-b hairline', `tone-${tone}`]}>
-  <div class="container-site pb-8 pt-6 sm:pb-10 sm:pt-8">
+<header class:list={['page-header relative isolate overflow-hidden border-b hairline', `tone-${tone}`]}>
+  <div class="bg-grid-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+  <div class="container-site pb-10 pt-6 sm:pb-14 sm:pt-8">
     <Breadcrumbs items={breadcrumbs} />
     {eyebrow && <p class="eyebrow mt-6">{eyebrow}</p>}
-    <h1 class="display mt-3 text-4xl text-white sm:text-5xl lg:text-6xl">{title}</h1>
+    <h1 class="display mt-4 text-4xl text-white sm:text-5xl lg:text-[4rem]">{title}</h1>
     {subtitle && <p class="mt-4 max-w-2xl text-base text-mist-300 sm:text-lg">{subtitle}</p>}
     <slot />
   </div>
@@ -28,7 +29,8 @@ const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
   }
   .tone-default {
     background:
-      radial-gradient(60% 120% at 90% 0%, color-mix(in oklab, white 5%, transparent), transparent 70%),
+      radial-gradient(55% 130% at 92% 0%, color-mix(in oklab, var(--color-gold-500) 8%, transparent), transparent 70%),
+      radial-gradient(60% 120% at 60% 0%, color-mix(in oklab, white 4%, transparent), transparent 70%),
       var(--color-ink-950);
   }
   .tone-gold {

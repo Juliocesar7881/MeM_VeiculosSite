@@ -52,13 +52,28 @@ export function contentLength(request: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** IP do cliente (Vercel/Cloudflare/local). Usado apenas de forma anonimizada (hash). */
-export function clientIp(request: Request, fallback: string | undefined): string {
-  const cf = request.headers.get('cf-connecting-ip');
-  if (cf) return cf;
-  const real = request.headers.get('x-real-ip');
-  if (real) return real;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown';
-  return fallback ?? 'unknown';
+/** De onde confiar o IP do cliente — cada plataforma define (e sobrescreve) um header diferente. */
+export type IpSource = 'cloudflare' | 'vercel' | 'direct';
+
+/**
+ * IP do cliente, usado apenas de forma anonimizada (hash) no rate limit.
+ * Só lê o header que a plataforma garante: aceitar qualquer header permitiria burlar o limite
+ * enviando, por exemplo, um "CF-Connecting-IP" falso para um site hospedado na Vercel.
+ */
+export function clientIp(request: Request, source: IpSource, clientAddress: () => string | undefined): string {
+  const headers = request.headers;
+  if (source === 'cloudflare') {
+    const cf = headers.get('cf-connecting-ip');
+    if (cf) return cf;
+  } else if (source === 'vercel') {
+    const real = headers.get('x-real-ip');
+    if (real) return real;
+    const forwarded = headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+    if (forwarded) return forwarded;
+  }
+  try {
+    return clientAddress() || 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
