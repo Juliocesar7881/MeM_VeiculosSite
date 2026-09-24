@@ -3,7 +3,16 @@
  * Formato armazenado: pbkdf2-sha256$<iterações>$<salt base64url>$<hash base64url>
  */
 const ALGORITHM = 'pbkdf2-sha256';
+/** Node/Vercel: 600 mil iterações (recomendação OWASP para SHA-256). */
 export const DEFAULT_ITERATIONS = 600_000;
+/**
+ * Cloudflare Workers: o WebCrypto aceita no máximo 100 mil iterações e o plano gratuito
+ * tem 10 ms de CPU por requisição — 50 mil (~5 ms) cabem com folga. O login também tem
+ * limite de tentativas por IP, o que compensa o custo menor por tentativa.
+ */
+export const WORKERS_ITERATIONS = 50_000;
+const MIN_ITERATIONS = 20_000;
+const MAX_ITERATIONS = 5_000_000;
 const KEY_LENGTH_BITS = 256;
 
 export function toBase64Url(bytes: Uint8Array): string {
@@ -49,7 +58,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const parts = stored.trim().split('$');
   if (parts.length !== 4 || parts[0] !== ALGORITHM) return false;
   const iterations = Number(parts[1]);
-  if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 5_000_000) return false;
+  if (!Number.isInteger(iterations) || iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) return false;
   try {
     const salt = fromBase64Url(parts[2] ?? '');
     const expected = fromBase64Url(parts[3] ?? '');
@@ -63,5 +72,6 @@ export async function verifyPassword(password: string, stored: string): Promise<
 export function isValidPasswordHash(stored: string | undefined | null): boolean {
   if (!stored) return false;
   const parts = stored.trim().split('$');
-  return parts.length === 4 && parts[0] === ALGORITHM && Number(parts[1]) >= 100_000;
+  const iterations = Number(parts[1]);
+  return parts.length === 4 && parts[0] === ALGORITHM && iterations >= MIN_ITERATIONS && iterations <= MAX_ITERATIONS;
 }

@@ -39,13 +39,14 @@ export class VehicleImageRepository {
   insertStatement(image: VehicleImage): SqlStatement {
     return {
       sql: `INSERT INTO vehicle_images
-        (id, vehicle_id, large_key, thumb_key, width, height, thumb_width, thumb_height, content_type, size_bytes, position, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, vehicle_id, large_key, thumb_key, og_key, width, height, thumb_width, thumb_height, content_type, size_bytes, position, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         image.id,
         image.vehicleId,
         image.largeKey,
         image.thumbKey,
+        image.ogKey,
         image.width,
         image.height,
         image.thumbWidth,

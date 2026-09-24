@@ -17,6 +17,7 @@ import { localDateEndToIso, localDateStartToIso } from '@/utils/dates';
 import { buildVehicleSlug } from '@/utils/slug';
 import { normalizeSearch } from '@/utils/text';
 import type { AuditService } from './audit-service';
+import { storedKeys } from './media-service';
 
 export interface VehicleServiceDeps {
   vehicles: VehicleRepository;
@@ -268,7 +269,7 @@ export class VehicleService {
     for (const image of images) await this.deps.images.delete(image.id);
     if (images.length) {
       await this.deps.storage
-        .delete(images.flatMap((i) => [i.largeKey, i.thumbKey]))
+        .delete(images.flatMap(storedKeys))
         .catch((error: unknown) => console.error('[vehicle] falha ao remover fotos do storage', error));
     }
     await this.deps.audit.log(actor, 'vehicle.delete', 'vehicle', vehicle.id, {

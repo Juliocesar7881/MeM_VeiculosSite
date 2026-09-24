@@ -37,7 +37,8 @@ export interface ServerConfig {
   allowIndexing: boolean;
   database: { url: string; authToken?: string | undefined };
   storage: {
-    driver: StorageDriver;
+    /** local | vercel-blob | s3 (Node/Vercel) · r2 | kv | s3 (Cloudflare Workers) */
+    driver: StorageDriver | 'kv' | 'r2';
     localDir: string;
     blobToken?: string | undefined;
     s3: {
@@ -111,7 +112,8 @@ export function getServerConfig(): ServerConfig {
     },
   };
 
-  if (isProduction && cached.database.url.startsWith('file:') && process.env.VERCEL) {
+  const onVercel = Boolean(globalThis.process?.env?.VERCEL);
+  if (isProduction && cached.database.url.startsWith('file:') && onVercel) {
     console.error('[config] DATABASE_URL aponta para arquivo local em ambiente Vercel. Configure o Turso (libsql://).');
   }
   return cached;

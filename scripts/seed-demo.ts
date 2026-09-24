@@ -10,6 +10,7 @@ import sharp from 'sharp';
 import { createLibsqlDatabase } from '../src/lib/db/libsql';
 import { LocalStorage } from '../src/lib/storage/local';
 import { vehicleInputSchema } from '../src/schemas/vehicle';
+import { renderOgImage } from '../src/server/og-image';
 import { buildServices } from '../src/server/services';
 import type { AdminActor } from '../src/types/domain';
 import { demoPhotoSvg, type DemoShape } from './lib/demo-art';
@@ -328,11 +329,12 @@ const VEHICLES: DemoVehicle[] = [
   },
 ];
 
-async function makePair(svg: string, maxLarge: number) {
+async function makePair(svg: string, maxLarge: number, withOg = false) {
   const base = sharp(Buffer.from(svg));
   const large = await base.clone().resize({ width: maxLarge }).webp({ quality: 80 }).toBuffer();
   const thumb = await base.clone().resize({ width: 720 }).webp({ quality: 76 }).toBuffer();
-  return { large: new Uint8Array(large), thumb: new Uint8Array(thumb) };
+  const og = withOg ? new Uint8Array(await renderOgImage(new Uint8Array(large))) : null;
+  return { large: new Uint8Array(large), thumb: new Uint8Array(thumb), og };
 }
 
 async function main() {
@@ -367,7 +369,7 @@ async function main() {
         label: `${item.data.brand} ${item.data.model} — imagem ${i + 1}`,
         variant: i,
       });
-      await services.media.addVehicleImage(vehicle.id, await makePair(svg, 1600), actor);
+      await services.media.addVehicleImage(vehicle.id, await makePair(svg, 1600, true), actor);
     }
     console.log(`✔ ${vehicle.brand} ${vehicle.model} (${vehicle.status})`);
   }

@@ -9,16 +9,18 @@
  * Fotos de propostas (sell-leads) nunca são misturadas com veículos publicados:
  * ao converter uma proposta, as fotos são COPIADAS para vehicles/.
  */
-export type ImageVariant = 'large' | 'thumb';
+export type ImageVariant = 'large' | 'thumb' | 'og';
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const EXT = '(webp|jpg)';
 
-export const VEHICLE_KEY_PATTERN = new RegExp(`^vehicles/${UUID}/${UUID}(-thumb)?\\.${EXT}$`);
+export const VEHICLE_KEY_PATTERN = new RegExp(`^vehicles/${UUID}/${UUID}(-thumb|-og)?\\.${EXT}$`);
 export const LEAD_KEY_PATTERN = new RegExp(`^sell-leads/${UUID}/${UUID}(-thumb)?\\.${EXT}$`);
 
 function fileName(imageId: string, variant: ImageVariant, extension: string): string {
-  return variant === 'thumb' ? `${imageId}-thumb.${extension}` : `${imageId}.${extension}`;
+  if (variant === 'thumb') return `${imageId}-thumb.${extension}`;
+  if (variant === 'og') return `${imageId}-og.${extension}`;
+  return `${imageId}.${extension}`;
 }
 
 export function vehicleImageKey(vehicleId: string, imageId: string, variant: ImageVariant, extension: string): string {

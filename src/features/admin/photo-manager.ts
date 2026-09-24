@@ -139,12 +139,13 @@ export function initPhotoManager() {
     const status = li.querySelector<HTMLElement>('.photo-status');
     const img = li.querySelector('img');
     try {
-      const pair = await makeImagePair(file, config);
+      const pair = await makeImagePair(file, { ...config, withOg: true });
       if (img) img.src = URL.createObjectURL(pair.thumb.blob);
       if (status) status.textContent = 'Enviando…';
       const body = new FormData();
       body.append('large', pair.large.blob, `foto.${extensionFor(pair.large.blob)}`);
       body.append('thumb', pair.thumb.blob, `foto-thumb.${extensionFor(pair.thumb.blob)}`);
+      if (pair.og) body.append('og', pair.og, 'foto-og.jpg');
       const res = await fetch(api, { method: 'POST', body });
       if (!res.ok) throw new Error(await readError(res));
       const data = (await res.json()) as { image: UploadedImage };

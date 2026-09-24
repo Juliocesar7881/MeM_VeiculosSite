@@ -2,7 +2,8 @@ import type { LeadStatus } from '@/config/catalog';
 import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
 import type { Database, SqlStatement } from '@/lib/db/types';
 import { ConflictError, NotFoundError, ValidationError } from '@/lib/errors';
-import { leadImageKey, vehicleImageKey, type ObjectStorage } from '@/lib/storage';
+import { leadImageKey, vehicleImageKey } from '@/lib/storage/keys';
+import type { ObjectStorage } from '@/lib/storage/types';
 import type { LeadListFilters, LeadRepository } from '@/repositories/lead-repository';
 import type { VehicleImageRepository } from '@/repositories/vehicle-image-repository';
 import type { VehicleRepository } from '@/repositories/vehicle-repository';
@@ -261,6 +262,7 @@ export class LeadService {
           vehicleId,
           largeKey,
           thumbKey,
+          ogKey: null,
           width: source.width,
           height: source.height,
           thumbWidth: source.thumbWidth,

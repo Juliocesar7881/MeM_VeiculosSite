@@ -9,7 +9,7 @@ import { loadEnv } from './lib/env';
 
 loadEnv();
 const port = process.env.PREVIEW_PORT ?? '4330';
-const env: NodeJS.ProcessEnv = { ...process.env, ADAPTER: 'node' };
+const env: NodeJS.ProcessEnv = { ...process.env, DEPLOY_TARGET: 'node' };
 const shell = process.platform === 'win32';
 
 const build = spawn('npx', ['astro', 'build'], { env, stdio: 'inherit', shell });

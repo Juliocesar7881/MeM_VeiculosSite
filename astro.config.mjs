@@ -1,5 +1,7 @@
 // @ts-check
+import { fileURLToPath } from 'node:url';
 import { defineConfig, envField } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import node from '@astrojs/node';
 import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,22 +13,47 @@ const site = process.env.PUBLIC_SITE_URL || 'http://localhost:4321';
 const secret = (/** @type {{ optional?: boolean; default?: string }} */ opts = {}) =>
   envField.string({ context: 'server', access: 'secret', optional: true, ...opts });
 
-// ADAPTER=node gera um servidor Node local (npm run preview:local) — útil para medir o
-// build de produção (Lighthouse) no computador. O padrão é a Vercel.
-const adapter =
-  process.env.ADAPTER === 'node'
-    ? node({ mode: 'standalone' })
-    : vercel({
-        maxDuration: 30,
-        // Não usamos o otimizador de imagens da Vercel: as fotos já são geradas
-        // em WebP nos tamanhos corretos no momento do upload.
-        imageService: false,
-      });
+/**
+ * Destino do build (DEPLOY_TARGET):
+ *  - cloudflare -> Workers + D1 + R2/KV (produção recomendada, plano gratuito)
+ *  - vercel     -> Vercel Functions + Turso + Blob
+ *  - node       -> servidor Node (desenvolvimento local e `npm run preview:local`)
+ */
+const target = process.env.DEPLOY_TARGET ?? 'node';
+
+const adapters = {
+  cloudflare: () =>
+    cloudflare({
+      // Fotos já chegam otimizadas (WebP) — sem serviço de imagens nem binding IMAGES.
+      imageService: 'passthrough',
+      imagesBindingName: false,
+    }),
+  vercel: () =>
+    vercel({
+      maxDuration: 30,
+      imageService: false,
+    }),
+  node: () => node({ mode: 'standalone' }),
+};
+const adapter = (adapters[/** @type {keyof typeof adapters} */ (target)] ?? adapters.node)();
+
+/** No Cloudflare, "@/server/platform" aponta para D1/R2/KV e mantém libSQL/sharp/fs fora do Worker. */
+const platformAlias =
+  target === 'cloudflare'
+    ? [
+        {
+          find: /^@\/server\/platform$/,
+          replacement: fileURLToPath(new URL('./src/server/platform/cloudflare.ts', import.meta.url)),
+        },
+      ]
+    : [];
 
 export default defineConfig({
   site,
   output: 'server',
   adapter,
+  // Não usamos sessões do Astro (o painel tem sessão própria assinada).
+  session: false,
   trailingSlash: 'ignore',
   compressHTML: true,
   devToolbar: { enabled: false },
@@ -46,7 +73,7 @@ export default defineConfig({
       STORAGE_DRIVER: envField.enum({
         context: 'server',
         access: 'secret',
-        values: ['local', 'vercel-blob', 's3'],
+        values: ['local', 'vercel-blob', 's3', 'r2', 'kv'],
         default: 'local',
       }),
       LOCAL_STORAGE_DIR: secret({ default: '.data/uploads' }),
@@ -77,6 +104,7 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    resolve: { alias: platformAlias },
     build: {
       // Limite para embutir CSS pequeno (inlineStylesheets: 'auto'). Scripts continuam
       // sempre externos — verificado pelo teste E2E de CSP (nenhum <script> inline executável).

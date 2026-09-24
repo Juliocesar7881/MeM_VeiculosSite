@@ -4,6 +4,7 @@ dist/
 .astro/
 .vercel/
 .output/
+.wrangler/
 
 # dados locais (banco SQLite de desenvolvimento, uploads, backups)
 .data/

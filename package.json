@@ -10,7 +10,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "vercel-build": "npm run db:migrate && astro build",
+    "cf:build": "tsx scripts/cf.ts build",
+    "cf:deploy": "tsx scripts/cf.ts deploy",
+    "cf:dev": "tsx scripts/cf.ts dev",
+    "cf:migrate": "tsx scripts/cf.ts migrate",
+    "cf:migrate:local": "tsx scripts/cf.ts migrate:local",
+    "cf:backup": "tsx scripts/cf-backup.ts backup",
+    "cf:restore": "tsx scripts/cf-backup.ts restore",
+    "vercel-build": "npm run db:migrate && DEPLOY_TARGET=vercel astro build",
     "preview:local": "tsx scripts/preview-local.ts",
     "typecheck": "astro check",
     "lint": "eslint .",
@@ -42,6 +49,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.3.3",
     "@astrojs/node": "^11.1.6",
     "@eslint/js": "^10.0.1",
     "@fontsource/roboto-slab": "^5.3.0",
@@ -59,7 +67,8 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "wrangler": "^4.138.0"
   },
   "overrides": {
     "@vercel/routing-utils": {
@@ -67,6 +76,7 @@
     }
   },
   "allowScripts": {
-    "esbuild@0.28.2": true
+    "esbuild@0.28.2": true,
+    "esbuild@0.28.1": true
   }
 }

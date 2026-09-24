@@ -1,12 +1,7 @@
 import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
 import { NotFoundError, ValidationError } from '@/lib/errors';
-import {
-  isLeadImageKey,
-  isVehicleImageKey,
-  vehicleImageKey,
-  type ObjectStorage,
-  type StoredObject,
-} from '@/lib/storage';
+import { isLeadImageKey, isVehicleImageKey, vehicleImageKey } from '@/lib/storage/keys';
+import type { ObjectStorage, StoredObject } from '@/lib/storage/types';
 import type { VehicleImageRepository } from '@/repositories/vehicle-image-repository';
 import type { VehicleRepository } from '@/repositories/vehicle-repository';
 import type { AdminActor, VehicleImage } from '@/types/domain';
@@ -16,6 +11,24 @@ import type { AuditService } from './audit-service';
 export interface ImagePair {
   large: Uint8Array;
   thumb: Uint8Array;
+  /** Opcional: JPEG 1200x630 para compartilhamento (gerado no navegador). */
+  og?: Uint8Array | null;
+}
+
+export const OG_SIZE = { width: 1200, height: 630, maxBytes: 400_000 } as const;
+
+/** Valida a imagem de compartilhamento: JPEG real, exatamente 1200x630. */
+export function validateOgImage(bytes: Uint8Array): InspectedImage {
+  try {
+    const og = inspectImage(bytes, { maxBytes: OG_SIZE.maxBytes, maxEdge: OG_SIZE.width, allowed: ['jpeg'] });
+    if (og.width !== OG_SIZE.width || og.height !== OG_SIZE.height) {
+      throw new ImageValidationError('Imagem de compartilhamento deve ter 1200×630 px.');
+    }
+    return og;
+  } catch (error) {
+    if (error instanceof ImageValidationError) throw new ValidationError(error.message);
+    throw error;
+  }
 }
 
 export interface ValidatedPair {
@@ -68,6 +81,11 @@ export interface MediaServiceDeps {
 
 export const IMMUTABLE_CACHE_SECONDS = 60 * 60 * 24 * 365;
 
+/** Todas as chaves de storage de uma foto (grande, miniatura e compartilhamento). */
+export function storedKeys(image: { largeKey: string; thumbKey: string; ogKey?: string | null }): string[] {
+  return [image.largeKey, image.thumbKey, ...(image.ogKey ? [image.ogKey] : [])];
+}
+
 export class MediaService {
   private readonly idGen: () => string;
 
@@ -89,9 +107,12 @@ export class MediaService {
       thumbMaxEdge: IMAGE_LIMITS.thumbMaxEdge,
     });
 
+    const og = pair.og ? validateOgImage(pair.og) : null;
+
     const imageId = this.idGen();
     const largeKey = vehicleImageKey(vehicleId, imageId, 'large', validated.large.extension);
     const thumbKey = vehicleImageKey(vehicleId, imageId, 'thumb', validated.thumb.extension);
+    const ogKey = og ? vehicleImageKey(vehicleId, imageId, 'og', og.extension) : null;
 
     await this.deps.storage.put(largeKey, pair.large, {
       contentType: validated.large.contentType,
@@ -102,11 +123,18 @@ export class MediaService {
         contentType: validated.thumb.contentType,
         cacheControlMaxAge: IMMUTABLE_CACHE_SECONDS,
       });
+      if (og && ogKey && pair.og) {
+        await this.deps.storage.put(ogKey, pair.og, {
+          contentType: og.contentType,
+          cacheControlMaxAge: IMMUTABLE_CACHE_SECONDS,
+        });
+      }
       const image: VehicleImage = {
         id: imageId,
         vehicleId,
         largeKey,
         thumbKey,
+        ogKey,
         width: validated.large.width,
         height: validated.large.height,
         thumbWidth: validated.thumb.width,
@@ -121,7 +149,7 @@ export class MediaService {
       await this.deps.audit.log(actor, 'vehicle.image.add', 'vehicle', vehicleId, { imageId });
       return image;
     } catch (error) {
-      await this.deps.storage.delete([largeKey, thumbKey]).catch(() => undefined);
+      await this.deps.storage.delete(storedKeys({ largeKey, thumbKey, ogKey })).catch(() => undefined);
       throw error;
     }
   }
@@ -130,7 +158,7 @@ export class MediaService {
     const image = await this.deps.images.findById(imageId);
     if (!image || image.vehicleId !== vehicleId) throw new NotFoundError('Foto não encontrada.');
     await this.deps.images.delete(imageId);
-    await this.deps.storage.delete([image.largeKey, image.thumbKey]).catch((error: unknown) => {
+    await this.deps.storage.delete(storedKeys(image)).catch((error: unknown) => {
       console.error('[media] falha ao remover arquivo do storage', error);
     });
     await this.deps.vehicles.touch(vehicleId, new Date().toISOString());

@@ -43,6 +43,8 @@ export interface VehicleImage {
   vehicleId: string;
   largeKey: string;
   thumbKey: string;
+  /** JPEG 1200x630 para compartilhamento (Open Graph); nulo em fotos antigas/convertidas. */
+  ogKey: string | null;
   width: number;
   height: number;
   thumbWidth: number;

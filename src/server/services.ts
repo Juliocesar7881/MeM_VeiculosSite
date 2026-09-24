@@ -1,5 +1,5 @@
 import type { Database } from '@/lib/db/types';
-import type { ObjectStorage } from '@/lib/storage';
+import type { ObjectStorage } from '@/lib/storage/types';
 import { AuditRepository } from '@/repositories/audit-repository';
 import { LeadRepository } from '@/repositories/lead-repository';
 import { RateLimitRepository } from '@/repositories/rate-limit-repository';

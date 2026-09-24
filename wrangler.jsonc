@@ -1,0 +1,40 @@
+// Cloudflare Workers — M&M Veículos
+// Build: npm run cf:build   ·   Deploy: npm run cf:deploy   ·   docs/DEPLOY-CLOUDFLARE.md
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mm-veiculos",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  // Smart Placement: executa o Worker perto do D1 quando isso reduz a latência das consultas.
+  "placement": { "mode": "smart" },
+
+  // Banco de dados (SQLite). Migrations: npm run cf:migrate
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mm-veiculos",
+      "database_id": "e73c4fdd-2e1a-4da5-8971-3bc6f6aa1e55",
+      "migrations_dir": "migrations",
+    },
+  ],
+
+  // Fotos. Enquanto o R2 não estiver ativado na conta, usamos o Workers KV (grátis, sem cartão).
+  // Para usar o R2: crie o bucket, descomente "r2_buckets" e troque STORAGE_DRIVER para "r2".
+  "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "6f46d016e005413a983bbb981b489f47" }],
+  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mm-veiculos-media" }],
+
+  // Variáveis públicas (não secretas). Segredos: `npx wrangler secret put <NOME>`
+  // (ADMIN_PASSWORD_HASH, SESSION_SECRET, IP_HASH_SALT, TURNSTILE_SECRET_KEY)
+  "vars": {
+    "STORAGE_DRIVER": "kv",
+    "AUTH_MODE": "password",
+    "ALLOW_INDEXING": "false",
+    // Chave pública do widget Turnstile (hostnames: *.workers.dev e localhost). Adicione o
+    // domínio definitivo no painel do Turnstile quando ele existir.
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFCMqr_iAvEcbdnL",
+  },
+}

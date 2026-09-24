@@ -97,8 +97,19 @@ export const requiredInt = (label: string, min: number, max: number) =>
       .max(max, { error: `${label} deve ser no máximo ${max}.` }),
   );
 
-export const requiredYear = (label: string) => requiredInt(label, 1950, currentYear() + 1);
-export const optionalYear = (label: string) => optionalInt(label, 1950, currentYear() + 1);
+/**
+ * O limite superior (ano atual + 1) é calculado NA HORA da validação: no Cloudflare Workers
+ * o relógio vale 1970 enquanto o módulo é carregado (fora de uma requisição).
+ */
+const maxYearMessage = (label: string) => () => `${label} deve ser no máximo ${currentYear() + 1}.`;
+
+export const requiredYear = (label: string) =>
+  requiredInt(label, 1950, 9999).refine((v) => v <= currentYear() + 1, { error: maxYearMessage(label) });
+
+export const optionalYear = (label: string) =>
+  optionalInt(label, 1950, 9999).refine((v) => v === null || v <= currentYear() + 1, {
+    error: maxYearMessage(label),
+  });
 
 /** Valor em reais digitado -> centavos | null */
 export const optionalMoney = (label: string, maxReais = 50_000_000) =>

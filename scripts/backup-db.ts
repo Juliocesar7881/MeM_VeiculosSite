@@ -63,6 +63,7 @@ async function main() {
       for (const row of data[table] ?? []) {
         keys.add(String(row.large_key));
         keys.add(String(row.thumb_key));
+        if (row.og_key) keys.add(String(row.og_key));
       }
     }
     let saved = 0;

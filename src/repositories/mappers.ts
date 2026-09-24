@@ -148,12 +148,13 @@ export interface ImageRow {
   created_at: string;
 }
 
-export function mapVehicleImage(row: ImageRow & { vehicle_id: string }): VehicleImage {
+export function mapVehicleImage(row: ImageRow & { vehicle_id: string; og_key?: string | null }): VehicleImage {
   return {
     id: row.id,
     vehicleId: row.vehicle_id,
     largeKey: row.large_key,
     thumbKey: row.thumb_key,
+    ogKey: row.og_key ?? null,
     width: row.width,
     height: row.height,
     thumbWidth: row.thumb_width,
