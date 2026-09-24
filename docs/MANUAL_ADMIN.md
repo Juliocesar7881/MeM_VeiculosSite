@@ -5,7 +5,7 @@ Guia rápido para quem vai cuidar do site no dia a dia. Funciona no computador e
 ## Entrar no painel
 
 1. Acesse **seusite.com.br/admin** (enquanto não houver domínio, use
-   `https://mm-veiculos.visor-crypto.workers.dev/admin`).
+   `https://mm-veiculos.lupinho7881.workers.dev/admin`).
 2. Digite a **senha do painel** e toque em **Entrar**.
 3. Para sair, use **Sair** (no menu lateral ou no ícone de saída no celular).
 

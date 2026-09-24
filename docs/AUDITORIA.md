@@ -1,6 +1,6 @@
 # Auditoria final
 
-Data: **24/09/2026** · Ambiente verificado: produção na Cloudflare (`https://mm-veiculos.visor-crypto.workers.dev`),
+Data: **24/09/2026** · Ambiente verificado: produção na Cloudflare (`https://mm-veiculos.lupinho7881.workers.dev`),
 build local em Node (testes E2E) e runtime local da Cloudflare (`wrangler dev`/workerd).
 
 | Verificação                                                                   | Resultado                                                                                                                                                                     |

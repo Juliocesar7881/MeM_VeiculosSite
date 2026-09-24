@@ -6,15 +6,16 @@ zero. O único custo obrigatório é o **domínio**. A alternativa pela Vercel c
 
 ## Situação atual (24/09/2026)
 
-| Item                        | Estado                                                                                                                  |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Site no ar (URL temporária) | **https://mm-veiculos.visor-crypto.workers.dev**                                                                        |
-| Painel                      | https://mm-veiculos.visor-crypto.workers.dev/admin (senha de **desenvolvimento**, trocar antes da entrega, ver passo 4) |
-| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                                 |
-| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0004 aplicadas                                                          |
-| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                               |
-| Anti-spam                   | Turnstile com chave real (hostname `*.workers.dev`)                                                                     |
-| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                               |
+| Item                        | Estado                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Site no ar (URL temporária) | **https://mm-veiculos.lupinho7881.workers.dev**                                                                        |
+| Painel                      | https://mm-veiculos.lupinho7881.workers.dev/admin (senha de **desenvolvimento**, trocar antes da entrega, ver passo 4) |
+| Conta Cloudflare            | **lupinho7881@gmail.com** (dedicada a este projeto)                                                                    |
+| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                                |
+| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0004 aplicadas                                                         |
+| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                              |
+| Anti-spam                   | Turnstile com chave real (hostname `mm-veiculos.lupinho7881.workers.dev`)                                              |
+| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                              |
 
 Tudo o que o site precisa já está configurado em [`wrangler.jsonc`](../wrangler.jsonc) (bindings e variáveis
 públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git).
@@ -102,7 +103,7 @@ npx wrangler secret put SESSION_SECRET
 
 Painel da Cloudflare → **Turnstile** → widget “M&M Veículos”:
 
-- **Hostnames:** mantenha o `*.workers.dev` durante a validação e **adicione o domínio definitivo** (ex.:
+- **Hostnames:** mantenha `mm-veiculos.lupinho7881.workers.dev` durante a validação e **adicione o domínio definitivo** (ex.:
   `mmveiculos.com.br` e `www.mmveiculos.com.br`) quando ele existir.
 - A **Site Key** fica em `wrangler.jsonc` (`TURNSTILE_SITE_KEY`, é pública); a **Secret Key** fica no secret
   `TURNSTILE_SECRET_KEY` (`npx wrangler secret put TURNSTILE_SECRET_KEY`).

@@ -17,14 +17,14 @@
     {
       "binding": "DB",
       "database_name": "mm-veiculos",
-      "database_id": "e73c4fdd-2e1a-4da5-8971-3bc6f6aa1e55",
+      "database_id": "693142c6-a23b-479d-83a5-40cf00ff3275",
       "migrations_dir": "migrations",
     },
   ],
 
   // Fotos. Enquanto o R2 não estiver ativado na conta, usamos o Workers KV (grátis, sem cartão).
   // Para usar o R2: crie o bucket, descomente "r2_buckets" e troque STORAGE_DRIVER para "r2".
-  "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "6f46d016e005413a983bbb981b489f47" }],
+  "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "07d500e6534c4d558dca80ef113621cb" }],
   // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mm-veiculos-media" }],
 
   // Variáveis públicas (não secretas). Segredos: `npx wrangler secret put <NOME>`
@@ -33,8 +33,8 @@
     "STORAGE_DRIVER": "kv",
     "AUTH_MODE": "password",
     "ALLOW_INDEXING": "false",
-    // Chave pública do widget Turnstile (hostnames: *.workers.dev e localhost). Adicione o
+    // Chave pública do widget Turnstile (hostname: mm-veiculos.lupinho7881.workers.dev). Adicione o
     // domínio definitivo no painel do Turnstile quando ele existir.
-    "TURNSTILE_SITE_KEY": "0x4AAAAAAFCMqr_iAvEcbdnL",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFCiSR2Su9bfoT-b",
   },
 }

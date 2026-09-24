@@ -6,7 +6,7 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 > “Construindo credibilidade a cada negociação.”
 
-**No ar (URL temporária de validação):** https://mm-veiculos.visor-crypto.workers.dev · painel em `/admin`
+**No ar (URL temporária de validação):** https://mm-veiculos.lupinho7881.workers.dev · painel em `/admin`
 
 | Documento                                              | Conteúdo                                                                           |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
