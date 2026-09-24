@@ -25,7 +25,13 @@ export function initFavoriteButtons() {
     if (!btn) return;
     event.preventDefault();
     event.stopPropagation();
-    toggleFavorite(btn.dataset.favToggle ?? '');
+    // Confirmação visual só na ação do usuário (não ao sincronizar no carregamento).
+    if (toggleFavorite(btn.dataset.favToggle ?? '')) {
+      btn.classList.remove('is-pop');
+      void btn.offsetWidth;
+      btn.classList.add('is-pop');
+      btn.addEventListener('animationend', () => btn.classList.remove('is-pop'), { once: true });
+    }
   });
   sync(getFavorites());
   onFavoritesChange(sync);

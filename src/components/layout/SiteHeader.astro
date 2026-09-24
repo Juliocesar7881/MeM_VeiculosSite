@@ -158,27 +158,24 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
 </dialog>
 
 <style>
+  /* Altura fixa (sem animar layout); ao rolar, só o fundo e o fio inferior aparecem. */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 40;
     height: var(--header-h);
     border-bottom: 1px solid transparent;
-    background: color-mix(in oklab, var(--color-ink-950) 72%, transparent);
+    background: color-mix(in oklab, var(--color-ink-950) 60%, transparent);
     backdrop-filter: saturate(140%) blur(14px);
     -webkit-backdrop-filter: saturate(140%) blur(14px);
     transition:
-      height 200ms var(--ease-out-soft),
-      background-color 200ms ease,
-      border-color 200ms ease;
+      background-color 240ms ease,
+      border-color 240ms ease;
+    view-transition-name: site-header;
   }
   :global(html[data-scrolled]) .site-header {
-    height: 3.9rem;
-    background: color-mix(in oklab, var(--color-ink-950) 90%, transparent);
+    background: color-mix(in oklab, var(--color-ink-950) 88%, transparent);
     border-bottom-color: color-mix(in oklab, white 8%, transparent);
-  }
-  .header-logo {
-    transition: height 200ms var(--ease-out-soft);
   }
   .nav-link {
     position: relative;
@@ -187,13 +184,18 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
     min-height: 2.75rem;
     padding: 0 0.6rem;
     border-radius: 0.6rem;
-    font-size: 0.93rem;
-    font-weight: 550;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: var(--color-mist-200);
     transition: color 140ms ease;
   }
-  .nav-link:hover {
-    color: #fff;
+  @media (hover: hover) {
+    .nav-link:hover {
+      color: #fff;
+    }
+    .nav-link:hover::after {
+      transform: scaleX(0.5);
+    }
   }
   @media (min-width: 1280px) {
     .nav-link {
@@ -211,10 +213,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
     background: var(--color-gold-500);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 200ms var(--ease-out-soft);
-  }
-  .nav-link:hover::after {
-    transform: scaleX(0.5);
+    transition: transform 260ms var(--ease-out-soft);
   }
   .nav-link.is-active {
     color: #fff;
@@ -255,23 +254,51 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
     background: rgb(0 0 0 / 0.6);
   }
   .mobile-menu[open] {
-    animation: menu-in 220ms var(--ease-out-soft);
+    animation: menu-in 260ms var(--ease-drawer);
   }
   @keyframes menu-in {
     from {
       opacity: 0;
-      transform: translateY(-8px);
+      transform: translateY(-12px);
+    }
+  }
+  /* Itens do menu entram em cascata curta (lista de verdade, 40ms entre itens). */
+  .mobile-menu[open] li {
+    animation: menu-item-in 360ms var(--ease-out-soft) backwards;
+  }
+  .mobile-menu[open] li:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .mobile-menu[open] li:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .mobile-menu[open] li:nth-child(4) {
+    animation-delay: 120ms;
+  }
+  .mobile-menu[open] li:nth-child(5) {
+    animation-delay: 160ms;
+  }
+  .mobile-menu[open] li:nth-child(6) {
+    animation-delay: 200ms;
+  }
+  .mobile-menu[open] li:nth-child(n + 7) {
+    animation-delay: 240ms;
+  }
+  @keyframes menu-item-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
     }
   }
   .mobile-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 3.6rem;
-    font-size: 1.3rem;
-    font-weight: 650;
-    font-stretch: 110%;
-    letter-spacing: -0.01em;
+    min-height: 3.9rem;
+    font-size: 1.85rem;
+    font-weight: 560;
+    font-stretch: 80%;
+    letter-spacing: -0.025em;
   }
   .mobile-link.is-active {
     color: var(--color-gold-400);

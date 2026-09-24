@@ -23,7 +23,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
   <div class="container-site grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr] lg:py-16">
     <div class="max-w-sm">
       <Logo height={44} class="h-11 w-auto" />
-      {settings.slogan && <p class="mt-5 text-lg font-semibold text-paper">{settings.slogan}</p>}
+      {settings.slogan && <p class="title mt-6 text-2xl text-paper">{settings.slogan}</p>}
       <p class="mt-3 text-sm leading-relaxed text-mist-400">
         Compra, venda, financiamento e repasse de veículos em {settings.city} - {settings.state}.
       </p>
@@ -154,12 +154,10 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
 
 <style>
   .footer-title {
-    margin-bottom: 1rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-gold-400);
+    margin-bottom: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 550;
+    color: var(--color-mist-400);
   }
   .footer-list {
     display: grid;
@@ -173,8 +171,10 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
     align-items: center;
     transition: color 140ms ease;
   }
-  .footer-list a:hover {
-    color: #fff;
+  @media (hover: hover) {
+    .footer-list a:hover {
+      color: #fff;
+    }
   }
   .social-btn {
     display: inline-flex;
@@ -182,17 +182,23 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
     height: 2.75rem;
     align-items: center;
     justify-content: center;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-control);
     border: 1px solid color-mix(in oklab, white 10%, transparent);
     color: var(--color-mist-100);
     transition:
       border-color 140ms ease,
       color 140ms ease,
-      background-color 140ms ease;
+      background-color 140ms ease,
+      transform 140ms var(--ease-out-soft);
   }
-  .social-btn:hover {
-    border-color: var(--color-gold-500);
-    color: var(--color-gold-300);
-    background: color-mix(in oklab, var(--color-gold-500) 8%, transparent);
+  .social-btn:active {
+    transform: scale(0.94);
+  }
+  @media (hover: hover) {
+    .social-btn:hover {
+      border-color: var(--color-gold-500);
+      color: var(--color-gold-300);
+      background: color-mix(in oklab, var(--color-gold-500) 8%, transparent);
+    }
   }
 </style>

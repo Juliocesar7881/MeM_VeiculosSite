@@ -7,6 +7,7 @@ import Hero from '@/components/home/Hero.astro';
 import SellCta from '@/components/home/SellCta.astro';
 import Icon from '@/components/ui/Icon.astro';
 import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
+import VehicleRow from '@/components/vehicle/VehicleRow.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { dealerJsonLd, instagramUrl } from '@/lib/seo';
 import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
@@ -36,13 +37,12 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
 
   <CategoryShortcuts counts={counts} offersTotal={sections.offersTotal} repassesTotal={sections.repassesTotal} />
 
-  <section class="container-site mt-20 sm:mt-24" aria-labelledby="destaques-title">
+  <section class="container-site mt-20 sm:mt-28" aria-labelledby="destaques-title">
     {showcase.length > 0 ? (
       <>
         <SectionHeader
           id="destaques-title"
-          eyebrow={sections.featured.length ? 'Selecionados pela M&M' : 'Chegaram recentemente'}
-          title={sections.featured.length ? 'Destaques' : 'Novidades no estoque'}
+          title={sections.featured.length ? 'Destaques da M&M' : 'Novidades no estoque'}
           href="/estoque"
           linkLabel="Ver estoque completo"
         />
@@ -73,11 +73,10 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
   </section>
 
   {sections.offers.length > 0 && (
-    <section class="offers-band mt-20 py-16 sm:mt-24 sm:py-20" aria-labelledby="ofertas-title">
+    <section class="offers-band mt-24 py-16 sm:mt-32 sm:py-24" aria-labelledby="ofertas-title">
       <div class="container-site">
         <SectionHeader
           id="ofertas-title"
-          eyebrow="Condição especial"
           title="Ofertas da M&M"
           subtitle="Veículos com preço especial. Confira os valores e fale com a nossa equipe."
           href="/ofertas"
@@ -89,45 +88,43 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
   )}
 
   {sections.repasses.length > 0 && (
-    <section class="repasse-band mt-20 py-16 sm:mt-24 sm:py-20" aria-labelledby="repasses-title">
-      <div class="container-site">
-        <SectionHeader
-          id="repasses-title"
-          eyebrow="Oportunidades"
-          title="Repasses"
-          subtitle={repasseSubtitle}
-          href="/repasses"
-          linkLabel="Ver todos os repasses"
-        />
-        <VehicleGrid vehicles={sections.repasses.slice(0, 3)} />
-      </div>
+    <section
+      class:list={['container-site', sections.offers.length > 0 ? 'mt-20 sm:mt-28' : 'mt-24 sm:mt-32']}
+      aria-labelledby="repasses-title"
+    >
+      <SectionHeader
+        id="repasses-title"
+        title="Repasses"
+        subtitle={repasseSubtitle}
+        href="/repasses"
+        linkLabel="Ver todos os repasses"
+      />
+      <ul class="divide-y divide-white/[0.08] border-y border-white/[0.08]" role="list">
+        {sections.repasses.slice(0, 4).map((vehicle) => (
+          <li>
+            <VehicleRow vehicle={vehicle} />
+          </li>
+        ))}
+      </ul>
     </section>
   )}
 
-  <div class="mt-20 sm:mt-24">
+  <div class="mt-24 sm:mt-32">
     <SellCta settings={settings} />
   </div>
 
-  <div class="mt-20 sm:mt-28">
+  <div class="mt-24 sm:mt-32">
     <AboutBlock settings={settings} />
   </div>
 </BaseLayout>
 
 <style>
+  /* Faixa de ofertas: luz dourada vinda do alto, como a do hero, e fios dourados nas bordas. */
   .offers-band {
     position: relative;
     background:
-      radial-gradient(70% 60% at 15% 0%, color-mix(in oklab, var(--color-gold-500) 10%, transparent), transparent 70%),
+      radial-gradient(60% 70% at 20% 0%, color-mix(in oklab, var(--color-gold-500) 11%, transparent), transparent 72%),
       var(--color-ink-900);
-    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 20%, transparent);
-  }
-  .repasse-band {
-    background:
-      radial-gradient(60% 60% at 85% 0%, color-mix(in oklab, var(--color-silver-300) 7%, transparent), transparent 70%),
-      var(--color-ink-900);
-    border-block: 1px solid color-mix(in oklab, white 8%, transparent);
-  }
-  .repasse-band :global(.eyebrow) {
-    color: var(--color-silver-300);
+    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 18%, transparent);
   }
 </style>

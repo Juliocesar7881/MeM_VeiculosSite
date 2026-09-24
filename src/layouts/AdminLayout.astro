@@ -1,6 +1,6 @@
 ---
 import '@/styles/global.css';
-import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import fontLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-standard-normal.woff2?url';
 import Logo from '@/components/brand/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
@@ -37,7 +37,7 @@ const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#08090a" />
-    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fontLatin} as="font" type="font/woff2" crossorigin />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{title} · Painel M&M</title>
   </head>

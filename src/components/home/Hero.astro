@@ -19,31 +19,45 @@ interface Props {
 const { settings, spotlight, availableCount, suggestions } = Astro.props;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
 const cover = spotlight?.cover ?? null;
+const spotlightHref = spotlight ? `/veiculo/${spotlight.slug}` : '';
+
+// Cada palavra sobe de dentro de uma máscara, em sequência (a última leva o ponto dourado).
+const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
+const stockLabel =
+  availableCount > 1 ? `Ver os ${availableCount} veículos` : availableCount === 1 ? 'Ver o veículo' : 'Ver estoque';
 ---
 
-<section class="hero relative isolate overflow-hidden" aria-labelledby="hero-title">
-  <div class="bg-grid-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
-  <div class="hero-glow pointer-events-none absolute -z-10" aria-hidden="true"></div>
+<section class="hero relative isolate" aria-labelledby="hero-title">
+  <div class="hero-light pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
 
-  <div class="container-site grid items-center gap-10 pb-12 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20 lg:pt-20">
+  <div class="container-site grid grid-cols-[minmax(0,1fr)] items-center gap-10 pb-14 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-14 lg:pb-20 lg:pt-16 xl:gap-20">
     <div class="relative">
-      <p class="eyebrow">
-        {settings.businessName} · {settings.city} - {settings.state}
-      </p>
-      <h1 id="hero-title" class="display mt-5 text-[2.6rem] text-white xs:text-5xl sm:text-6xl xl:text-[4.6rem]">
-        Seu próximo veículo <span class="text-gold-400">começa aqui.</span>
+      <h1 id="hero-title" class="display hero-title text-white">
+        {headline.map((word, index) => (
+          <>
+            <span class="word">
+              <span
+                style={`--i:${index}`}
+                class:list={{ 'word-last': index === headline.length - 1 }}
+                set:text={word}
+              />
+            </span>{' '}
+          </>
+        ))}
       </h1>
-      <p class="mt-5 max-w-xl text-lg text-mist-200 sm:text-xl">
+      <p class="hero-lede mt-6 max-w-[34rem] text-lg text-mist-200 sm:text-xl">
         {settings.slogan}
-        <span class="block text-base text-mist-400 sm:text-lg">Compra, venda, financiamento e repasses.</span>
+        <span class="text-mist-400">
+          Compra, venda, financiamento e repasses em {settings.city} - {settings.state}.
+        </span>
       </p>
 
-      <form action="/estoque" method="get" role="search" class="search-box mt-8" aria-label="Buscar veículos">
+      <form action="/estoque" method="get" role="search" class="search-box hero-rise mt-9" aria-label="Buscar veículos">
         <label for="hero-q" class="sr-only">
           Qual veículo você procura?
         </label>
-        <div class="flex flex-1 items-center gap-3 px-4">
-          <Icon name="search" size={20} class="shrink-0 text-gold-400" />
+        <div class="flex flex-1 items-center gap-3 pl-4 pr-2">
+          <Icon name="search" size={20} class="shrink-0 text-mist-400" />
           <input
             id="hero-q"
             name="q"
@@ -75,55 +89,54 @@ const cover = spotlight?.cover ?? null;
           <Icon name="arrow-right" size={18} class="xs:hidden" />
         </button>
       </form>
-      <p class="mt-3 text-sm text-mist-400">Busque por marca, modelo ou versão.</p>
 
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+      <div class="hero-rise mt-7 flex flex-col gap-3 xs:flex-row xs:items-center xs:gap-6" style="--d:1">
         <a href="/estoque" class="btn btn-outline-gold btn-lg">
-          Ver estoque
-          <Icon name="arrow-right" size={18} />
+          {stockLabel}
+          <Icon name="arrow-right" size={18} class="btn-arrow" />
         </a>
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-lg">
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex min-h-11 items-center justify-center gap-2 font-medium text-mist-100 transition-colors hover:text-white"
+        >
           <Icon name="whatsapp" size={20} class="text-whatsapp" />
-          Falar no WhatsApp
+          <span class="link-underline">Falar no WhatsApp</span>
         </a>
       </div>
-
-      {availableCount > 0 && (
-        <p class="mt-8 inline-flex items-center gap-2 text-sm text-mist-300">
-          <span class="relative flex size-2.5">
-            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60" />
-            <span class="relative inline-flex size-2.5 rounded-full bg-success" />
-          </span>
-          <strong class="text-white tabular">{availableCount}</strong>
-          {availableCount === 1 ? 'veículo disponível no estoque agora' : 'veículos disponíveis no estoque agora'}
-        </p>
-      )}
     </div>
 
     <div class="relative">
       {spotlight && cover ? (
-        <a href={`/veiculo/${spotlight.slug}`} class="spotlight group" aria-label={`Ver ${vehicleName(spotlight)}`}>
-          <img
-            src={mediaUrl(cover.largeKey)}
-            srcset={vehicleSrcset(cover)}
-            sizes="(min-width: 1024px) 46vw, 94vw"
-            width={cover.width}
-            height={cover.height}
-            alt={`${vehicleName(spotlight)} ${spotlight.version ?? ''}`.trim()}
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-            class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-          />
-          <div class="spotlight-info">
-            <p class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-gold-400">Em destaque</p>
-            <p class="mt-1 text-xl font-bold text-white [font-stretch:110%] sm:text-2xl">{vehicleName(spotlight)}</p>
-            <p class="text-sm text-mist-300">
-              {[spotlight.version, yearLabel(spotlight), usageLabel(spotlight)].filter(Boolean).join(' · ')}
-            </p>
-            <div class="mt-3 flex items-end justify-between gap-4">
+        <a href={spotlightHref} class="stage group" data-vt-card aria-label={`Ver ${vehicleName(spotlight)}`}>
+          <div class="stage-media" data-showroom>
+            <img
+              src={mediaUrl(cover.largeKey)}
+              srcset={vehicleSrcset(cover)}
+              sizes="(min-width: 1024px) 48vw, 94vw"
+              width={cover.width}
+              height={cover.height}
+              alt={`${vehicleName(spotlight)} ${spotlight.version ?? ''}`.trim()}
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              class="stage-img"
+              data-vt-photo={spotlightHref}
+            />
+            <span class="stage-sheen" aria-hidden="true"></span>
+            <span class="stage-torch" aria-hidden="true" data-showroom-light></span>
+          </div>
+          <div class="stage-caption">
+            <div class="min-w-0">
+              <p class="title truncate text-2xl text-white sm:text-[1.75rem]">{vehicleName(spotlight)}</p>
+              <p class="mt-1 truncate text-sm text-mist-300">
+                {[spotlight.version, yearLabel(spotlight), usageLabel(spotlight)].filter(Boolean).join(', ')}
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-4">
               <PriceTag vehicle={spotlight} />
-              <span class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-gold-500 text-ink-950 transition-transform group-hover:translate-x-1">
+              <span class="stage-go" aria-hidden="true">
                 <Icon name="arrow-up-right" size={20} />
               </span>
             </div>
@@ -144,22 +157,72 @@ const cover = spotlight?.cover ?? null;
 </section>
 
 <style>
-  .hero-glow {
-    top: -20%;
-    right: -10%;
-    width: 60rem;
-    height: 40rem;
-    background: radial-gradient(closest-side, color-mix(in oklab, var(--color-gold-500) 11%, transparent), transparent);
-    filter: blur(10px);
+  /* Luz de showroom: um facho quente vindo do alto sobre o veículo e o chão levemente iluminado. */
+  .hero-light {
+    background:
+      radial-gradient(36% 58% at 74% -6%, color-mix(in oklab, var(--color-gold-500) 11%, transparent), transparent 72%),
+      radial-gradient(34% 14% at 72% 80%, color-mix(in oklab, white 4%, transparent), transparent 70%);
   }
+
+  /* Duas linhas no desktop ("Seu próximo veículo / começa aqui."): o tamanho acompanha a coluna. */
+  .hero-title {
+    font-size: clamp(2.9rem, 1.2rem + 7vw, 5.5rem);
+  }
+  @media (min-width: 1024px) {
+    .hero-title {
+      font-size: clamp(3.4rem, 6.1vw - 0.5rem, 5.5rem);
+    }
+  }
+
+  /* Máscara por palavra: folga em cima (acentos) e embaixo (ç, p) para nada ser cortado. */
+  .word {
+    display: inline-block;
+    overflow: hidden;
+    padding: 0.1em 0.02em 0.14em;
+    margin: -0.1em -0.02em -0.14em;
+    vertical-align: top;
+  }
+  .word > span {
+    display: inline-block;
+    animation: word-up 900ms var(--ease-expo) backwards;
+    animation-delay: calc(120ms + var(--i) * 70ms);
+  }
+  /* Ponto final dourado (gerado em CSS para não haver espaço entre "aqui" e o ponto). */
+  .word-last::after {
+    content: '.';
+    color: var(--color-gold-400);
+  }
+  @keyframes word-up {
+    from {
+      transform: translateY(108%);
+    }
+  }
+
+  .hero-lede,
+  .hero-rise {
+    animation: fade-rise 800ms var(--ease-expo) backwards;
+    animation-delay: calc(480ms + var(--d, 0) * 90ms);
+  }
+  .hero-lede {
+    --d: -1;
+  }
+  @keyframes fade-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
   .search-box {
     display: flex;
     align-items: center;
-    max-width: 40rem;
-    border-radius: 1rem;
-    background: color-mix(in oklab, var(--color-ink-800) 92%, transparent);
+    max-width: 38rem;
+    border-radius: 0.875rem;
+    background: color-mix(in oklab, var(--color-ink-800) 88%, transparent);
     border: 1px solid color-mix(in oklab, white 12%, transparent);
-    box-shadow: 0 20px 50px -25px rgb(0 0 0 / 0.8);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 5%, transparent),
+      0 24px 50px -28px rgb(0 0 0 / 0.9);
     transition:
       border-color 160ms ease,
       box-shadow 160ms ease;
@@ -168,7 +231,7 @@ const cover = spotlight?.cover ?? null;
     border-color: var(--color-gold-500);
     box-shadow:
       0 0 0 3px color-mix(in oklab, var(--color-gold-500) 20%, transparent),
-      0 20px 50px -25px rgb(0 0 0 / 0.8);
+      0 24px 50px -28px rgb(0 0 0 / 0.9);
   }
   .hero-select {
     height: 3rem;
@@ -190,44 +253,167 @@ const cover = spotlight?.cover ?? null;
   .hero-select option {
     background: var(--color-ink-850);
   }
-  .spotlight {
+
+  /* Vitrine: foto do destaque + legenda embaixo (fora da imagem). */
+  .stage {
     position: relative;
     display: block;
+    border-radius: var(--radius-panel);
+    background: linear-gradient(to bottom, var(--color-ink-850), var(--color-ink-900));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, white 8%, transparent),
+      0 50px 90px -50px rgb(0 0 0 / 0.95);
+  }
+  .stage-media {
+    position: relative;
     aspect-ratio: 4 / 3;
     overflow: hidden;
-    border-radius: 1.5rem;
-    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    border-radius: var(--radius-panel) var(--radius-panel) var(--radius-card) var(--radius-card);
     background: var(--color-ink-800);
-    box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.9);
   }
-  .spotlight::before {
+  .stage-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: stage-settle 1600ms var(--ease-expo) backwards;
+    transition: transform 700ms var(--ease-out-soft);
+  }
+  @keyframes stage-settle {
+    from {
+      transform: scale(1.08);
+    }
+  }
+  /* A "capa" que se abre da esquerda para a direita, como no lançamento de um carro. */
+  .stage-media::after {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 1;
-    background: linear-gradient(to top, rgb(8 9 10 / 0.95) 0%, rgb(8 9 10 / 0.35) 38%, transparent 60%);
+    z-index: 2;
+    background: var(--color-ink-900);
+    transform-origin: right;
+    animation: unveil 1000ms var(--ease-in-out-strong) 150ms both;
     pointer-events: none;
   }
-  .spotlight-info {
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 2;
-    padding: 1.25rem;
-  }
-  @media (min-width: 640px) {
-    .spotlight-info {
-      padding: 1.75rem;
+  @keyframes unveil {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
     }
   }
+  /*
+   * Reflexo de luz que passa pela lataria: uma vez ao carregar (.stage-sheen, keyframes) e a cada
+   * hover (::before, transição que volta instantaneamente quando o cursor sai, fora do quadro).
+   */
+  .stage-sheen,
+  .stage-media::before {
+    position: absolute;
+    inset: -10% -40%;
+    z-index: 1;
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.05) 44%,
+      rgb(255 255 255 / 0.24) 50%,
+      rgb(255 255 255 / 0.05) 56%,
+      transparent 62%
+    );
+    mix-blend-mode: soft-light;
+    transform: translateX(-70%);
+    pointer-events: none;
+  }
+  .stage-sheen {
+    animation: sheen 1400ms var(--ease-in-out-strong) 900ms both;
+  }
+  .stage-media::before {
+    content: '';
+  }
+  @keyframes sheen {
+    from {
+      transform: translateX(-70%);
+    }
+    to {
+      transform: translateX(70%);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .stage:hover .stage-img {
+      transform: scale(1.025);
+    }
+    .stage:hover .stage-media::before {
+      transform: translateX(70%);
+      transition: transform 1100ms var(--ease-in-out-strong);
+    }
+    .stage:hover .stage-go {
+      background: var(--color-gold-500);
+      border-color: var(--color-gold-500);
+      color: #14110a;
+    }
+  }
+  /* Lanterna que segue o cursor (features/showroom-light.ts). */
+  .stage-torch {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 70%;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, rgb(255 244 214 / 0.5), rgb(255 244 214 / 0.14) 55%, transparent);
+    mix-blend-mode: soft-light;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 500ms ease;
+  }
+  .stage-media:global(.is-lit) .stage-torch {
+    opacity: 1;
+  }
+  .stage-caption {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .stage-caption {
+      padding: 1.25rem 1.6rem 1.5rem;
+    }
+  }
+  .stage-go {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, white 16%, transparent);
+    color: var(--color-mist-100);
+    transition:
+      background-color 200ms ease,
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+  @media (min-width: 400px) {
+    .stage-go {
+      display: inline-flex;
+    }
+  }
+
   .hero-art {
     position: relative;
     display: grid;
     aspect-ratio: 4 / 3;
     place-items: center;
     padding: 2rem;
-    border-radius: 1.5rem;
+    border-radius: var(--radius-panel);
     border: 1px solid color-mix(in oklab, white 8%, transparent);
     background: radial-gradient(90% 70% at 50% 35%, #1b1e22, #0b0c0e 75%);
   }
 </style>
+
+<script>
+  import { initShowroomLight } from '@/features/showroom-light';
+  initShowroomLight();
+</script>

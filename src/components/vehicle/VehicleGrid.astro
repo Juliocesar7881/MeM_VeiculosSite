@@ -22,7 +22,7 @@ const { vehicles, eagerCount = 0, hideFeatured = false, columns = 3, class: clas
   role="list"
 >
   {vehicles.map((vehicle, index) => (
-    <li class="flex">
+    <li class="reveal-item flex">
       <VehicleCard vehicle={vehicle} eager={index < eagerCount} hideFeatured={hideFeatured} />
     </li>
   ))}

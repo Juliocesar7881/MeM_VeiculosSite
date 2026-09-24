@@ -61,7 +61,7 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
 
   <section class="container-site grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16">
     <div>
-      <p class="display text-3xl text-gold-300 sm:text-4xl">“{settings.slogan}”</p>
+      <p class="display text-4xl text-gold-200 sm:text-5xl">“{settings.slogan}”</p>
       <p class="mt-6 text-lg text-mist-200">
         A {settings.businessName} atua em {settings.city}, Santa Catarina, com compra, venda, financiamento e repasse de
         veículos.
@@ -81,7 +81,7 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
       </div>
     </div>
     <div
-      class="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-[1.75rem] border hairline bg-[radial-gradient(90%_70%_at_50%_30%,#1c1f23,#0a0b0d_75%)] p-10"
+      class="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-[var(--radius-panel)] border hairline bg-[radial-gradient(90%_70%_at_50%_30%,#1c1f23,#0a0b0d_75%)] p-10"
       aria-hidden="true"
     >
       <svg viewBox={LOGO_VIEWBOX} class="w-full max-w-lg">
@@ -94,24 +94,23 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
   </section>
 
   <section class="container-site" aria-labelledby="servicos">
-    <h2 id="servicos" class="heading text-3xl text-white">
+    <h2 id="servicos" class="heading text-[2.4rem] text-white sm:text-5xl">
       O que fazemos
     </h2>
-    <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
+    <ul class="mt-8 border-t hairline" role="list">
       {services.map((s) => (
-        <li class="surface flex flex-col p-6">
-          <span class="inline-flex size-12 items-center justify-center rounded-xl bg-white/5 text-gold-400">
-            <Icon name={s.icon} size={26} strokeWidth={1.6} />
-          </span>
-          <h3 class="mt-5 text-xl font-bold text-white [font-stretch:108%]">{s.title}</h3>
-          <p class="mt-2 flex-1 text-sm text-mist-300">{s.text}</p>
+        <li class="service">
+          <Icon name={s.icon} size={24} strokeWidth={1.6} class="service-icon" />
+          <h3 class="service-title">{s.title}</h3>
+          <p class="service-text">{s.text}</p>
           {s.href && (
             <a
               href={s.href}
-              class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-300 hover:text-gold-200"
+              class="service-link group"
               {...(s.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             >
-              {s.cta} <Icon name="arrow-right" size={16} />
+              <span class="link-underline">{s.cta}</span>
+              <Icon name="arrow-right" size={16} class="transition-transform duration-200 group-hover:translate-x-1" />
             </a>
           )}
         </li>
@@ -143,3 +142,61 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .service {
+    display: grid;
+    grid-template-columns: 1.6rem minmax(0, 1fr);
+    column-gap: 1rem;
+    row-gap: 0.35rem;
+    align-items: baseline;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid color-mix(in oklab, white 8%, transparent);
+  }
+  @media (min-width: 768px) {
+    .service {
+      grid-template-columns: 1.6rem minmax(0, 15rem) minmax(0, 1fr) auto;
+      column-gap: 1.5rem;
+      padding-block: 1.75rem;
+    }
+  }
+  .service :global(.service-icon) {
+    align-self: center;
+    color: var(--color-gold-400);
+  }
+  .service-title {
+    font-size: clamp(1.8rem, 1.3rem + 1.2vw, 2.4rem);
+    font-stretch: 80%;
+    font-weight: 580;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    color: #fff;
+  }
+  .service-text,
+  .service-link {
+    grid-column: 2;
+  }
+  .service-text {
+    max-width: 52ch;
+    color: var(--color-mist-300);
+  }
+  .service-link {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.4rem;
+    justify-self: start;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-gold-300);
+  }
+  @media (min-width: 768px) {
+    .service-text {
+      grid-column: 3;
+    }
+    .service-link {
+      grid-column: 4;
+      justify-self: end;
+    }
+  }
+</style>

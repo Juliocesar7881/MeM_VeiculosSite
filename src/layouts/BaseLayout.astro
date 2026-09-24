@@ -1,6 +1,6 @@
 ---
 import '@/styles/global.css';
-import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import fontLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-standard-normal.woff2?url';
 import MobileTabBar from '@/components/layout/MobileTabBar.astro';
 import SiteFooter from '@/components/layout/SiteFooter.astro';
 import SiteHeader from '@/components/layout/SiteHeader.astro';
@@ -25,7 +25,7 @@ const settings = await Astro.locals.container.settings.get();
     <meta name="theme-color" content="#08090a" />
     <meta name="color-scheme" content="dark" />
     <meta name="format-detection" content="telephone=no" />
-    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fontLatin} as="font" type="font/woff2" crossorigin />
     {preloadImage && (
       <link
         rel="preload"
@@ -57,3 +57,8 @@ const settings = await Astro.locals.container.settings.get();
     <slot name="after" />
   </body>
 </html>
+
+<script>
+  import { initVehicleTransitions } from '@/features/vehicle-transition';
+  initVehicleTransitions();
+</script>

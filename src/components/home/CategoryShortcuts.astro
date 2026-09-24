@@ -1,7 +1,5 @@
 ---
-import Icon from '@/components/ui/Icon.astro';
-import type { IconName } from '@/components/ui/icons';
-import { CATEGORY_INFO, type VehicleCategory } from '@/config/catalog';
+import { CATEGORY_INFO, VEHICLE_CATEGORIES, type VehicleCategory } from '@/config/catalog';
 
 interface Props {
   counts: Record<VehicleCategory, number>;
@@ -11,109 +9,153 @@ interface Props {
 
 const { counts, offersTotal, repassesTotal } = Astro.props;
 
-const icons: Record<VehicleCategory, IconName> = {
-  carro: 'car',
-  moto: 'moto',
-  scooter: 'scooter',
-  pesado: 'truck',
-  maquina_agricola: 'tractor',
-};
+type Item = { label: string; href: string; count: number; tone?: 'gold' | 'silver' };
 
-const items: { label: string; href: string; icon: IconName; count: number; accent?: 'gold' | 'silver' }[] = [
-  ...(Object.keys(icons) as VehicleCategory[]).map((category) => ({
-    label: CATEGORY_INFO[category].plural,
-    href: `/estoque?categoria=${CATEGORY_INFO[category].slug}`,
-    icon: icons[category],
-    count: counts[category],
-  })),
-  { label: 'Repasses', href: '/repasses', icon: 'repasse', count: repassesTotal, accent: 'silver' },
-  { label: 'Ofertas', href: '/ofertas', icon: 'tag', count: offersTotal, accent: 'gold' },
+// Índice tipográfico: categorias primeiro; repasses e ofertas (condições comerciais) depois do divisor.
+const categories: Item[] = VEHICLE_CATEGORIES.map((category) => ({
+  label: CATEGORY_INFO[category].plural,
+  href: `/estoque?categoria=${CATEGORY_INFO[category].slug}`,
+  count: counts[category],
+}));
+const deals: Item[] = [
+  { label: 'Repasses', href: '/repasses', count: repassesTotal, tone: 'silver' },
+  { label: 'Ofertas', href: '/ofertas', count: offersTotal, tone: 'gold' },
 ];
+const countLabel = (count: number) =>
+  count > 0 ? `${count} ${count === 1 ? 'veículo' : 'veículos'}` : 'consulte disponibilidade';
 ---
 
 <section aria-labelledby="atalhos-title" class="container-site">
   <h2 id="atalhos-title" class="sr-only">
     Navegue por categoria
   </h2>
-  <ul
-    class="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7"
-    role="list"
-  >
-    {items.map((item) => (
-      <li class="snap-start">
-        <a href={item.href} class:list={['shortcut', item.accent && `shortcut-${item.accent}`]}>
-          <span class="shortcut-icon">
-            <Icon name={item.icon} size={30} strokeWidth={1.5} />
-          </span>
-          <span class="shortcut-label">{item.label}</span>
-          <span class="shortcut-count tabular">
-            {item.count > 0 ? `${item.count} ${item.count === 1 ? 'veículo' : 'veículos'}` : 'Consulte'}
-          </span>
-        </a>
-      </li>
-    ))}
-  </ul>
+  <div class="cat-index scrollbar-none">
+    <ul class="cat-list" role="list">
+      {[...categories, ...deals].map((item, index) => (
+        <li class:list={[{ 'cat-split': index === categories.length }]}>
+          <a
+            href={item.href}
+            class:list={['cat', item.tone && `cat-${item.tone}`, { 'is-empty': item.count === 0 }]}
+            aria-label={`${item.label}, ${countLabel(item.count)}`}
+          >
+            <span class="cat-label">{item.label}</span>
+            {item.count > 0 && (
+              <span class="cat-count tabular" aria-hidden="true">
+                {item.count}
+              </span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
 </section>
 
 <style>
-  .shortcut {
-    display: flex;
-    width: 8.6rem;
-    height: 100%;
-    flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem;
-    border-radius: 1rem;
-    background: var(--color-ink-850);
-    border: 1px solid color-mix(in oklab, white 7%, transparent);
-    transition:
-      border-color 180ms ease,
-      background-color 180ms ease,
-      transform 200ms var(--ease-out-soft);
+  .cat-index {
+    position: relative;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    overflow-x: auto;
+    border-block: 1px solid color-mix(in oklab, white 8%, transparent);
+    scroll-snap-type: x proximity;
+    /* Esmaece as pontas quando a lista rola no celular. */
+    mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 2.5rem), transparent);
   }
-  @media (min-width: 640px) {
-    .shortcut {
-      width: auto;
+  @media (min-width: 1024px) {
+    .cat-index {
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+      mask-image: none;
     }
   }
-  .shortcut:hover {
-    border-color: color-mix(in oklab, var(--color-gold-500) 50%, transparent);
-    background: var(--color-ink-800);
-    transform: translateY(-2px);
-  }
-  .shortcut-icon {
-    display: inline-flex;
-    width: 3rem;
-    height: 3rem;
+  .cat-list {
+    display: flex;
+    width: max-content;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 0.4rem;
-    border-radius: 0.8rem;
-    background: color-mix(in oklab, white 5%, transparent);
+    gap: 0.25rem 1.75rem;
+    padding-block: 1.1rem;
+  }
+  @media (min-width: 1024px) {
+    .cat-list {
+      width: auto;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.5rem 1.5rem;
+      padding-block: 1.6rem;
+    }
+  }
+  .cat-split {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+  }
+  .cat-split::before {
+    content: '';
+    width: 1px;
+    height: 1.9rem;
+    background: color-mix(in oklab, white 14%, transparent);
+  }
+  .cat {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding-block: 0.35rem;
+    scroll-snap-align: start;
+    white-space: nowrap;
+    color: var(--color-paper);
+  }
+  .cat-label {
+    font-size: clamp(1.6rem, 1.05rem + 1.5vw, 2.55rem);
+    font-stretch: 80%;
+    font-weight: 560;
+    letter-spacing: -0.028em;
+    line-height: 1;
+    transition: color 200ms ease;
+  }
+  .cat-count {
+    margin-top: 0.1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     color: var(--color-gold-400);
-    transition:
-      background-color 180ms ease,
-      color 180ms ease;
   }
-  .shortcut:hover .shortcut-icon {
-    background: var(--color-gold-500);
-    color: #111;
-  }
-  .shortcut-silver .shortcut-icon {
+  .cat-silver .cat-count {
     color: var(--color-silver-300);
   }
-  .shortcut-gold .shortcut-icon {
-    background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
-  }
-  .shortcut-label {
-    font-weight: 700;
-    font-stretch: 108%;
-    font-size: 0.98rem;
-    color: #fff;
-    line-height: 1.15;
-  }
-  .shortcut-count {
-    font-size: 0.78rem;
+  .cat.is-empty .cat-label {
     color: var(--color-mist-400);
+  }
+  /* Traço dourado que cresce da esquerda sob o nome. */
+  .cat::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.1rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-gold-500);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 320ms var(--ease-out-soft);
+  }
+  .cat-silver::after {
+    background: var(--color-silver-300);
+  }
+  @media (hover: hover) {
+    .cat:hover .cat-label {
+      color: var(--color-gold-300);
+    }
+    .cat-silver:hover .cat-label {
+      color: #fff;
+    }
+    .cat:hover::after {
+      transform: scaleX(1);
+    }
+  }
+  .cat:focus-visible::after {
+    transform: scaleX(1);
   }
 </style>

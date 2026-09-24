@@ -37,16 +37,17 @@ const sold = vehicle.status === 'sold';
 
 <style>
   .price-main {
-    font-weight: 800;
-    font-stretch: 108%;
+    font-weight: 620;
+    font-stretch: 84%;
     letter-spacing: -0.02em;
-    line-height: 1.05;
+    line-height: 1.02;
   }
   .price-md .price-main {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
   }
   .price-lg .price-main {
-    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    font-size: clamp(2.3rem, 1.6rem + 2.4vw, 3rem);
+    letter-spacing: -0.028em;
   }
   .price-prev {
     display: flex;
@@ -63,17 +64,18 @@ const sold = vehicle.status === 'sold';
     text-decoration-thickness: 1px;
   }
   .price-off {
-    padding: 0.08rem 0.35rem;
+    padding: 0.1rem 0.35rem;
     border-radius: 0.3rem;
     background: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
     color: var(--color-gold-300);
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-weight: 600;
   }
   .price-por {
     margin-right: 0.3rem;
-    font-size: 0.55em;
-    font-weight: 600;
+    font-size: 0.5em;
+    font-weight: 500;
+    font-stretch: 100%;
     color: var(--color-mist-300);
     letter-spacing: 0;
   }

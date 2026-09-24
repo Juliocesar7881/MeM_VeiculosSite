@@ -110,7 +110,7 @@ Fase 3 (conta dedicada, senha, domínio, métricas):
 
 - Islands: JavaScript só nas páginas que precisam, sem framework no cliente; CSS/JS servidos como arquivos estáticos
   da Cloudflare (grátis, sem passar pelo Worker), com cache imutável.
-- Fonte variável única (Archivo) com preload; `font-display: swap`.
+- Fonte variável única (Instrument Sans, eixos de peso e largura) com preload; `font-display: swap`.
 - Fotos em WebP em 3 larguras (720/1080/1920) com `srcset`/`sizes`; preload + `fetchpriority="high"` da capa; demais
   fotos da galeria carregam depois; dimensões explícitas (CLS 0).
 - Páginas: consultas ao D1 em paralelo, configurações em cache de 30 s na instância, cache de borda de 60 s no domínio

@@ -62,7 +62,6 @@ if (settings.facebook)
   jsonLd={[dealerJsonLd(settings, siteUrl), breadcrumbJsonLd(breadcrumbs, siteUrl)]}
 >
   <PageHeader
-    eyebrow="Atendimento"
     title="Contato"
     subtitle="O jeito mais rápido de falar com a gente é pelo WhatsApp."
     breadcrumbs={breadcrumbs}
@@ -79,7 +78,7 @@ if (settings.facebook)
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm text-mist-300">Fale agora pelo WhatsApp</span>
-          <span class="block text-2xl font-extrabold text-white [font-stretch:110%] tabular">{settings.phone}</span>
+          <span class="title block text-3xl text-white tabular">{settings.phone}</span>
         </span>
         <Icon
           name="arrow-up-right"
@@ -94,7 +93,7 @@ if (settings.facebook)
             <a href={c.href} class="channel" {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
               <Icon name={c.icon} size={22} class={c.accent ?? 'text-gold-400'} />
               <span class="min-w-0">
-                <span class="block text-xs uppercase tracking-wider text-mist-400">{c.label}</span>
+                <span class="block text-sm text-mist-400">{c.label}</span>
                 <span class="block truncate font-semibold text-white">{c.value}</span>
               </span>
             </a>

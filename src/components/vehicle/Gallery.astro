@@ -8,9 +8,11 @@ interface Props {
   images: VehicleImage[];
   alt: string;
   sold?: boolean;
+  /** Caminho da página do veículo: a foto principal recebe a transição vinda do card. */
+  transitionPath?: string;
 }
 
-const { images, alt, sold = false } = Astro.props;
+const { images, alt, sold = false, transitionPath } = Astro.props;
 const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
 ---
 
@@ -20,7 +22,11 @@ const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
   </div>
 ) : (
   <div class="gallery" data-gallery data-count={images.length}>
-    <div class:list={['gallery-main', { 'is-sold': sold }]}>
+    <div
+      class:list={['gallery-main', { 'is-sold': sold }]}
+      data-vt-main={transitionPath ? '' : undefined}
+      data-vt-photo={transitionPath}
+    >
       <div
         class="gallery-track scrollbar-none"
         data-track
@@ -147,9 +153,13 @@ const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
   .gallery-main {
     position: relative;
     overflow: hidden;
-    border-radius: 1.25rem;
+    border-radius: var(--radius-panel);
     background: var(--color-ink-850);
     border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  /* Recebe a foto do card clicado (ver features/vehicle-transition.ts). */
+  .gallery-main[data-vt-main] {
+    view-transition-name: vehicle-photo;
   }
   @media (max-width: 639.98px) {
     .gallery-main {
@@ -191,10 +201,15 @@ const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
     color: #fff;
     backdrop-filter: blur(8px);
     transform: translateY(-50%);
-    transition: background-color 140ms ease;
+    transition:
+      background-color 140ms ease,
+      transform 140ms var(--ease-out-soft);
   }
   .gallery-arrow:hover {
     background: rgb(8 9 10 / 0.85);
+  }
+  .gallery-arrow:active {
+    transform: translateY(-50%) scale(0.92);
   }
   @media (hover: hover) and (pointer: fine) {
     .gallery-arrow {

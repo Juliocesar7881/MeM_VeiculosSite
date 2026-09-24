@@ -7,25 +7,17 @@ function updateFavCount(ids: string[]) {
   });
 }
 
+/** Marca `html[data-scrolled]` quando a página sai do topo (sentinela + IntersectionObserver, sem ouvir scroll). */
 function initScrollState() {
   const root = document.documentElement;
-  let ticking = false;
-  const apply = () => {
-    ticking = false;
-    if (window.scrollY > 8) root.setAttribute('data-scrolled', '');
-    else root.removeAttribute('data-scrolled');
-  };
-  apply();
-  window.addEventListener(
-    'scroll',
-    () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(apply);
-      }
-    },
-    { passive: true },
-  );
+  const sentinel = document.createElement('div');
+  sentinel.setAttribute('aria-hidden', 'true');
+  sentinel.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:8px;pointer-events:none;';
+  document.body.prepend(sentinel);
+  new IntersectionObserver(([entry]) => {
+    if (entry?.isIntersecting) root.removeAttribute('data-scrolled');
+    else root.setAttribute('data-scrolled', '');
+  }).observe(sentinel);
 }
 
 function initMobileMenu() {

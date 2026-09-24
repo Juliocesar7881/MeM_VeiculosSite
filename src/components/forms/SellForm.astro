@@ -380,15 +380,23 @@ const limits = {
       padding: 1.8rem;
     }
   }
+  /* Legenda dentro do painel (float), em vez de "sentada" na borda do fieldset. */
   .section-title {
+    float: left;
+    width: 100%;
+    padding: 0;
     display: flex;
     align-items: center;
     gap: 0.7rem;
     margin-bottom: 1.25rem;
-    font-size: 1.15rem;
-    font-weight: 700;
-    font-stretch: 108%;
+    font-size: 1.4rem;
+    font-weight: 600;
+    font-stretch: 86%;
+    letter-spacing: -0.015em;
     color: #fff;
+  }
+  .section-title + :global(*) {
+    clear: both;
   }
   .section-num {
     display: inline-flex;
@@ -396,11 +404,14 @@ const limits = {
     height: 1.8rem;
     align-items: center;
     justify-content: center;
-    border-radius: 0.5rem;
-    background: var(--color-gold-500);
-    color: #111;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 60%, transparent);
+    background: color-mix(in oklab, var(--color-gold-500) 10%, transparent);
+    color: var(--color-gold-300);
     font-size: 0.85rem;
-    font-weight: 800;
+    font-weight: 600;
+    font-stretch: 100%;
+    letter-spacing: 0;
   }
   .cat-option {
     display: flex;

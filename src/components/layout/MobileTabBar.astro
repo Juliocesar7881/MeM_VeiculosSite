@@ -64,6 +64,7 @@ const tabs: { label: string; href: string; icon: IconName; active: boolean }[] =
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-top: 1px solid color-mix(in oklab, white 8%, transparent);
+    view-transition-name: tabbar;
   }
   .tab {
     display: flex;
@@ -72,8 +73,8 @@ const tabs: { label: string; href: string; icon: IconName; active: boolean }[] =
     align-items: center;
     justify-content: center;
     gap: 0.2rem;
-    font-size: 0.68rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 550;
     color: var(--color-mist-400);
     transition: color 140ms ease;
   }
@@ -83,6 +84,10 @@ const tabs: { label: string; href: string; icon: IconName; active: boolean }[] =
   .tab-icon {
     position: relative;
     display: inline-flex;
+    transition: transform 140ms var(--ease-out-soft);
+  }
+  .tab:active .tab-icon {
+    transform: scale(0.88);
   }
   .tab.is-cta .tab-icon {
     width: 2rem;

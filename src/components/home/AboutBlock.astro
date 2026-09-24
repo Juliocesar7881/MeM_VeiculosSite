@@ -18,40 +18,101 @@ const services: { icon: IconName; title: string; text: string }[] = [
 ---
 
 <section class="container-site" aria-labelledby="sobre-title">
-  <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+  <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
     <div>
       <p class="eyebrow">
+        <Icon name="map-pin" size={16} />
         {settings.city} - {settings.state}
       </p>
-      <h2 id="sobre-title" class="display mt-4 text-4xl text-white sm:text-5xl">
+      <h2 id="sobre-title" class="display mt-4 text-5xl text-white sm:text-6xl">
         {settings.businessName}
       </h2>
-      <p class="mt-5 text-2xl font-semibold leading-snug text-gold-300 [font-stretch:108%]">“{settings.slogan}”</p>
-      <p class="mt-5 max-w-lg text-mist-300">
+      <blockquote class="slogan mt-6">
+        <p>“{settings.slogan}”</p>
+      </blockquote>
+      <p class="mt-6 max-w-lg text-mist-300">
         Atuamos com compra, venda, financiamento e repasse de veículos. Fale com a nossa equipe pelo WhatsApp ou
         acompanhe as novidades nas nossas redes sociais.
       </p>
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
+      <div class="mt-8 flex flex-col gap-3 xs:flex-row xs:items-center xs:gap-6">
         <a href="/empresa" class="btn btn-ghost">
           Conheça a empresa
         </a>
         {settings.instagram && (
-          <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
-            <Icon name="instagram" size={18} class="text-gold-400" />@{settings.instagram}
+          <a
+            href={instagramUrl(settings.instagram)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-11 items-center gap-2 font-medium text-mist-100 hover:text-white"
+          >
+            <Icon name="instagram" size={18} class="text-gold-400" />
+            <span class="link-underline">@{settings.instagram}</span>
           </a>
         )}
       </div>
     </div>
-    <ul class="grid gap-3 sm:grid-cols-2" role="list">
+
+    <ul class="services" role="list">
       {services.map((s) => (
-        <li class="surface p-5 sm:p-6">
-          <span class="inline-flex size-11 items-center justify-center rounded-xl bg-white/5 text-gold-400">
-            <Icon name={s.icon} size={24} strokeWidth={1.6} />
-          </span>
-          <h3 class="mt-4 text-lg font-bold text-white [font-stretch:108%]">{s.title}</h3>
-          <p class="mt-1 text-sm text-mist-300">{s.text}</p>
+        <li class="service">
+          <Icon name={s.icon} size={22} strokeWidth={1.6} class="service-icon" />
+          <h3 class="service-title">{s.title}</h3>
+          <p class="service-text">{s.text}</p>
         </li>
       ))}
     </ul>
   </div>
 </section>
+
+<style>
+  .slogan p {
+    max-width: 22ch;
+    font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.1rem);
+    font-stretch: 84%;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    color: var(--color-gold-200);
+  }
+  /* Serviços como lista tipográfica: nome grande à esquerda, descrição à direita, fios entre as linhas. */
+  .services {
+    border-top: 1px solid color-mix(in oklab, white 10%, transparent);
+  }
+  .service {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    column-gap: 1rem;
+    row-gap: 0.25rem;
+    align-items: baseline;
+    padding-block: 1.35rem;
+    border-bottom: 1px solid color-mix(in oklab, white 10%, transparent);
+  }
+  @media (min-width: 640px) {
+    .service {
+      grid-template-columns: 1.5rem minmax(0, 13rem) minmax(0, 1fr);
+      column-gap: 1.25rem;
+      padding-block: 1.6rem;
+    }
+  }
+  .service :global(.service-icon) {
+    align-self: center;
+    color: var(--color-gold-400);
+  }
+  .service-title {
+    font-size: clamp(1.7rem, 1.3rem + 1vw, 2.2rem);
+    font-stretch: 80%;
+    font-weight: 580;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    color: #fff;
+  }
+  .service-text {
+    grid-column: 2;
+    color: var(--color-mist-300);
+  }
+  @media (min-width: 640px) {
+    .service-text {
+      grid-column: 3;
+    }
+  }
+</style>

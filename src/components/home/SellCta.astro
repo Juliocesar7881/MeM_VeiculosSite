@@ -8,45 +8,45 @@ interface Props {
 }
 
 const { settings } = Astro.props;
+// Os passos são uma sequência de verdade, por isso a numeração.
 const steps = [
-  { icon: 'send' as const, title: 'Você envia os dados', text: 'Informações e fotos do veículo, em poucos minutos.' },
-  { icon: 'search' as const, title: 'A M&M analisa', text: 'Nossa equipe avalia as informações enviadas.' },
-  { icon: 'whatsapp' as const, title: 'Entramos em contato', text: 'Retornamos pelo WhatsApp para conversar.' },
+  { title: 'Você envia os dados', text: 'Informações e fotos do veículo, em poucos minutos.' },
+  { title: 'A M&M analisa', text: 'Nossa equipe avalia as informações enviadas.' },
+  { title: 'Entramos em contato', text: 'Retornamos pelo WhatsApp para conversar.' },
 ];
 ---
 
 <section class="container-site" aria-labelledby="venda-title">
-  <div class="sell-cta relative overflow-hidden rounded-[1.75rem] p-7 sm:p-10 lg:p-14">
+  <div class="sell-cta relative overflow-hidden px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-20">
     <svg viewBox={LOGO_VIEWBOX} class="sell-art" aria-hidden="true">
       {LOGO_GOLD_PATHS.map((d) => (
         <path d={d} fill="currentColor" />
       ))}
     </svg>
-    <div class="relative grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+    <div class="relative grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20">
       <div>
-        <p class="eyebrow">Venda com a M&M</p>
-        <h2 id="venda-title" class="display mt-4 text-4xl text-white sm:text-5xl">
+        <h2 id="venda-title" class="display text-[2.9rem] text-white sm:text-6xl xl:text-7xl">
           Quer vender seu veículo?
         </h2>
-        <p class="mt-4 max-w-md text-lg text-mist-200">Envie os dados do seu veículo para nossa equipe avaliar.</p>
-        <div class="mt-8 flex flex-col gap-3 xs:flex-row">
-          <a href="/anuncie-seu-veiculo" class="btn btn-gold btn-lg">
-            Quero vender meu veículo
-            <Icon name="arrow-right" size={18} />
-          </a>
-        </div>
+        <p class="mt-5 max-w-md text-lg text-mist-200">Envie os dados do seu veículo para nossa equipe avaliar.</p>
+        <a href="/anuncie-seu-veiculo" class="btn btn-gold btn-lg mt-8">
+          Quero vender meu veículo
+          <Icon name="arrow-right" size={18} class="btn-arrow" />
+        </a>
         <p class="mt-4 text-sm text-mist-400">Sem compromisso. O envio não garante a compra do veículo.</p>
       </div>
-      <ol class="grid gap-3">
+      <ol class="steps" role="list">
         {steps.map((step, index) => (
           <li class="step">
-            <span class="step-num tabular">{index + 1}</span>
-            <div>
-              <p class="flex items-center gap-2 font-semibold text-white">
-                <Icon name={step.icon} size={17} class="text-gold-400" />
+            <span class="step-num tabular" aria-hidden="true">
+              {index + 1}
+            </span>
+            <div class="pb-1">
+              <h3 class="title text-xl text-white">
+                <span class="sr-only">Passo {index + 1}: </span>
                 {step.title}
-              </p>
-              <p class="mt-1 text-sm text-mist-300">{step.text}</p>
+              </h3>
+              <p class="mt-1 text-mist-300">{step.text}</p>
             </div>
           </li>
         ))}
@@ -58,43 +58,78 @@ const steps = [
 
 <style>
   .sell-cta {
+    border-radius: var(--radius-panel);
     background:
       radial-gradient(
-        80% 120% at 100% 0%,
-        color-mix(in oklab, var(--color-gold-500) 14%, transparent),
-        transparent 60%
+        70% 110% at 100% 0%,
+        color-mix(in oklab, var(--color-gold-500) 13%, transparent),
+        transparent 62%
       ),
-      linear-gradient(160deg, #15181b, #0c0d0f);
-    border: 1px solid color-mix(in oklab, var(--color-gold-500) 22%, transparent);
+      linear-gradient(165deg, var(--color-ink-800), var(--color-ink-900) 70%);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 20%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
   }
   .sell-art {
     position: absolute;
-    right: -6%;
-    bottom: -18%;
-    width: 70%;
-    color: color-mix(in oklab, var(--color-gold-500) 9%, transparent);
+    right: -8%;
+    bottom: -22%;
+    width: 72%;
+    color: color-mix(in oklab, var(--color-gold-500) 7%, transparent);
     pointer-events: none;
   }
+  /* Linha do tempo: números ligados por um fio dourado que se apaga no último passo. */
+  .steps {
+    display: grid;
+    gap: 2rem;
+  }
   .step {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    padding: 1.1rem 1.2rem;
-    border-radius: 1rem;
-    background: rgb(8 9 10 / 0.55);
-    border: 1px solid color-mix(in oklab, white 8%, transparent);
-    backdrop-filter: blur(4px);
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: calc(1.375rem - 0.5px);
+    top: 3.25rem;
+    bottom: -1.5rem;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-gold-500) 55%, transparent),
+      color-mix(in oklab, var(--color-gold-500) 10%, transparent)
+    );
+  }
+  /* O fio se desenha de cima para baixo conforme a lista entra na tela (CSS scroll-driven). */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .step:not(:last-child)::before {
+        transform-origin: top;
+        animation: draw-line linear both;
+        animation-timeline: view();
+        animation-range: entry 60% cover 55%;
+      }
+    }
+  }
+  @keyframes draw-line {
+    from {
+      transform: scaleY(0);
+    }
   }
   .step-num {
     display: inline-flex;
-    width: 2.2rem;
-    height: 2.2rem;
-    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
     align-items: center;
     justify-content: center;
-    border-radius: 0.65rem;
-    background: var(--color-gold-500);
-    color: #111;
-    font-weight: 800;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 60%, transparent);
+    background: color-mix(in oklab, var(--color-gold-500) 10%, var(--color-ink-900));
+    color: var(--color-gold-300);
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-stretch: 85%;
   }
 </style>

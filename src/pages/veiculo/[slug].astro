@@ -138,31 +138,31 @@ const preload = cover
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
       <!-- Galeria -->
       <div class="min-w-0">
-        <Gallery images={vehicle.images} alt={`${fullName} ${years}`} sold={sold} />
+        <Gallery images={vehicle.images} alt={`${fullName} ${years}`} sold={sold} transitionPath={pagePath} />
       </div>
 
       <!-- Resumo e ação -->
       <aside class="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start" aria-label="Resumo do veículo">
         <Badges vehicle={vehicle} max={3} />
-        <p class="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-mist-400">{vehicle.brand}</p>
-        <h1 class="heading mt-1 text-3xl text-white sm:text-4xl">
+        <p class="mt-5 text-base font-medium text-mist-400">{vehicle.brand}</p>
+        <h1 class="display mt-1 text-[2.9rem] text-white sm:text-6xl">
           {vehicle.model}
           {vehicle.version && (
-            <span class="mt-1 block text-lg font-medium text-mist-300 [font-stretch:100%] sm:text-xl">
+            <span class="mt-2 block text-lg font-normal tracking-normal text-mist-300 [font-stretch:100%] sm:text-xl">
               {vehicle.version}
             </span>
           )}
         </h1>
 
         {highlights.length > 0 && (
-          <ul class="mt-6 grid grid-cols-2 gap-2.5">
+          <ul class="highlights mt-6 grid grid-cols-2 border-y hairline">
             {highlights.map((h) => (
-              <li class="rounded-xl border hairline bg-white/[0.02] px-3.5 py-3">
-                <p class="flex items-center gap-1.5 text-[0.72rem] font-medium uppercase tracking-wider text-mist-400">
+              <li class="py-3.5">
+                <p class="flex items-center gap-1.5 text-[0.8rem] font-medium text-mist-400">
                   <Icon name={h.icon} size={14} />
                   {h.label}
                 </p>
-                <p class="mt-1 font-semibold text-white tabular">{h.value}</p>
+                <p class="title mt-1 text-lg text-white tabular">{h.value}</p>
               </li>
             ))}
           </ul>
@@ -171,7 +171,7 @@ const preload = cover
         <div class="mt-6 rounded-2xl border hairline bg-ink-850 p-5 sm:p-6">
           {sold ? (
             <div>
-              <p class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-[#ff8a8f]">
+              <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#ff8a8f]">
                 <span class="size-2 rounded-full bg-sold" /> Veículo vendido
               </p>
               <p class="heading mt-3 text-2xl text-white">Procurando algo parecido?</p>
@@ -220,7 +220,7 @@ const preload = cover
                 class="mt-3 flex items-center justify-center gap-2 text-sm font-medium text-mist-200 hover:text-white"
               >
                 <Icon name="shield" size={16} class="text-gold-400" />
-                Trabalhamos com financiamento — consulte condições
+                Trabalhamos com financiamento: consulte as condições
               </a>
             </div>
           )}
@@ -306,7 +306,6 @@ const preload = cover
       <section class="mt-20" aria-labelledby="semelhantes">
         <SectionHeader
           id="semelhantes"
-          eyebrow="Continue procurando"
           title="Veículos semelhantes"
           href={`/estoque?categoria=${CATEGORY_INFO[vehicle.category].slug}`}
           linkLabel="Ver mais"
@@ -322,7 +321,7 @@ const preload = cover
       <p class="truncate text-xs text-mist-400">
         {vehicleName(vehicle)} {years}
       </p>
-      <p class="truncate text-lg font-extrabold text-white tabular [font-stretch:108%]">
+      <p class="title truncate text-xl text-white tabular">
         {sold ? 'Vendido' : price.current ? formatBRL(price.current) : 'Sob consulta'}
       </p>
     </div>
@@ -340,6 +339,14 @@ const preload = cover
 </BaseLayout>
 
 <style>
+  /* Destaques em grade 2x2 separada por fios, sem caixinhas. */
+  .highlights li:nth-child(2n) {
+    padding-left: 1.1rem;
+    border-left: 1px solid color-mix(in oklab, white 8%, transparent);
+  }
+  .highlights li:nth-child(n + 3) {
+    border-top: 1px solid color-mix(in oklab, white 8%, transparent);
+  }
   .mobile-cta {
     position: fixed;
     inset-inline: 0;

@@ -28,16 +28,16 @@ const {
 const href = `/veiculo/${v.slug}`;
 const name = vehicleName(v);
 const specs = [
-  { icon: 'calendar' as const, value: yearLabel(v), label: 'Ano' },
-  { icon: 'gauge' as const, value: usageLabel(v), label: 'Uso' },
-  { icon: 'gear' as const, value: transmissionLabel(v.transmission), label: 'Câmbio' },
-  { icon: 'fuel' as const, value: fuelLabel(v.fuel), label: 'Combustível' },
+  { value: yearLabel(v), label: 'Ano' },
+  { value: usageLabel(v), label: 'Uso' },
+  { value: transmissionLabel(v.transmission), label: 'Câmbio' },
+  { value: fuelLabel(v.fuel), label: 'Combustível' },
 ].filter((s) => s.value);
 const sold = v.status === 'sold';
 ---
 
 <article class:list={['vcard group', { 'is-sold': sold }]} data-vehicle-card={v.id}>
-  <div class="vcard-media">
+  <div class="vcard-media" data-vt-photo={v.cover ? undefined : href}>
     {v.cover ? (
       <img
         src={mediaUrl(v.cover.thumbKey)}
@@ -50,6 +50,7 @@ const sold = v.status === 'sold';
         fetchpriority={eager ? 'high' : undefined}
         decoding="async"
         class="vcard-img"
+        data-vt-photo={href}
       />
     ) : (
       <PhotoPlaceholder />
@@ -65,9 +66,9 @@ const sold = v.status === 'sold';
     )}
   </div>
 
-  <div class="flex flex-1 flex-col p-4 sm:p-5">
-    <p class="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mist-400">{v.brand}</p>
-    <Heading class="mt-1 text-lg leading-tight font-bold text-white [font-stretch:108%]">
+  <div class="flex flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5 sm:pt-4">
+    <p class="text-sm font-medium text-mist-400">{v.brand}</p>
+    <Heading class="title mt-0.5 text-[1.45rem] text-white">
       <a href={href} class="vcard-link" data-astro-prefetch>
         {v.model}
       </a>
@@ -77,10 +78,10 @@ const sold = v.status === 'sold';
     </p>
 
     {specs.length > 0 && (
-      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[0.82rem] text-mist-200">
+      <ul class="vcard-specs mt-3.5 text-[0.84rem] text-mist-200" aria-label="Características">
         {specs.map((spec) => (
-          <li class="inline-flex items-center gap-1.5">
-            <Icon name={spec.icon} size={15} class="text-mist-500" label={spec.label} />
+          <li>
+            <span class="sr-only">{spec.label}: </span>
             <span class="tabular">{spec.value}</span>
           </li>
         ))}
@@ -88,11 +89,8 @@ const sold = v.status === 'sold';
     )}
 
     <div class="min-h-4 flex-1" aria-hidden="true"></div>
-    <div class="flex items-end justify-between gap-3 border-t hairline pt-4">
+    <div class="border-t hairline pt-3.5">
       <PriceTag vehicle={v} />
-      <span class="vcard-arrow" aria-hidden="true">
-        <Icon name="arrow-up-right" size={18} />
-      </span>
     </div>
   </div>
 </article>
@@ -105,29 +103,24 @@ const sold = v.status === 'sold';
     overflow: hidden;
     border-radius: var(--radius-card);
     background: var(--color-ink-850);
-    border: 1px solid color-mix(in oklab, white 7%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, white 7%, transparent);
     transition:
-      border-color 200ms ease,
-      transform 240ms var(--ease-out-soft),
-      box-shadow 240ms var(--ease-out-soft);
+      box-shadow 220ms ease,
+      transform 260ms var(--ease-out-soft);
   }
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     .vcard:hover {
-      border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-lift);
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 40%, transparent),
+        var(--shadow-lift);
     }
     .vcard:hover .vcard-img {
       transform: scale(1.035);
     }
-    .vcard:hover .vcard-arrow {
-      background: var(--color-gold-500);
-      color: #111;
-      border-color: var(--color-gold-500);
-    }
   }
   .vcard:focus-within {
-    border-color: color-mix(in oklab, var(--color-gold-500) 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 70%, transparent);
   }
   .vcard-media {
     position: relative;
@@ -139,12 +132,12 @@ const sold = v.status === 'sold';
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 500ms var(--ease-out-soft);
+    transition: transform 600ms var(--ease-out-soft);
   }
   .vcard-shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 28%, transparent 78%, rgb(0 0 0 / 0.35));
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 26%, transparent 80%, rgb(0 0 0 / 0.3));
     pointer-events: none;
   }
   .is-sold .vcard-img {
@@ -158,12 +151,35 @@ const sold = v.status === 'sold';
     align-items: center;
     gap: 0.3rem;
     padding: 0.2rem 0.5rem;
-    border-radius: 0.45rem;
+    border-radius: 0.4rem;
     background: rgb(8 9 10 / 0.6);
     backdrop-filter: blur(6px);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-mist-100);
+  }
+  /* Especificações em linha, separadas por um traço vertical fino. */
+  .vcard-specs {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+    margin-left: calc(-2 * 0.6rem - 1px);
+    clip-path: inset(0 0 0 calc(2 * 0.6rem + 1px));
+  }
+  .vcard-specs li {
+    display: inline-flex;
+    align-items: center;
+  }
+  /*
+   * Separador antes de cada item; a lista é deslocada para a esquerda e recortada, então o
+   * separador do primeiro item de cada linha fica escondido (nada de "|" no início ao quebrar).
+   */
+  .vcard-specs li::before {
+    content: '';
+    width: 1px;
+    height: 0.8em;
+    margin-inline: 0.6rem;
+    background: color-mix(in oklab, white 18%, transparent);
   }
   /* Link "esticado": o card inteiro é clicável, sem aninhar o botão de favorito no link. */
   .vcard-link::after {
@@ -174,20 +190,5 @@ const sold = v.status === 'sold';
   }
   .vcard-link:focus-visible {
     outline: none;
-  }
-  .vcard-arrow {
-    display: inline-flex;
-    width: 2.4rem;
-    height: 2.4rem;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid color-mix(in oklab, white 14%, transparent);
-    color: var(--color-mist-200);
-    transition:
-      background-color 200ms ease,
-      color 200ms ease,
-      border-color 200ms ease;
   }
 </style>

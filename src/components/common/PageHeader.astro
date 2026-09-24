@@ -15,9 +15,11 @@ const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
 <header class:list={['page-header relative overflow-hidden border-b hairline', `tone-${tone}`]}>
   <div class="container-site pb-8 pt-6 sm:pb-10 sm:pt-8">
     <Breadcrumbs items={breadcrumbs} />
-    {eyebrow && <p class="eyebrow mt-6">{eyebrow}</p>}
-    <h1 class="display mt-3 text-4xl text-white sm:text-5xl lg:text-6xl">{title}</h1>
-    {subtitle && <p class="mt-4 max-w-2xl text-base text-mist-300 sm:text-lg">{subtitle}</p>}
+    {eyebrow && <p class="eyebrow mt-7">{eyebrow}</p>}
+    <h1 class:list={['display text-[2.9rem] text-white sm:text-6xl lg:text-7xl', eyebrow ? 'mt-3' : 'mt-7']}>
+      {title}
+    </h1>
+    {subtitle && <p class="mt-5 max-w-2xl text-base text-mist-300 sm:text-lg">{subtitle}</p>}
     <slot />
   </div>
 </header>

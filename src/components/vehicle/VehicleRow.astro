@@ -1,0 +1,182 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { mediaUrl } from '@/lib/storage/keys';
+import type { VehicleCard } from '@/types/domain';
+import { fuelLabel, transmissionLabel, usageLabel, vehicleName, yearLabel } from '@/utils/vehicle-format';
+import PhotoPlaceholder from './PhotoPlaceholder.astro';
+import PriceTag from './PriceTag.astro';
+
+/** Linha compacta de veículo (lista de repasses na home): foto, nome, ficha curta e preço. */
+interface Props {
+  vehicle: VehicleCard;
+}
+
+const { vehicle: v } = Astro.props;
+const href = `/veiculo/${v.slug}`;
+const specs = [
+  { value: yearLabel(v), label: 'Ano' },
+  { value: usageLabel(v), label: 'Uso' },
+  { value: transmissionLabel(v.transmission), label: 'Câmbio' },
+  { value: fuelLabel(v.fuel), label: 'Combustível' },
+].filter((s) => s.value);
+---
+
+<article class="vrow group" data-vt-card>
+  <div class="vrow-thumb" data-vt-photo={v.cover ? undefined : href}>
+    {v.cover ? (
+      <img
+        src={mediaUrl(v.cover.thumbKey)}
+        width={v.cover.thumbWidth}
+        height={v.cover.thumbHeight}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="h-full w-full object-cover transition-transform duration-500 ease-out-soft"
+        data-vt-photo={href}
+      />
+    ) : (
+      <PhotoPlaceholder />
+    )}
+  </div>
+
+  <div class="vrow-name min-w-0">
+    <p class="text-sm font-medium text-mist-400">{v.brand}</p>
+    <h3 class="title text-xl text-white sm:text-[1.4rem]">
+      <a href={href} class="vrow-link" data-astro-prefetch>
+        {v.model}
+      </a>
+    </h3>
+    {v.version && <p class="truncate text-sm text-mist-300">{v.version}</p>}
+  </div>
+
+  {specs.length > 0 && (
+    <ul class="vrow-specs text-[0.84rem] text-mist-200" aria-label={`Características de ${vehicleName(v)}`}>
+      {specs.map((spec) => (
+        <li>
+          <span class="sr-only">{spec.label}: </span>
+          <span class="tabular">{spec.value}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <PriceTag vehicle={v} class="vrow-price" />
+
+  <span class="vrow-go" aria-hidden="true">
+    <Icon name="arrow-up-right" size={18} />
+  </span>
+</article>
+
+<style>
+  .vrow {
+    position: relative;
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    grid-template-areas:
+      'thumb name'
+      'thumb specs'
+      'thumb price';
+    column-gap: 1rem;
+    row-gap: 0.4rem;
+    align-items: center;
+    padding-block: 1rem;
+  }
+  @media (min-width: 1024px) {
+    .vrow {
+      grid-template-columns: 9.5rem minmax(0, 1fr) auto 11rem 2.75rem;
+      grid-template-areas: 'thumb name specs price go';
+      column-gap: 2rem;
+      padding-block: 1.1rem;
+    }
+  }
+  .vrow-thumb {
+    grid-area: thumb;
+    align-self: start;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: var(--color-ink-800);
+  }
+  .vrow-name {
+    grid-area: name;
+  }
+  .vrow-specs {
+    grid-area: specs;
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+    margin-left: calc(-2 * 0.55rem - 1px);
+    clip-path: inset(0 0 0 calc(2 * 0.55rem + 1px));
+  }
+  .vrow-specs li {
+    display: inline-flex;
+    align-items: center;
+  }
+  /*
+   * Separador antes de cada item; a lista é deslocada para a esquerda e recortada, então o
+   * separador do primeiro item de cada linha fica escondido (nada de "|" no início ao quebrar).
+   */
+  .vrow-specs li::before {
+    content: '';
+    width: 1px;
+    height: 0.8em;
+    margin-inline: 0.55rem;
+    background: color-mix(in oklab, white 18%, transparent);
+  }
+  .vrow :global(.vrow-price) {
+    grid-area: price;
+  }
+  @media (min-width: 1024px) {
+    .vrow :global(.vrow-price) {
+      justify-self: end;
+      text-align: right;
+    }
+    .vrow :global(.vrow-price .price-prev) {
+      justify-content: flex-end;
+    }
+  }
+  .vrow-go {
+    grid-area: go;
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, white 14%, transparent);
+    color: var(--color-mist-200);
+    transition:
+      background-color 200ms ease,
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+  @media (min-width: 1024px) {
+    .vrow-go {
+      display: inline-flex;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .vrow:hover .vrow-go {
+      background: var(--color-silver-300);
+      border-color: var(--color-silver-300);
+      color: #111;
+    }
+    .vrow:hover .vrow-thumb img {
+      transform: scale(1.05);
+    }
+  }
+  /* Link esticado: a linha inteira é clicável. */
+  .vrow-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .vrow-link:focus-visible {
+    outline: none;
+  }
+  .vrow:focus-within {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
+    border-radius: 0.75rem;
+  }
+</style>
