@@ -14,6 +14,8 @@ const CARD_SELECT = `
     ci.height AS cover_height,
     ci.thumb_width AS cover_thumb_width,
     ci.thumb_height AS cover_thumb_height,
+    ci.medium_key AS cover_medium_key,
+    ci.medium_width AS cover_medium_width,
     (SELECT COUNT(*) FROM vehicle_images x WHERE x.vehicle_id = v.id) AS image_count
   FROM vehicles v
   LEFT JOIN vehicle_images ci ON ci.id = (
@@ -339,17 +341,17 @@ export class VehicleRepository {
     applyInventoryFilters(where, filters, nowIso);
     const ws = whereSql(where);
 
-    const countRow = await this.db.first<{ total: number }>(
-      `SELECT COUNT(*) AS total FROM vehicles v ${ws}`,
-      where.args,
-    );
-    const total = Number(countRow?.total ?? 0);
     const offset = (Math.max(1, filters.page) - 1) * options.pageSize;
-    const rows = await this.db.all<VehicleCardRow>(
-      `${CARD_SELECT} ${ws} ORDER BY ${orderBy(filters.sort)} LIMIT ? OFFSET ?`,
-      [...where.args, options.pageSize, offset],
-    );
-    return { items: rows.map(mapVehicleCard), total };
+    // Em paralelo: no Cloudflare cada consulta ao D1 é uma ida e volta pela rede.
+    const [countRow, rows] = await Promise.all([
+      this.db.first<{ total: number }>(`SELECT COUNT(*) AS total FROM vehicles v ${ws}`, where.args),
+      this.db.all<VehicleCardRow>(`${CARD_SELECT} ${ws} ORDER BY ${orderBy(filters.sort)} LIMIT ? OFFSET ?`, [
+        ...where.args,
+        options.pageSize,
+        offset,
+      ]),
+    ]);
+    return { items: rows.map(mapVehicleCard), total: Number(countRow?.total ?? 0) };
   }
 
   /** Lista de cards por seção (destaques, ofertas, repasses) — nunca inclui vendidos. */
@@ -427,7 +429,7 @@ export class VehicleRepository {
     publicVisibility(base, options.showSold);
     const bw = whereSql(base);
 
-    const [categories, brands, ranges] = await Promise.all([
+    const [categories, brands, ranges, models] = await Promise.all([
       this.db.all<{ value: string; count: number }>(
         `SELECT v.category AS value, COUNT(*) AS count FROM vehicles v ${bw} GROUP BY v.category`,
         base.args,
@@ -450,16 +452,14 @@ export class VehicleRepository {
          FROM vehicles v ${bw}`,
         base.args,
       ),
+      filters.brand
+        ? this.db.all<{ value: string; count: number }>(
+            `SELECT MIN(v.model) AS value, COUNT(*) AS count FROM vehicles v ${bw} AND v.brand = ? COLLATE NOCASE
+             GROUP BY v.model COLLATE NOCASE ORDER BY v.model COLLATE NOCASE`,
+            [...base.args, filters.brand],
+          )
+        : Promise.resolve([] as FacetCount[]),
     ]);
-
-    let models: FacetCount[] = [];
-    if (filters.brand) {
-      models = await this.db.all<{ value: string; count: number }>(
-        `SELECT MIN(v.model) AS value, COUNT(*) AS count FROM vehicles v ${bw} AND v.brand = ? COLLATE NOCASE
-         GROUP BY v.model COLLATE NOCASE ORDER BY v.model COLLATE NOCASE`,
-        [...base.args, filters.brand],
-      );
-    }
 
     return {
       categories: categories.map((c) => ({ value: c.value, count: Number(c.count) })),
@@ -472,17 +472,19 @@ export class VehicleRepository {
 
   /** Sugestões para o campo de busca (marcas e modelos presentes no estoque). */
   async searchSuggestions(limit = 60): Promise<string[]> {
-    const rows = await this.db.all<{ label: string }>(
-      `SELECT DISTINCT v.brand || ' ' || v.model AS label FROM vehicles v
-       WHERE v.deleted_at IS NULL AND v.published = 1 AND v.status IN ('available', 'reserved')
-       ORDER BY label LIMIT ?`,
-      [limit],
-    );
-    const brands = await this.db.all<{ label: string }>(
-      `SELECT DISTINCT v.brand AS label FROM vehicles v
-       WHERE v.deleted_at IS NULL AND v.published = 1 AND v.status IN ('available', 'reserved')
-       ORDER BY label LIMIT 30`,
-    );
+    const [rows, brands] = await Promise.all([
+      this.db.all<{ label: string }>(
+        `SELECT DISTINCT v.brand || ' ' || v.model AS label FROM vehicles v
+         WHERE v.deleted_at IS NULL AND v.published = 1 AND v.status IN ('available', 'reserved')
+         ORDER BY label LIMIT ?`,
+        [limit],
+      ),
+      this.db.all<{ label: string }>(
+        `SELECT DISTINCT v.brand AS label FROM vehicles v
+         WHERE v.deleted_at IS NULL AND v.published = 1 AND v.status IN ('available', 'reserved')
+         ORDER BY label LIMIT 30`,
+      ),
+    ]);
     return [...new Set([...brands.map((b) => b.label), ...rows.map((r) => r.label)])];
   }
 

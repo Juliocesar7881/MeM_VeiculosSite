@@ -10,7 +10,7 @@ import PriceTag from '@/components/vehicle/PriceTag.astro';
 import VehicleGrid from '@/components/vehicle/VehicleGrid.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { CATEGORY_INFO } from '@/config/catalog';
-import { mediaUrl } from '@/lib/storage/keys';
+import { mediaUrl, vehicleSrcset } from '@/lib/storage/keys';
 import { absoluteUrl, breadcrumbJsonLd, vehicleJsonLd } from '@/lib/seo';
 import { isValidSlug } from '@/utils/slug';
 import { formatDate } from '@/utils/dates';
@@ -39,8 +39,7 @@ if (result.kind === 'not-found') {
 }
 
 const vehicle = result.vehicle;
-const settings = await container.settings.get();
-const similar = await container.vehicles.listSimilar(vehicle, 4);
+const [settings, similar] = await Promise.all([container.settings.get(), container.vehicles.listSimilar(vehicle, 4)]);
 
 const pagePath = `/veiculo/${vehicle.slug}`;
 const pageUrl = absoluteUrl(siteUrl, pagePath);
@@ -116,7 +115,7 @@ const ogImage = cover ? `/og/veiculo/${vehicle.id}/${cover.id}.jpg` : '/og-defau
 const preload = cover
   ? {
       href: mediaUrl(cover.largeKey),
-      srcset: `${mediaUrl(cover.thumbKey)} ${cover.thumbWidth}w, ${mediaUrl(cover.largeKey)} ${cover.width}w`,
+      srcset: vehicleSrcset(cover),
       sizes: '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw',
     }
   : undefined;

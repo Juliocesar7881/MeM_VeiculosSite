@@ -84,6 +84,9 @@ export interface CoverColumns {
   cover_height: Nullable<number>;
   cover_thumb_width: Nullable<number>;
   cover_thumb_height: Nullable<number>;
+  /** Ausente na listagem de propostas (fotos de proposta não têm versão média). */
+  cover_medium_key?: Nullable<string>;
+  cover_medium_width?: Nullable<number>;
   image_count: number;
 }
 
@@ -96,6 +99,8 @@ export function mapCover(row: CoverColumns): ImageRef | null {
     height: row.cover_height ?? 1200,
     thumbWidth: row.cover_thumb_width ?? 720,
     thumbHeight: row.cover_thumb_height ?? 540,
+    mediumKey: row.cover_medium_key ?? null,
+    mediumWidth: row.cover_medium_width ?? null,
   };
 }
 
@@ -148,13 +153,24 @@ export interface ImageRow {
   created_at: string;
 }
 
-export function mapVehicleImage(row: ImageRow & { vehicle_id: string; og_key?: string | null }): VehicleImage {
+export interface VehicleImageRow extends ImageRow {
+  vehicle_id: string;
+  og_key?: Nullable<string>;
+  medium_key?: Nullable<string>;
+  medium_width?: Nullable<number>;
+  medium_height?: Nullable<number>;
+}
+
+export function mapVehicleImage(row: VehicleImageRow): VehicleImage {
   return {
     id: row.id,
     vehicleId: row.vehicle_id,
     largeKey: row.large_key,
     thumbKey: row.thumb_key,
     ogKey: row.og_key ?? null,
+    mediumKey: row.medium_key ?? null,
+    mediumWidth: row.medium_width ?? null,
+    mediumHeight: row.medium_height ?? null,
     width: row.width,
     height: row.height,
     thumbWidth: row.thumb_width,

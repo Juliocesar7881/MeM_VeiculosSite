@@ -4,90 +4,104 @@ O que precisa de backup: **banco** (veículos, propostas, configurações, hist�
 `sell-leads/`). O código está no GitHub.
 
 > Os backups contêm dados pessoais das propostas (nome, WhatsApp, e-mail). Guarde-os em local protegido e apague cópias
-> antigas que não forem mais necessárias (LGPD).
+> antigas que não forem mais necessárias (LGPD). A pasta `backups/` é ignorada pelo Git.
 
 ## Rotina recomendada
 
-- **Semanal:** `npm run db:backup -- --with-media` com as variáveis de produção.
-- **Antes de qualquer mudança grande** (migração de provedor, importação em massa): backup completo.
+- **Semanal:** `npm run cf:backup` (banco + fotos da produção).
+- **Antes de qualquer mudança grande** (migração de provedor, importação em massa, troca KV → R2): backup completo.
 - Mantenha as últimas 4 cópias semanais em um armazenamento pessoal seguro (ex.: Google Drive da empresa).
+- O D1 ainda guarda sozinho o histórico dos últimos **7 dias** (Time Travel, plano gratuito).
 
-## Backup (produção)
+## Cloudflare (produção atual)
 
-Crie no seu computador um arquivo `.env.production.local` **fora do Git** (o `.gitignore` já ignora `.env.*`) com:
+Requer o Wrangler autenticado na conta (`npx wrangler login`).
 
-```ini
-DATABASE_URL=libsql://mm-veiculos-<org>.turso.io
-DATABASE_AUTH_TOKEN=<token do Turso>
-STORAGE_DRIVER=vercel-blob
-BLOB_READ_WRITE_TOKEN=<token do store Blob>
-# ou, se usar R2:
-# STORAGE_DRIVER=s3
-# S3_ENDPOINT=... S3_BUCKET=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...
+### Backup
+
+```bash
+npm run cf:backup
 ```
 
-E rode (PowerShell):
+Resultado em `backups/cf-AAAA-MM-DDTHH-MM-SS/`:
+
+- `d1.sql` — exportação completa do D1 (`wrangler d1 export`: estrutura + dados);
+- `media/…` — todas as fotos referenciadas no banco (grande, média, miniatura, compartilhamento e fotos de propostas),
+  baixadas do KV ou do R2 conforme o `wrangler.jsonc`, com as mesmas chaves.
+
+### Voltar o banco para um momento anterior (Time Travel)
+
+Para desfazer um erro recente (ex.: exclusão indevida) **sem** backup manual:
+
+```bash
+npx wrangler d1 time-travel info mm-veiculos                                  # ponto de restauração atual
+npx wrangler d1 time-travel restore mm-veiculos --timestamp=2026-09-24T12:00:00Z
+```
+
+O banco inteiro volta ao estado daquele momento (até 7 dias atrás no plano gratuito). As fotos não são afetadas —
+fotos excluídas depois daquele momento **não voltam** (use o backup com `media/` para isso).
+
+### Restaurar a partir de um backup
+
+`d1.sql` contém `CREATE TABLE`, então a restauração completa é feita num **banco novo e vazio**:
+
+```bash
+npx wrangler d1 create mm-veiculos-restaurado --location enam
+# troque database_name/database_id do binding DB no wrangler.jsonc para o banco novo
+npm run cf:restore -- backups/cf-2026-09-24T12-00-00      # importa o banco + envia as fotos
+npm run cf:deploy
+```
+
+Só as fotos (ex.: migrar do KV para o R2, ou recuperar fotos apagadas):
+
+```bash
+npm run cf:restore -- backups/cf-2026-09-24T12-00-00 --media-only
+```
+
+As fotos vão para o storage configurado em `wrangler.jsonc` (`STORAGE_DRIVER` `kv` ou `r2`).
+
+**Testar o backup** (recomendado a cada poucos meses): importe o `d1.sql` num banco SQLite local e confira os dados:
+
+```bash
+npx wrangler d1 execute mm-veiculos --local --file=backups/<pasta>/d1.sql   # D1 local vazio (.wrangler/)
+```
+
+## Node / Vercel / Turso (alternativa)
+
+Com as variáveis da plataforma carregadas (`DATABASE_URL`, `STORAGE_DRIVER`…), em um arquivo `.env.production.local`
+**fora do Git**:
+
+```bash
+set -a; source .env.production.local; set +a      # PowerShell: veja abaixo
+npm run db:backup -- --with-media
+```
+
+PowerShell:
 
 ```powershell
 Get-Content .env.production.local | ForEach-Object { if ($_ -match '^([^#=]+)=(.*)$') { Set-Item "env:$($matches[1])" $matches[2] } }
 npm run db:backup -- --with-media
 ```
 
-ou (bash):
+Resultado em `backups/AAAA-MM-DDTHH-MM-SS/`: `database.json` (usado pela restauração), `database.sql`
+(`INSERT OR REPLACE` de todas as tabelas, importável no D1/SQLite) e `media/…`.
+
+Restauração (destino = variáveis de ambiente atuais):
 
 ```bash
-set -a; source .env.production.local; set +a
-npm run db:backup -- --with-media
-```
-
-Resultado em `backups/AAAA-MM-DDTHH-MM-SS/`:
-
-- `database.json` — todos os dados (usado pela restauração);
-- `database.sql` — `INSERT OR REPLACE` de todas as tabelas (útil para importar no D1/SQLite);
-- `media/…` — todas as fotos referenciadas no banco, com as mesmas chaves.
-
-## Restauração
-
-```bash
-# Destino = variáveis de ambiente atuais (DATABASE_URL, STORAGE_DRIVER...)
 npm run db:restore -- backups/2026-09-24T12-00-00               # só banco
 npm run db:restore -- backups/2026-09-24T12-00-00 --with-media  # banco + fotos
-# destino remoto exige confirmação explícita:
-npm run db:restore -- backups/2026-09-24T12-00-00 --with-media --yes
+npm run db:restore -- backups/2026-09-24T12-00-00 --with-media --yes   # destino remoto exige confirmação
 ```
 
-O script aplica as migrations no destino e grava os registros com `INSERT OR REPLACE` (registros com o mesmo id são
-substituídos; os demais permanecem). Para restaurar em um banco limpo, crie um banco novo e aponte o `DATABASE_URL`
-para ele.
-
-**Testar o backup** (recomendado a cada poucos meses): restaure no banco local
-
-```bash
-DATABASE_URL=file:.data/restore-test.db STORAGE_DRIVER=local LOCAL_STORAGE_DIR=.data/restore-test \
-  npm run db:restore -- backups/<pasta> --with-media
-```
+O script aplica as migrations no destino e grava os registros com `INSERT OR REPLACE`.
 
 ## Recursos dos provedores
 
-### Turso
-
-- Restauração pontual (*point-in-time*): 1 dia no plano gratuito — `turso db create mm-veiculos-restaurado --from-db mm-veiculos --timestamp <data ISO>`.
-- Dump SQL direto: `turso db shell mm-veiculos .dump > dump.sql`.
-- Restaurar um dump num banco novo: `turso db create mm-veiculos-novo --from-dump dump.sql`.
-
-### Vercel Blob
-
-- Não há versionamento automático: arquivos apagados não voltam. Por isso o backup com `--with-media`.
-- Listagem/download manual: `vercel blob list` (CLI da Vercel).
-
-### Cloudflare R2 (se usado)
-
-- Cópia do bucket com `rclone` (remote S3 apontando para o R2) ou o próprio `npm run db:backup -- --with-media`.
-
-### Cloudflare D1 (após migração)
-
-- Time Travel (restauração pontual de 30 dias no plano pago; 7 dias no gratuito — confira a documentação vigente):
-  `wrangler d1 time-travel restore <db> --timestamp=<ISO>`.
-- Exportação: `wrangler d1 export <db> --remote --output=backup.sql`.
-- Importação de backup deste projeto: `wrangler d1 execute <db> --remote --file=backups/<pasta>/database.sql`
-  (após `wrangler d1 migrations apply <db> --remote`).
+| Provedor      | Recurso                                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------- |
+| Cloudflare D1 | Time Travel (7 dias no gratuito, 30 no pago); `wrangler d1 export mm-veiculos --remote --output=backup.sql` |
+| Workers KV    | Sem versionamento: arquivos apagados não voltam — por isso o backup com `media/`                            |
+| Cloudflare R2 | Sem versionamento automático; `cf:backup` baixa as fotos (ou `rclone` com remote S3 apontando para o R2)    |
+| Turso         | Restauração pontual (1 dia no gratuito): `turso db create novo --from-db mm-veiculos --timestamp <ISO>`     |
+| Vercel Blob   | Sem versionamento; backup com `db:backup -- --with-media`                                                   |

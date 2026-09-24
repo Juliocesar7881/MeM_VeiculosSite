@@ -1,8 +1,6 @@
 import type { Database, SqlStatement } from '@/lib/db/types';
 import type { VehicleImage } from '@/types/domain';
-import { mapVehicleImage, type ImageRow } from './mappers';
-
-type Row = ImageRow & { vehicle_id: string };
+import { mapVehicleImage, type VehicleImageRow as Row } from './mappers';
 
 export class VehicleImageRepository {
   constructor(private readonly db: Database) {}
@@ -39,14 +37,18 @@ export class VehicleImageRepository {
   insertStatement(image: VehicleImage): SqlStatement {
     return {
       sql: `INSERT INTO vehicle_images
-        (id, vehicle_id, large_key, thumb_key, og_key, width, height, thumb_width, thumb_height, content_type, size_bytes, position, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, vehicle_id, large_key, thumb_key, og_key, medium_key, medium_width, medium_height,
+         width, height, thumb_width, thumb_height, content_type, size_bytes, position, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         image.id,
         image.vehicleId,
         image.largeKey,
         image.thumbKey,
         image.ogKey,
+        image.mediumKey,
+        image.mediumWidth,
+        image.mediumHeight,
         image.width,
         image.height,
         image.thumbWidth,

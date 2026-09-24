@@ -44,15 +44,18 @@ export const IMAGE_LIMITS = {
   largeMaxEdge: 1920,
   /** Lado maior da miniatura (cards / thumbnails). */
   thumbMaxEdge: 720,
+  /** Lado maior da versão média (celulares: galeria e cards em telas de alta densidade). */
+  mediumMaxEdge: 1080,
   /** Limites de bytes aceitos no servidor, por arquivo já comprimido. */
   vehicleLargeMaxBytes: 1_200_000,
+  vehicleMediumMaxBytes: 450_000,
   vehicleThumbMaxBytes: 250_000,
   leadLargeMaxEdge: 1600,
   leadLargeMaxBytes: 600_000,
   leadThumbMaxBytes: 150_000,
   /** Limite total do corpo da requisição do formulário público (Vercel aceita até 4,5 MB). */
   leadRequestMaxBytes: 4_300_000,
-  /** Foto grande + miniatura + imagem de compartilhamento (OG) na mesma requisição. */
-  vehicleRequestMaxBytes: 2_000_000,
+  /** Foto grande + média + miniatura + imagem de compartilhamento (OG) na mesma requisição. */
+  vehicleRequestMaxBytes: 2_500_000,
   maxDimension: 4096,
 } as const;

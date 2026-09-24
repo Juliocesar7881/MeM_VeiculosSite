@@ -12,8 +12,8 @@ import { dealerJsonLd, instagramUrl } from '@/lib/seo';
 import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
 
 const { container, siteUrl } = Astro.locals;
-const settings = await container.settings.get();
-const [sections, counts, suggestions] = await Promise.all([
+const [settings, sections, counts, suggestions] = await Promise.all([
+  container.settings.get(),
   container.vehicles.homeSections(),
   container.vehicles.countByCategory(),
   container.vehicles.searchSuggestions(),

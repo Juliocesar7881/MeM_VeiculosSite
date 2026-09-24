@@ -46,6 +46,18 @@ function initGallery(root: HTMLElement) {
   };
   onScrollEnd(track, update);
 
+  // As fotos 2+ começam com a miniatura (a mesma da faixa abaixo) e só ganham as versões
+  // maiores depois que a página carregou — assim a capa (LCP) não disputa banda no 4G.
+  const upgrade = () => {
+    track.querySelectorAll<HTMLImageElement>('img[data-srcset]').forEach((img) => {
+      img.srcset = img.dataset.srcset ?? '';
+      img.removeAttribute('data-srcset');
+    });
+  };
+  if (document.readyState === 'complete') upgrade();
+  else window.addEventListener('load', upgrade, { once: true });
+  track.addEventListener('scroll', upgrade, { once: true, passive: true });
+
   root.querySelector('[data-prev]')?.addEventListener('click', () => goTo(track, currentIndex(track) - 1));
   root.querySelector('[data-next]')?.addEventListener('click', () => goTo(track, currentIndex(track) + 1));
   thumbs.forEach((thumb, index) => thumb.addEventListener('click', () => goTo(track, index)));

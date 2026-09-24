@@ -3,7 +3,7 @@ import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/br
 import Icon from '@/components/ui/Icon.astro';
 import PriceTag from '@/components/vehicle/PriceTag.astro';
 import { CATEGORY_INFO, VEHICLE_CATEGORIES } from '@/config/catalog';
-import { mediaUrl } from '@/lib/storage/keys';
+import { mediaUrl, vehicleSrcset } from '@/lib/storage/keys';
 import type { VehicleCard } from '@/types/domain';
 import type { SiteSettings } from '@/types/settings';
 import { usageLabel, vehicleName, yearLabel } from '@/utils/vehicle-format';
@@ -105,7 +105,7 @@ const cover = spotlight?.cover ?? null;
         <a href={`/veiculo/${spotlight.slug}`} class="spotlight group" aria-label={`Ver ${vehicleName(spotlight)}`}>
           <img
             src={mediaUrl(cover.largeKey)}
-            srcset={`${mediaUrl(cover.thumbKey)} ${cover.thumbWidth}w, ${mediaUrl(cover.largeKey)} ${cover.width}w`}
+            srcset={vehicleSrcset(cover)}
             sizes="(min-width: 1024px) 46vw, 94vw"
             width={cover.width}
             height={cover.height}

@@ -10,7 +10,8 @@
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 
-const DB_NAME = 'mm-veiculos';
+// Binding do wrangler.jsonc: os comandos seguem o banco configurado lá (database_name/id).
+const DB_NAME = 'DB';
 const env = { ...process.env, DEPLOY_TARGET: 'cloudflare' };
 const shell = process.platform === 'win32';
 

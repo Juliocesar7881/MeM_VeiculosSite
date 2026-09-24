@@ -45,6 +45,10 @@ export interface VehicleImage {
   thumbKey: string;
   /** JPEG 1200x630 para compartilhamento (Open Graph); nulo em fotos antigas/convertidas. */
   ogKey: string | null;
+  /** Versão média (~1080 px) para celulares; nula em fotos antigas/convertidas. */
+  mediumKey: string | null;
+  mediumWidth: number | null;
+  mediumHeight: number | null;
   width: number;
   height: number;
   thumbWidth: number;
@@ -62,6 +66,8 @@ export interface ImageRef {
   height: number;
   thumbWidth: number;
   thumbHeight: number;
+  mediumKey?: string | null;
+  mediumWidth?: number | null;
 }
 
 export interface VehicleDetail extends Vehicle {

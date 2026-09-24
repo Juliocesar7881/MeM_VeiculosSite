@@ -1,206 +1,240 @@
-# Publicação (Vercel + Turso + Blob + Turnstile)
+# Publicação na Cloudflare (Workers + D1 + KV/R2 + Turnstile)
 
-Guia passo a passo para colocar o site no ar. **O domínio só é necessário no final** — tudo funciona antes com a URL
-gratuita `*.vercel.app`, usada para validar com o cliente.
+Este é o caminho **principal** de hospedagem: plano gratuito da Cloudflare, uso comercial permitido, custo mensal
+zero. O único custo obrigatório é o **domínio**. A alternativa pela Vercel continua documentada em
+[DEPLOY-VERCEL.md](DEPLOY-VERCEL.md).
 
-> ⚠️ O plano **Hobby** da Vercel é para uso **pessoal/não comercial**. Use-o para preview e validação. Para a produção
-> comercial, escolha **Vercel Pro** ou a **migração para Cloudflare** (plano gratuito sem essa restrição) descrita em
-> [ARQUITETURA.md](ARQUITETURA.md#migração-para-cloudflare).
+## Situação atual (24/09/2026)
+
+| Item                        | Estado                                                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Site no ar (URL temporária) | **https://mm-veiculos.visor-crypto.workers.dev**                                                                        |
+| Painel                      | https://mm-veiculos.visor-crypto.workers.dev/admin (senha de **desenvolvimento**, trocar antes da entrega, ver passo 4) |
+| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                                 |
+| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0004 aplicadas                                                          |
+| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                               |
+| Anti-spam                   | Turnstile com chave real (hostname `*.workers.dev`)                                                                     |
+| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                               |
+
+Tudo o que o site precisa já está configurado em [`wrangler.jsonc`](../wrangler.jsonc) (bindings e variáveis
+públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git).
 
 ## Sumário
 
-1. [Contas necessárias](#1-contas-necessárias)
-2. [Código no GitHub](#2-código-no-github)
-3. [Banco (Turso)](#3-banco-turso)
-4. [Projeto na Vercel](#4-projeto-na-vercel)
-5. [Fotos (Vercel Blob privado)](#5-fotos-vercel-blob-privado)
-6. [Senha do painel](#6-senha-do-painel)
-7. [Turnstile](#7-turnstile)
-8. [Variáveis de ambiente](#8-variáveis-de-ambiente)
-9. [Primeiro deploy e migrations](#9-primeiro-deploy-e-migrations)
-10. [Região das funções](#10-região-das-funções)
-11. [Validação com o cliente](#11-validação-com-o-cliente)
-12. [Domínio (somente no final)](#12-domínio-somente-no-final)
-13. [Opcional: aviso de novas propostas por e-mail](#13-opcional-aviso-de-novas-propostas-por-e-mail)
-14. [Opcional: Cloudflare R2 no lugar do Blob](#14-opcional-cloudflare-r2-no-lugar-do-blob)
-15. [Checklist final](#15-checklist-final)
+1. [Pré-requisitos](#1-pré-requisitos)
+2. [Recursos da conta (já criados)](#2-recursos-da-conta-já-criados)
+3. [Publicar uma nova versão](#3-publicar-uma-nova-versão)
+4. [Senha do painel e secrets](#4-senha-do-painel-e-secrets)
+5. [Turnstile](#5-turnstile)
+6. [Domínio próprio](#6-domínio-próprio)
+7. [Ativar o R2 para as fotos (recomendado)](#7-ativar-o-r2-para-as-fotos-recomendado)
+8. [Opcional: Cloudflare Access no painel](#8-opcional-cloudflare-access-no-painel)
+9. [Opcional: aviso de propostas por e-mail](#9-opcional-aviso-de-propostas-por-e-mail)
+10. [Limites do plano gratuito e monitoramento](#10-limites-do-plano-gratuito-e-monitoramento)
+11. [Recriar tudo em outra conta](#11-recriar-tudo-em-outra-conta)
+12. [Checklist de entrega](#12-checklist-de-entrega)
 
 ---
 
-## 1. Contas necessárias
+## 1. Pré-requisitos
 
-Crie (gratuitas) — de preferência com o e-mail da empresa:
-
-- **GitHub** — guarda o código.
-- **Vercel** — hospedagem (entre com a conta do GitHub).
-- **Turso** — banco de dados (pode ser criado pela própria Vercel, veja o passo 3).
-- **Cloudflare** — somente para o **Turnstile** agora (e DNS/migração no futuro).
-
-## 2. Código no GitHub
+- Node.js 22.12+ e `npm install` feito no projeto.
+- Login no Wrangler (CLI da Cloudflare, já instalada no projeto):
 
 ```bash
-git init            # se ainda não for um repositório
-git add .
-git commit -m "M&M Veículos: versão inicial"
-git branch -M main
-git remote add origin https://github.com/<usuario>/mm-veiculos.git
-git push -u origin main
+npx wrangler login
+npx wrangler whoami
 ```
 
-O `.gitignore` já impede o envio de `.env`, `.data/` (banco local e fotos) e `backups/`.
+## 2. Recursos da conta (já criados)
 
-## 3. Banco (Turso)
+| Recurso   | Nome / binding        | Para quê                                                     |
+| --------- | --------------------- | ------------------------------------------------------------ |
+| Worker    | `mm-veiculos`         | O site e o painel (Astro SSR)                                |
+| D1        | `mm-veiculos` → `DB`  | Banco SQLite (veículos, propostas, configurações, histórico) |
+| KV        | `MEDIA_KV`            | Fotos (enquanto o R2 não é ativado)                          |
+| Turnstile | widget “M&M Veículos” | Anti-spam do formulário “Anuncie seu veículo”                |
 
-**Opção A — pela Vercel (mais simples):** no projeto da Vercel → **Storage** → **Create Database** → **Turso** →
-escolha uma região e conecte ao projeto. As variáveis de conexão são criadas automaticamente; confira os nomes e
-garanta que existam **`DATABASE_URL`** (`libsql://...`) e **`DATABASE_AUTH_TOKEN`** (crie-as copiando os valores, se a
-integração usar outros nomes, como `TURSO_DATABASE_URL`).
+Variáveis **públicas** ficam em `wrangler.jsonc` → `vars` (`STORAGE_DRIVER`, `AUTH_MODE`, `ALLOW_INDEXING`,
+`TURNSTILE_SITE_KEY` e, quando houver domínio, `PUBLIC_SITE_URL`).
 
-**Opção B — pela CLI do Turso:**
+Secrets já gravados no Worker: `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, `IP_HASH_SALT`, `TURNSTILE_SECRET_KEY`.
+
+## 3. Publicar uma nova versão
 
 ```bash
-turso auth login
-turso db create mm-veiculos --location <região mais próxima do Brasil disponível>
-turso db show mm-veiculos --url          # -> DATABASE_URL
-turso db tokens create mm-veiculos       # -> DATABASE_AUTH_TOKEN
+npm run verify        # lint + typecheck + testes + build (recomendado)
+npm run cf:deploy     # aplica migrations novas no D1, gera o build e publica o Worker
 ```
 
-**Recomendado:** crie um segundo banco (`mm-veiculos-preview`) para os deploys de *Preview*, assim testes nunca
-alteram a produção.
+O `cf:deploy` faz, na ordem: `wrangler d1 migrations apply DB --remote` (binding do `wrangler.jsonc`) → `astro build`
+(`DEPLOY_TARGET=cloudflare`) → `wrangler deploy`. A troca de versão é instantânea e sem downtime.
 
-## 4. Projeto na Vercel
+- **Voltar para a versão anterior:** `npx wrangler rollback` (ou painel → Workers → mm-veiculos → Deployments).
+  Atenção: o rollback não desfaz migrations do banco.
+- **Testar localmente no runtime da Cloudflare:** `npm run cf:dev` (D1/KV simulados em `.wrangler/`).
+- **Logs em tempo real:** `npx wrangler tail mm-veiculos`.
 
-1. **Add New → Project** → importe o repositório.
-2. Framework: **Astro** (detectado). O build usa automaticamente o script `vercel-build`
-   (`npm run db:migrate && astro build`), que aplica as migrations antes de compilar.
-3. **Node.js**: 22.x ou superior (Settings → Build and Deployment).
-4. Não clique em Deploy ainda — configure as variáveis (passo 8) antes. Se já tiver clicado, tudo bem: o build falha
-   com uma mensagem clara pedindo o `DATABASE_URL`, e basta refazer após configurar.
+## 4. Senha do painel e secrets
 
-## 5. Fotos (Vercel Blob privado)
-
-1. Projeto → **Storage** → **Create Database** → **Blob** → **Access: Private** → conecte ao projeto.
-2. A Vercel injeta a autenticação (OIDC / `BLOB_STORE_ID`) — não é preciso token dentro da Vercel.
-3. Defina `STORAGE_DRIVER=vercel-blob`.
-4. Para backups rodando no seu computador, copie o **Read/Write Token** do store para `BLOB_READ_WRITE_TOKEN` no
-   `.env` local de backup (nunca no Git).
-
-> O store precisa ser **privado**: as fotos de propostas contêm dados de clientes. As fotos de veículos são entregues
-> pelo próprio site em `/media/...` com cache de CDN.
-
-## 6. Senha do painel
-
-No seu computador:
+> A senha atual é de **desenvolvimento** e foi combinada fora do repositório. **Troque-a antes de entregar o painel
+> ao cliente.**
 
 ```bash
-npm run admin:hash-password
+npm run admin:hash-password -- --cloudflare
 ```
 
-Digite uma senha forte (12+ caracteres). O comando imprime `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` e `IP_HASH_SALT`
-para colar na Vercel. Guarde a senha num gerenciador de senhas — o hash não permite recuperá-la. Para trocar a senha
-depois, gere um novo hash e atualize a variável (todas as sessões abertas são encerradas).
-
-## 7. Turnstile
-
-1. Cloudflare → **Turnstile** → **Add widget**.
-2. Nome: `M&M Veículos`; **Hostnames**: `localhost`, o domínio `*.vercel.app` do projeto e, no futuro, o domínio
-   definitivo (`mmveiculos.com.br` e `www.mmveiculos.com.br`, por exemplo).
-3. Modo: **Managed**.
-4. Copie **Site Key** → `TURNSTILE_SITE_KEY` e **Secret Key** → `TURNSTILE_SECRET_KEY`.
-
-Sem essas chaves, em produção o formulário “Anuncie seu veículo” mostra “temporariamente indisponível” (falha segura).
-
-## 8. Variáveis de ambiente
-
-Vercel → Settings → **Environment Variables**. Marque **Production** e **Preview** conforme a coluna.
-
-| Variável | Production | Preview | Valor |
-| --- | --- | --- | --- |
-| `DATABASE_URL` | ✅ | ✅ (banco de preview) | `libsql://...` |
-| `DATABASE_AUTH_TOKEN` | ✅ | ✅ | token do Turso |
-| `STORAGE_DRIVER` | ✅ | ✅ | `vercel-blob` |
-| `AUTH_MODE` | ✅ | ✅ | `password` |
-| `ADMIN_PASSWORD_HASH` | ✅ | ✅ | do passo 6 |
-| `SESSION_SECRET` | ✅ | ✅ | do passo 6 |
-| `IP_HASH_SALT` | ✅ | ✅ | do passo 6 |
-| `TURNSTILE_SITE_KEY` | ✅ | ✅ | do passo 7 |
-| `TURNSTILE_SECRET_KEY` | ✅ | ✅ | do passo 7 |
-| `ALLOW_INDEXING` | `false` até o domínio | `false` | depois `true` só em Production |
-| `PUBLIC_SITE_URL` | só com domínio | vazio | `https://www.seudominio.com.br` |
-
-Nunca coloque segredos em arquivos do repositório.
-
-## 9. Primeiro deploy e migrations
-
-1. **Deploy**. O log deve mostrar `✔ migration aplicada: 0001_initial.sql` e `0002_seed_settings.sql`.
-2. Acesse `https://<projeto>.vercel.app` — o site abre com “Novos veículos em breve” (estoque vazio, nada inventado).
-3. Acesse `/admin`, entre com a senha, confira **Configurações** (dados oficiais já preenchidos) e cadastre o primeiro
-   veículo com fotos.
-
-As próximas migrations rodam sozinhas a cada deploy. Para rodar manualmente contra a produção:
+Digite a nova senha (12+ caracteres). O comando imprime `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` e `IP_HASH_SALT`.
+Grave os dois primeiros no Worker (cada comando pede o valor — cole e tecle Enter):
 
 ```bash
-DATABASE_URL=libsql://... DATABASE_AUTH_TOKEN=... npm run db:migrate
+npx wrangler secret put ADMIN_PASSWORD_HASH
+npx wrangler secret put SESSION_SECRET
 ```
 
-## 10. Região das funções
+- O novo `SESSION_SECRET` encerra todas as sessões abertas (inclusive a de desenvolvimento).
+- Não é preciso refazer o deploy: gravar um secret já publica uma nova versão.
+- O hash usa PBKDF2-SHA256 com **50 mil iterações** no Workers (limite de CPU do runtime); combinado com o bloqueio
+  de tentativas por IP, uma senha longa continua inviável de adivinhar. Use 14+ caracteres.
+- Guarde a senha num gerenciador de senhas: o hash não permite recuperá-la.
 
-Cada página consulta o banco algumas vezes; por isso a função deve ficar **perto do banco**:
-Vercel → Settings → **Functions → Region** → escolha a região mais próxima da região do Turso. As páginas já ficam em
-cache na CDN global (60 s) e as fotos por 1 ano, então o visitante no Brasil recebe a maior parte do conteúdo da borda
-mais próxima.
+## 5. Turnstile
 
-## 11. Validação com o cliente
+Painel da Cloudflare → **Turnstile** → widget “M&M Veículos”:
 
-- Compartilhe a URL `*.vercel.app` (ou a URL de um deploy de *Preview*).
-- Com `ALLOW_INDEXING=false`, o `robots.txt` bloqueia buscadores e todas as páginas enviam `noindex` — o Google não
-  indexa a versão temporária.
-- Ajustes de textos/contatos são feitos no painel; ajustes de layout, pelo código (cada push gera um novo preview).
+- **Hostnames:** mantenha o `*.workers.dev` durante a validação e **adicione o domínio definitivo** (ex.:
+  `mmveiculos.com.br` e `www.mmveiculos.com.br`) quando ele existir.
+- A **Site Key** fica em `wrangler.jsonc` (`TURNSTILE_SITE_KEY`, é pública); a **Secret Key** fica no secret
+  `TURNSTILE_SECRET_KEY` (`npx wrangler secret put TURNSTILE_SECRET_KEY`).
+- Sem as chaves, o formulário mostra “temporariamente indisponível” (falha segura).
 
-## 12. Domínio (somente no final)
+## 6. Domínio próprio
 
-1. Compre o domínio (ex.: **Registro.br** para `.com.br`).
-2. Vercel → Settings → **Domains** → adicione `www.seudominio.com.br` e `seudominio.com.br` (redirecionando para o
-   `www`, ou o contrário).
-3. No painel do registrador, configure o DNS conforme a Vercel indicar (registro `A`/`CNAME`), **ou** aponte os
-   nameservers para a **Cloudflare DNS** (grátis) e crie lá os registros indicados pela Vercel (proxy desligado — “DNS
-   only”). O HTTPS é emitido automaticamente.
-4. Atualize na Vercel (Production): `PUBLIC_SITE_URL=https://www.seudominio.com.br` e `ALLOW_INDEXING=true`.
-5. Adicione o domínio nos **Hostnames do Turnstile**.
-6. **Redeploy** (as variáveis entram no próximo deploy).
-7. Confira: `https://www.seudominio.com.br/robots.txt` deve apontar o sitemap; teste o compartilhamento de um veículo
-   no WhatsApp (foto + título + preço).
-8. **Google Search Console** → adicione a propriedade → envie `https://www.seudominio.com.br/sitemap.xml`.
-9. Atualize o link do site na bio do Instagram e na página do Facebook.
+1. Compre o domínio (ex.: **Registro.br** para `.com.br`, ~R$ 40/ano).
+2. Cloudflare → **Add a domain** → plano **Free** → a Cloudflare mostra 2 nameservers.
+3. No Registro.br → domínio → **DNS** → “Alterar servidores DNS” → informe os 2 nameservers da Cloudflare. A
+   ativação leva de minutos a algumas horas.
+4. Workers → `mm-veiculos` → **Settings → Domains & Routes → Add → Custom domain**: adicione
+   `www.seudominio.com.br` e `seudominio.com.br`. O HTTPS é emitido automaticamente.
+5. Escolha a versão principal (sugestão: `www`) e crie um redirecionamento 301 da outra:
+   **Rules → Redirect Rules → Redirect from root to WWW** (modelo pronto, gratuito).
+6. Em `wrangler.jsonc` → `vars`:
 
-## 13. Opcional: aviso de novas propostas por e-mail
+   ```jsonc
+   "PUBLIC_SITE_URL": "https://www.seudominio.com.br",
+   "ALLOW_INDEXING": "true",
+   ```
 
-Crie uma conta no **Resend** (plano gratuito) com o e-mail que vai receber os avisos, gere uma API key e defina
-`RESEND_API_KEY`, `LEAD_NOTIFICATION_EMAIL` (ex.: `mmveiculos.sc@gmail.com`) e, após verificar o domínio no Resend,
-`LEAD_NOTIFICATION_FROM` (ex.: `M&M Veículos <site@seudominio.com.br>`). O e-mail traz apenas o resumo e o link para a
-proposta no painel. Sem essas variáveis, nada é enviado.
+7. Adicione o domínio nos **Hostnames do Turnstile** (passo 5) e rode `npm run cf:deploy`.
+8. Confira `https://www.seudominio.com.br/robots.txt` (deve liberar o site e apontar o sitemap) e compartilhe um
+   veículo no WhatsApp para ver a prévia (foto + título + preço).
+9. **Google Search Console** → adicionar propriedade (tipo _Domínio_, verificação por DNS na Cloudflare) → enviar
+   `https://www.seudominio.com.br/sitemap.xml`.
+10. Atualize o link do site no Instagram e no Facebook.
+11. Opcional: Workers → Settings → desligue a URL `workers.dev` (`"workers_dev": false`) para existir só o domínio.
 
-## 14. Opcional: Cloudflare R2 no lugar do Blob
+Com domínio próprio, o **cache de borda** passa a funcionar: páginas públicas ficam 60 s no data center mais próximo
+do visitante (sem consultar o banco). Na URL `*.workers.dev` a Cloudflare ignora esse cache.
 
-Útil se o volume de fotos passar do plano gratuito do Blob (R2: 10 GB e 1 milhão de uploads/mês, sem custo de saída).
+## 7. Ativar o R2 para as fotos (recomendado)
 
-1. Cloudflare → **R2** → criar bucket `mm-veiculos` (**privado**, sem acesso público).
-2. **Manage R2 API Tokens** → token com permissão *Object Read & Write* restrito ao bucket.
-3. Variáveis: `STORAGE_DRIVER=s3`, `S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com`,
-   `S3_BUCKET=mm-veiculos`, `S3_REGION=auto`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
-4. Para migrar fotos já existentes: `npm run db:backup -- --with-media` com as variáveis antigas e
-   `npm run db:restore -- backups/<pasta> --with-media --yes` com as novas (veja [BACKUP.md](BACKUP.md)).
+O KV gratuito aceita **1.000 gravações por dia**. Cada foto de veículo gera 4 arquivos (grande, média, miniatura e
+compartilhamento), ou seja, **~250 fotos por dia**; cada foto de proposta gera 2. Para o cadastro inicial do estoque
+(dezenas de veículos com 15–30 fotos), ative o R2: 10 GB grátis, 1 milhão de gravações e 10 milhões de leituras por
+mês.
 
-## 15. Checklist final
+1. Painel da Cloudflare → **R2** → _Purchase R2 / Enable_ (o plano gratuito pode exigir um cartão cadastrado na conta;
+   só há cobrança acima dos limites gratuitos).
+2. Crie o bucket (privado):
 
-- [ ] Deploy de produção sem erros; migrations aplicadas
-- [ ] `/admin` exige senha; senha forte guardada em local seguro
-- [ ] Configurações conferidas (WhatsApp 554896410338, Instagram, Facebook, e-mail)
-- [ ] Endereço e horário preenchidos (se o cliente quiser exibir)
+   ```bash
+   npx wrangler r2 bucket create mm-veiculos-media
+   ```
+
+3. Copie as fotos que já estão no KV (se houver):
+
+   ```bash
+   npm run cf:backup
+   ```
+
+4. Em `wrangler.jsonc`: descomente `"r2_buckets"` e troque `"STORAGE_DRIVER": "kv"` por `"r2"`.
+5. Envie as fotos do backup para o R2 e publique:
+
+   ```bash
+   npm run cf:restore -- backups/cf-<data> --media-only
+   npm run cf:deploy
+   ```
+
+6. Abra alguns veículos no site e confira as fotos. Depois de alguns dias, o namespace KV pode ser removido.
+
+O bucket **não** deve ser público: as fotos de propostas têm dados de clientes. O site entrega as fotos de veículos
+por `/media/...` (cache de 1 ano) e as de propostas só para o painel.
+
+## 8. Opcional: Cloudflare Access no painel
+
+Para vários usuários, cada um com o próprio e-mail (grátis até 50 usuários):
+
+1. **Zero Trust → Access → Applications → Add → Self-hosted**: domínio `www.seudominio.com.br`, caminhos `/admin` e
+   `/api/admin`; política _Allow_ para os e-mails autorizados (login por código enviado ao e-mail).
+2. Copie o **Application Audience (AUD) Tag**.
+3. Em `wrangler.jsonc` → `vars`: `"AUTH_MODE": "cloudflare-access"`,
+   `"CF_ACCESS_TEAM_DOMAIN": "https://<equipe>.cloudflareaccess.com"`, `"CF_ACCESS_AUD": "<AUD>"` e, opcionalmente,
+   `"ADMIN_EMAILS": "a@x.com,b@y.com"`. Depois `npm run cf:deploy`.
+
+O servidor valida o JWT do Access em toda requisição do painel (não basta esconder o link).
+
+## 9. Opcional: aviso de propostas por e-mail
+
+Conta gratuita no **Resend** → API key → `npx wrangler secret put RESEND_API_KEY`. Em `vars`:
+`"LEAD_NOTIFICATION_EMAIL": "mmveiculos.sc@gmail.com"` e, depois de verificar o domínio no Resend,
+`"LEAD_NOTIFICATION_FROM": "M&M Veículos <site@seudominio.com.br>"`. O e-mail traz só o resumo e o link para a
+proposta no painel.
+
+## 10. Limites do plano gratuito e monitoramento
+
+Consultados na documentação oficial em 24/09/2026 (planos mudam; revise periodicamente). Os limites renovam
+diariamente às 00:00 UTC (21:00 em Brasília).
+
+| Serviço   | Limite gratuito                                                                     | O que significa para a M&M                                                                                          |
+| --------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Workers   | 100 mil requisições/dia, 10 ms de CPU por requisição; arquivos estáticos ilimitados | HTML e fotos contam; estáticos (CSS/JS/logo) não. Uma visita típica usa ~5–15 requisições → milhares de visitas/dia |
+| D1        | 5 mi linhas lidas/dia, 100 mil escritas/dia, 500 MB por banco, Time Travel 7 dias   | Muito acima do necessário para um estoque de centenas de veículos                                                   |
+| KV        | 100 mil leituras/dia, **1 mil gravações/dia**, 1 GB                                 | Fotos: ~250 fotos de veículo por dia (ver passo 7)                                                                  |
+| R2        | 10 GB, 1 mi gravações e 10 mi leituras por mês, saída grátis                        | Folga para anos de fotos                                                                                            |
+| Turnstile | Gratuito                                                                            | —                                                                                                                   |
+| Access    | Até 50 usuários                                                                     | —                                                                                                                   |
+
+Se algum limite diário estourar, as requisições daquele tipo falham até a renovação. O painel mostra uma mensagem
+clara quando a cota de fotos acaba; no formulário público a proposta é salva mesmo assim (sem as fotos) com uma
+anotação para pedir as fotos pelo WhatsApp. Para crescer além disso: **Workers Paid** (US$ 5/mês por conta).
+
+Monitoramento: painel da Cloudflare → Workers → `mm-veiculos` → **Metrics/Logs**; D1 → **Metrics**; KV → **Metrics**.
+
+## 11. Recriar tudo em outra conta
+
+Útil se o site for transferido para uma conta da própria M&M:
+
+```bash
+npx wrangler login
+npx wrangler d1 create mm-veiculos --location enam     # copie o database_id para o wrangler.jsonc
+npx wrangler kv namespace create MEDIA_KV              # copie o id para o wrangler.jsonc (ou use R2, passo 7)
+npm run admin:hash-password -- --cloudflare            # e grave os secrets (passo 4)
+npx wrangler secret put IP_HASH_SALT
+npx wrangler secret put TURNSTILE_SECRET_KEY            # widget novo no Turnstile da conta nova
+npm run cf:deploy                                       # cria as tabelas e publica
+```
+
+Para levar os dados: `npm run cf:backup` na conta antiga e `npm run cf:restore -- backups/cf-<data>` na nova (banco
+recém-criado, vazio). Detalhes em [BACKUP.md](BACKUP.md).
+
+## 12. Checklist de entrega
+
+- [ ] Senha de desenvolvimento substituída (passo 4) e entregue ao cliente de forma segura
+- [ ] Configurações conferidas no painel (WhatsApp 554896410338, Instagram, Facebook, e-mail, slogan)
+- [ ] Endereço e horário preenchidos, se o cliente quiser exibir
+- [ ] R2 ativado antes do cadastro do estoque inicial (passo 7)
 - [ ] Veículos reais cadastrados com fotos; destaques marcados
 - [ ] Formulário “Anuncie seu veículo” testado de ponta a ponta (proposta chegou no painel)
-- [ ] Turnstile com chaves reais e hostname do domínio
-- [ ] Domínio com HTTPS; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true` em Production
+- [ ] Domínio conectado com HTTPS; `PUBLIC_SITE_URL` e `ALLOW_INDEXING=true`; domínio no Turnstile
 - [ ] Sitemap enviado ao Google Search Console
-- [ ] Primeiro backup feito (`npm run db:backup -- --with-media`)
-- [ ] Decisão sobre o plano: Vercel Pro ou migração para Cloudflare (uso comercial)
+- [ ] Primeiro backup feito (`npm run cf:backup`) e guardado em local seguro

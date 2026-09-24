@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { validateImagePair } from '@/services/media-service';
+import { vehicleSrcset } from '@/lib/storage/keys';
+import { validateImagePair, validateMediumImage, validateOgImage } from '@/services/media-service';
 import { detectImageFormat, ImageValidationError, inspectImage, readImageDimensions } from '@/utils/image-inspect';
 import { makeImage, makePair } from '../helpers/images';
 
@@ -51,5 +52,40 @@ describe('validateImagePair', () => {
   it('rejeita fotos pequenas demais', async () => {
     const pair = { large: await makeImage(300, 200), thumb: await makeImage(300, 200) };
     expect(() => validateImagePair(pair, limits)).toThrow(/pequena/);
+  });
+});
+
+describe('validateMediumImage / validateOgImage', () => {
+  it('aceita versão média consistente com a grande', async () => {
+    const { large } = validateImagePair(await makePair(), {
+      largeMaxBytes: 1_200_000,
+      thumbMaxBytes: 250_000,
+      largeMaxEdge: 1920,
+      thumbMaxEdge: 720,
+    });
+    expect(validateMediumImage(await makeImage(1080, 810), large).width).toBe(1080);
+    const square = await makeImage(1080, 1080);
+    expect(() => validateMediumImage(square, large)).toThrow(/proporção/);
+    const tooBig = await makeImage(1600, 1200);
+    expect(() => validateMediumImage(tooBig, large)).toThrow(/Dimensões/);
+  });
+
+  it('imagem de compartilhamento precisa ser JPEG 1200x630', async () => {
+    expect(validateOgImage(await makeImage(1200, 630, 'jpeg')).width).toBe(1200);
+    const webp = await makeImage(1200, 630, 'webp');
+    expect(() => validateOgImage(webp)).toThrow(/Formato/);
+    const narrow = await makeImage(1000, 630, 'jpeg');
+    expect(() => validateOgImage(narrow)).toThrow(/1200/);
+  });
+});
+
+describe('vehicleSrcset', () => {
+  const base = { thumbKey: 'vehicles/a/b-thumb.webp', thumbWidth: 720, largeKey: 'vehicles/a/b.webp', width: 1920 };
+
+  it('inclui a versão média apenas quando existe', () => {
+    expect(vehicleSrcset(base)).toBe('/media/vehicles/a/b-thumb.webp 720w, /media/vehicles/a/b.webp 1920w');
+    expect(vehicleSrcset({ ...base, mediumKey: 'vehicles/a/b-md.webp', mediumWidth: 1080 })).toBe(
+      '/media/vehicles/a/b-thumb.webp 720w, /media/vehicles/a/b-md.webp 1080w, /media/vehicles/a/b.webp 1920w',
+    );
   });
 });

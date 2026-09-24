@@ -1,6 +1,6 @@
 ---
 import Icon from '@/components/ui/Icon.astro';
-import { mediaUrl } from '@/lib/storage/keys';
+import { mediaUrl, vehicleSrcset } from '@/lib/storage/keys';
 import type { VehicleCard } from '@/types/domain';
 import { fuelLabel, transmissionLabel, usageLabel, vehicleName, yearLabel } from '@/utils/vehicle-format';
 import Badges from './Badges.astro';
@@ -41,7 +41,7 @@ const sold = v.status === 'sold';
     {v.cover ? (
       <img
         src={mediaUrl(v.cover.thumbKey)}
-        srcset={`${mediaUrl(v.cover.thumbKey)} ${v.cover.thumbWidth}w, ${mediaUrl(v.cover.largeKey)} ${v.cover.width}w`}
+        srcset={vehicleSrcset(v.cover)}
         sizes={sizes}
         width={v.cover.thumbWidth}
         height={v.cover.thumbHeight}

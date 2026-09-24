@@ -333,8 +333,11 @@ async function makePair(svg: string, maxLarge: number, withOg = false) {
   const base = sharp(Buffer.from(svg));
   const large = await base.clone().resize({ width: maxLarge }).webp({ quality: 80 }).toBuffer();
   const thumb = await base.clone().resize({ width: 720 }).webp({ quality: 76 }).toBuffer();
-  const og = withOg ? new Uint8Array(await renderOgImage(new Uint8Array(large))) : null;
-  return { large: new Uint8Array(large), thumb: new Uint8Array(thumb), og };
+  if (!withOg) return { large: new Uint8Array(large), thumb: new Uint8Array(thumb) };
+  // Fotos de veículo: também a versão média (celulares) e a de compartilhamento, como no painel.
+  const medium = await base.clone().resize({ width: 1080 }).webp({ quality: 78 }).toBuffer();
+  const og = new Uint8Array(await renderOgImage(new Uint8Array(large)));
+  return { large: new Uint8Array(large), thumb: new Uint8Array(thumb), medium: new Uint8Array(medium), og };
 }
 
 async function main() {

@@ -6,11 +6,17 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 > “Construindo credibilidade a cada negociação.”
 
-- Documentação de publicação: [docs/DEPLOY.md](docs/DEPLOY.md)
-- Manual do administrador (linguagem simples): [docs/MANUAL_ADMIN.md](docs/MANUAL_ADMIN.md)
-- Arquitetura e migração futura para Cloudflare: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
-- Backup e restauração: [docs/BACKUP.md](docs/BACKUP.md)
-- Auditoria final (segurança, performance, SEO, acessibilidade…): [docs/AUDITORIA.md](docs/AUDITORIA.md)
+**No ar (URL temporária de validação):** https://mm-veiculos.visor-crypto.workers.dev · painel em `/admin`
+
+| Documento                                              | Conteúdo                                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [docs/RELATORIO_ENTREGA.md](docs/RELATORIO_ENTREGA.md) | **O que está pronto, o que foi verificado e o que falta para entregar ao cliente** |
+| [docs/DEPLOY.md](docs/DEPLOY.md)                       | Publicação na **Cloudflare** (principal): deploy, senha, domínio, R2, limites      |
+| [docs/MANUAL_ADMIN.md](docs/MANUAL_ADMIN.md)           | Manual do painel em linguagem simples (para a M&M)                                 |
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md)             | Camadas, modelo de dados, fotos, cache, portabilidade                              |
+| [docs/BACKUP.md](docs/BACKUP.md)                       | Backup e restauração (Cloudflare e alternativas)                                   |
+| [docs/AUDITORIA.md](docs/AUDITORIA.md)                 | Auditoria final: segurança, performance, SEO, acessibilidade                       |
+| [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md)         | Alternativa: Vercel + Turso + Blob                                                 |
 
 ---
 
@@ -18,21 +24,19 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 1. [O que o sistema faz](#o-que-o-sistema-faz)
 2. [Stack](#stack)
-3. [Por que Vercel agora (e o plano Cloudflare)](#por-que-vercel-agora-e-o-plano-cloudflare)
+3. [Hospedagem: Cloudflare (principal) e alternativas](#hospedagem-cloudflare-principal-e-alternativas)
 4. [Arquitetura resumida](#arquitetura-resumida)
 5. [Instalação e desenvolvimento local](#instalação-e-desenvolvimento-local)
 6. [Scripts](#scripts)
 7. [Variáveis de ambiente](#variáveis-de-ambiente)
 8. [Banco de dados e migrations](#banco-de-dados-e-migrations)
-9. [Fotos (armazenamento)](#fotos-armazenamento)
+9. [Fotos](#fotos)
 10. [Autenticação do painel](#autenticação-do-painel)
 11. [Anti-spam (Turnstile + rate limit)](#anti-spam-turnstile--rate-limit)
 12. [Testes](#testes)
-13. [Preview, produção e domínio](#preview-produção-e-domínio)
-14. [Custos e planos gratuitos](#custos-e-planos-gratuitos)
-15. [Backup e restauração](#backup-e-restauração)
-16. [Estrutura de pastas](#estrutura-de-pastas)
-17. [Dados que ainda faltam](#dados-que-ainda-faltam)
+13. [Custos e planos gratuitos](#custos-e-planos-gratuitos)
+14. [Estrutura de pastas](#estrutura-de-pastas)
+15. [Dados que ainda faltam](#dados-que-ainda-faltam)
 
 ---
 
@@ -40,17 +44,17 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 **Site público**
 
-| Rota | Conteúdo |
-| --- | --- |
-| `/` | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa |
-| `/estoque` | Estoque com busca (marca/modelo/versão), filtros, ordenação e paginação — tudo na URL (`/estoque?marca=Toyota`, `?oferta=true`, `?repasse=true`) |
-| `/veiculo/[slug]` | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?” |
-| `/ofertas` | Veículos em oferta ativa, com “De R$ X por R$ Y” quando houver preço anterior |
-| `/repasses` | Veículos com tipo comercial “repasse” + texto configurável |
-| `/anuncie-seu-veiculo` | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD |
-| `/favoritos` | Favoritos salvos no navegador (sem login) |
-| `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional |
-| `/sitemap.xml`, `/robots.txt` | Gerados dinamicamente |
+| Rota                                               | Conteúdo                                                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/`                                                | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa         |
+| `/estoque`                                         | Estoque com busca (marca/modelo/versão), filtros, ordenação e paginação — tudo na URL (`/estoque?marca=Toyota`, `?oferta=true`, `?repasse=true`) |
+| `/veiculo/[slug]`                                  | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?”   |
+| `/ofertas`                                         | Veículos em oferta ativa, com “De R$ X por R$ Y” quando houver preço anterior                                                                    |
+| `/repasses`                                        | Veículos com tipo comercial “repasse” + texto configurável                                                                                       |
+| `/anuncie-seu-veiculo`                             | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD                                                |
+| `/favoritos`                                       | Favoritos salvos no navegador (sem login)                                                                                                        |
+| `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                    |
+| `/sitemap.xml`, `/robots.txt`                      | Gerados dinamicamente                                                                                                                            |
 
 **Painel (`/admin`)** — Dashboard, Veículos (lista com filtros e ações rápidas), Novo veículo, fotos (upload múltiplo,
 arrastar, reordenar, capa, excluir), Propostas (status, WhatsApp do cliente, anotações, **transformar em veículo**,
@@ -61,52 +65,47 @@ exclusão LGPD), Ofertas e Repasses (filtros da lista), Configurações (contato
 
 ## Stack
 
-| Camada | Tecnologia |
-| --- | --- |
-| Front-end / SSR | **Astro 7** (Islands — JavaScript só onde há interação; ~24 KB de JS no site inteiro) |
-| Linguagem | **TypeScript strict** (`astro/tsconfigs/strictest`) |
-| CSS | **Tailwind CSS 4** + design system próprio (preto/grafite + dourado da logo) |
-| Hospedagem (agora) | **Vercel** (Functions Node.js + CDN) via `@astrojs/vercel` |
-| Banco | **libSQL/SQLite** — local em arquivo; produção no **Turso** (mesmo dialeto do Cloudflare D1) |
-| Fotos | Abstração com 3 drivers: **local**, **Vercel Blob (privado)**, **S3/Cloudflare R2** |
-| Admin/Auth | Senha única com hash PBKDF2 + sessão assinada (agora) · **Cloudflare Access** já implementado para a migração |
-| Anti-spam | **Cloudflare Turnstile** + rate limit no banco + honeypot + validação no servidor |
-| Validação | **Zod 4** |
-| Testes | **Vitest** (unitários + integração com banco real em memória) e **Playwright** (E2E) |
+| Camada          | Tecnologia                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| Front-end / SSR | **Astro 7** (Islands — JavaScript só onde há interação, sem framework no cliente)          |
+| Linguagem       | **TypeScript strict** (`astro/tsconfigs/strictest`)                                        |
+| CSS             | **Tailwind CSS 4** + design system próprio (preto/grafite + dourado da logo)               |
+| Hospedagem      | **Cloudflare Workers** (`@astrojs/cloudflare`) — alternativas prontas: Vercel e Node       |
+| Banco           | **Cloudflare D1** (SQLite) — local em arquivo libSQL; Turso na alternativa Vercel          |
+| Fotos           | Interface `ObjectStorage` com drivers **KV**, **R2**, S3, Vercel Blob e local              |
+| Admin/Auth      | Senha única (PBKDF2) + sessão assinada · **Cloudflare Access** já implementado             |
+| Anti-spam       | **Cloudflare Turnstile** + rate limit no banco + honeypot + validação no servidor          |
+| Validação       | **Zod 4**                                                                                  |
+| Testes          | **Vitest** (unitários + integração, inclusive adaptadores D1/KV/R2) e **Playwright** (E2E) |
 
-## Por que Vercel agora (e o plano Cloudflare)
+## Hospedagem: Cloudflare (principal) e alternativas
 
-O pedido original priorizava o ecossistema Cloudflare; a decisão atual foi **publicar pela Vercel por enquanto**.
-O código foi escrito para que a troca futura não exija reconstrução:
+O site roda **na Cloudflare, no plano gratuito** (uso comercial permitido): Workers + D1 + KV/R2 + Turnstile. O mesmo
+código também compila para Vercel e para um servidor Node — a plataforma é escolhida no build por `DEPLOY_TARGET`:
 
-| Peça | Agora (Vercel) | Depois (Cloudflare) | Esforço da troca |
-| --- | --- | --- | --- |
-| Hospedagem | Vercel Functions | Workers (`@astrojs/cloudflare`) | Trocar o adapter |
-| Banco | Turso (libSQL/SQLite) | D1 (SQLite) | Mesmas migrations; adaptador D1 da interface `Database` |
-| Fotos | Vercel Blob privado **ou** R2 (driver `s3` já pronto) | R2 | Nenhum código — só variáveis |
-| Admin | Senha + sessão | Cloudflare Access (`AUTH_MODE=cloudflare-access`, já implementado) | Só variáveis |
-| Anti-spam | Turnstile | Turnstile | Nenhum |
+| `DEPLOY_TARGET` | Adapter               | Banco             | Fotos                           | Uso                                                                                                  |
+| --------------- | --------------------- | ----------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `cloudflare`    | `@astrojs/cloudflare` | D1 (binding `DB`) | KV (`MEDIA_KV`) ou R2 (`MEDIA`) | **Produção** (`npm run cf:deploy`)                                                                   |
+| `vercel`        | `@astrojs/vercel`     | Turso (libSQL)    | Vercel Blob ou S3/R2            | Alternativa ([DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md)); o plano Hobby da Vercel é **não comercial** |
+| `node` (padrão) | `@astrojs/node`       | arquivo libSQL    | disco local                     | Desenvolvimento, testes E2E, `preview:local`                                                         |
 
-> ⚠️ **Importante sobre custo:** pelas [regras de uso justo da Vercel](https://vercel.com/docs/limits/fair-use-guidelines),
-> o **plano Hobby (gratuito) é apenas para uso pessoal e não comercial**. Ele serve para desenvolvimento, previews e
-> validação com o cliente. Para o site comercial em produção há duas opções: **Vercel Pro** (US$ 20/mês por membro) ou
-> **migrar para a Cloudflare**, cujo plano gratuito não tem essa restrição — veja [docs/ARQUITETURA.md](docs/ARQUITETURA.md#migração-para-cloudflare).
+Só `src/server/platform/` conhece a plataforma; serviços e repositórios usam as interfaces `Database` e
+`ObjectStorage`. Guia completo: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ## Arquitetura resumida
 
 ```
-Navegador ──► CDN (cache de páginas 60 s + fotos 1 ano)
-                 │
+Navegador ──► Cloudflare (borda mais próxima)
+                 │  arquivos estáticos (CSS/JS/logo) servidos direto, sem Worker
                  ▼
-          middleware.ts  → CSRF (origem), autenticação do /admin, headers de segurança, cache
+          Worker (Astro SSR)
+          middleware.ts  → cache de borda (domínio próprio) · CSRF · auth do /admin · headers de segurança
                  │
-          pages/ (Astro)  → só apresentação: chama serviços, nunca SQL
-                 │
+          pages/          → só apresentação: chama serviços, nunca SQL
           services/       → regras de negócio (oferta ativa, publicação, conversão proposta→veículo…)
-                 │
-     repositories/  +  lib/storage/        → SQL parametrizado  |  fotos (local / Blob / S3-R2)
-                 │                 │
-          lib/db (libSQL/Turso)   Vercel Blob privado ou R2
+          repositories/   → SQL parametrizado          lib/storage/ → fotos
+                 │                                           │
+          D1 (SQLite)                                   KV ou R2 (privados)
 ```
 
 Detalhes, modelo de dados e decisões: [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
@@ -128,75 +127,82 @@ npm run dev                       # http://localhost:4321  —  painel em http:/
 - As fotos ficam em `.data/uploads` (driver `local`). Nada disso vai para o Git.
 - O seed de demonstração **recusa** rodar em banco remoto e marca tudo como “FOTO DEMONSTRATIVA”.
 - Para recomeçar do zero: `npm run db:reset`.
+- Para testar no runtime da Cloudflare (workerd, D1/KV simulados): `npm run cf:dev`.
 
 ## Scripts
 
-| Comando | O que faz |
-| --- | --- |
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção (gera `.vercel/output`) |
-| `npm run vercel-build` | Usado pela Vercel: aplica migrations e faz o build |
-| `npm run preview:local` | Build de **produção** rodando localmente (adapter Node) em http://localhost:4330 — útil para Lighthouse |
-| `npm run typecheck` | `astro check` (TypeScript + templates) |
-| `npm run lint` / `lint:fix` | ESLint |
-| `npm run format` / `format:check` | Prettier |
-| `npm test` | Testes unitários + integração (Vitest) |
-| `npm run test:e2e` | Testes E2E (Playwright, usa o Edge/Chrome instalado) |
-| `npm run verify` | lint + typecheck + testes + build |
-| `npm run db:migrate` | Aplica migrations pendentes no `DATABASE_URL` |
-| `npm run db:seed:demo` | Dados de demonstração (somente banco local) |
-| `npm run db:reset` | Recria o banco local |
-| `npm run db:backup` / `db:restore` | Backup e restauração (veja [docs/BACKUP.md](docs/BACKUP.md)) |
-| `npm run admin:hash-password` | Gera o hash da senha do painel |
-| `npm run brand:logo` | Regenera logo SVG/PNG, favicons e imagem Open Graph |
+| Comando                                            | O que faz                                                                                       |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`                                      | Servidor de desenvolvimento (Node)                                                              |
+| `npm run cf:dev`                                   | Desenvolvimento dentro do runtime da Cloudflare (D1/KV locais)                                  |
+| `npm run cf:deploy`                                | **Publica na Cloudflare**: migrations no D1 remoto + build + `wrangler deploy`                  |
+| `npm run cf:build`                                 | Só o build para Workers                                                                         |
+| `npm run cf:migrate` / `cf:migrate:local`          | Migrations no D1 remoto / local                                                                 |
+| `npm run cf:backup` / `cf:restore`                 | Backup e restauração da produção (D1 + fotos) — [docs/BACKUP.md](docs/BACKUP.md)                |
+| `npm run build`                                    | Build Node (`DEPLOY_TARGET=vercel` para a Vercel)                                               |
+| `npm run vercel-build`                             | Usado pela Vercel: migrations no Turso + build                                                  |
+| `npm run preview:local`                            | Build de **produção** rodando localmente (Node) em http://localhost:4330 — útil para Lighthouse |
+| `npm run typecheck`                                | `astro check` (TypeScript + templates)                                                          |
+| `npm run lint` / `lint:fix`                        | ESLint                                                                                          |
+| `npm run format` / `format:check`                  | Prettier                                                                                        |
+| `npm test`                                         | Testes unitários + integração (Vitest)                                                          |
+| `npm run test:e2e`                                 | Testes E2E (Playwright, usa o Edge/Chrome instalado)                                            |
+| `npm run verify`                                   | lint + typecheck + testes + build                                                               |
+| `npm run db:migrate` / `db:seed:demo` / `db:reset` | Banco local (libSQL)                                                                            |
+| `npm run db:backup` / `db:restore`                 | Backup/restauração do banco libSQL/Turso                                                        |
+| `npm run admin:hash-password`                      | Hash da senha do painel (`-- --cloudflare` para o Workers)                                      |
+| `npm run brand:logo`                               | Regenera logo SVG/PNG, favicons e imagem Open Graph                                             |
 
 ## Variáveis de ambiente
 
-Todas documentadas em [`.env.example`](.env.example). Nenhum segredo vai para o navegador nem para o Git.
+- **Cloudflare:** variáveis públicas em [`wrangler.jsonc`](wrangler.jsonc) → `vars`; valores sigilosos como
+  **secrets** do Worker (`npx wrangler secret put NOME`). Nada sigiloso fica no Git.
+- **Local / Vercel / Node:** [`.env.example`](.env.example) documenta todas.
 
-| Variável | Obrigatória em produção | Descrição |
-| --- | --- | --- |
-| `PUBLIC_SITE_URL` | ao ter domínio | URL canônica (ex.: `https://www.mmveiculos.com.br`). Vazia = usa a URL da requisição |
-| `ALLOW_INDEXING` | — | `true` só no domínio definitivo. Enquanto `false`, `robots.txt` bloqueia buscadores |
-| `DATABASE_URL` / `DATABASE_AUTH_TOKEN` | sim | Turso (`libsql://…`) |
-| `STORAGE_DRIVER` | sim | `vercel-blob` ou `s3` (`local` só em desenvolvimento) |
-| `BLOB_READ_WRITE_TOKEN` | não na Vercel (OIDC) | Necessário só fora da Vercel (scripts de backup) |
-| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | se `s3` | Cloudflare R2 ou outro S3 |
-| `AUTH_MODE` | — | `password` (padrão) ou `cloudflare-access` |
-| `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` | sim (`password`) | Gerados por `npm run admin:hash-password` |
-| `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_EMAILS` | se `cloudflare-access` | Validação do JWT do Access |
-| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | **sim** | Sem elas, em produção o formulário fica bloqueado (falha segura) |
-| `IP_HASH_SALT` | recomendado | Sal do hash de IP usado no rate limit |
-| `RESEND_API_KEY`, `LEAD_NOTIFICATION_EMAIL`, `LEAD_NOTIFICATION_FROM` | opcional | Aviso por e-mail a cada nova proposta |
+| Variável                                                                                    | Onde (Cloudflare) | Descrição                                                                                             |
+| ------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `PUBLIC_SITE_URL`                                                                           | vars              | URL canônica (ex.: `https://www.mmveiculos.com.br`). Vazia = URL da requisição                        |
+| `ALLOW_INDEXING`                                                                            | vars              | `true` só no domínio definitivo. Enquanto `false`, `robots.txt` e `X-Robots-Tag` bloqueiam buscadores |
+| `STORAGE_DRIVER`                                                                            | vars              | `kv` ou `r2` na Cloudflare; `vercel-blob`, `s3` ou `local` nas demais                                 |
+| `AUTH_MODE`                                                                                 | vars              | `password` (padrão) ou `cloudflare-access`                                                            |
+| `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`                                                     | secrets           | Gerados por `npm run admin:hash-password -- --cloudflare`                                             |
+| `IP_HASH_SALT`                                                                              | secret            | Sal do hash de IP usado no rate limit                                                                 |
+| `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`                                               | vars / secret     | Sem elas, em produção o formulário fica bloqueado (falha segura)                                      |
+| `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_EMAILS`                                    | vars              | Só com `cloudflare-access`                                                                            |
+| `RESEND_API_KEY` / `LEAD_NOTIFICATION_EMAIL`, `LEAD_NOTIFICATION_FROM`                      | secret / vars     | Opcional: aviso de nova proposta por e-mail                                                           |
+| `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `BLOB_READ_WRITE_TOKEN`, `S3_*`, `LOCAL_STORAGE_DIR` | —                 | Só nas plataformas Node/Vercel                                                                        |
+| `DEPLOY_TARGET`                                                                             | (build)           | `cloudflare`, `vercel` ou `node` — definido pelos scripts                                             |
 
 ## Banco de dados e migrations
 
-- SQL puro em [`migrations/`](migrations) — dialeto SQLite, compatível com **Turso** e **Cloudflare D1**.
-- Controle das migrations aplicadas na tabela `d1_migrations` (mesmo formato do Wrangler/D1).
+- SQL puro em [`migrations/`](migrations) — dialeto SQLite, igual no **D1**, no Turso e no arquivo local.
+- Controle na tabela `d1_migrations` (formato do Wrangler). `npm run cf:deploy` aplica as pendentes antes de publicar.
 - Valores monetários em **centavos** (inteiro); datas em ISO 8601 UTC; booleanos 0/1.
 - Tabelas: `vehicles`, `vehicle_images`, `vehicle_features`, `vehicle_slug_history`, `vehicle_leads`,
   `vehicle_lead_images`, `site_settings`, `admin_audit_log`, `rate_limits`.
 - Os dados oficiais da empresa entram pela migration `0002_seed_settings.sql` e depois são editados no painel.
-- Todas as consultas usam **parâmetros** (`?`); a UI nunca executa SQL.
+- Todas as consultas usam **parâmetros** (`?`); a UI nunca executa SQL. Consultas independentes de uma página rodam
+  em paralelo (no Workers cada consulta ao D1 é uma ida e volta pela rede).
 
-## Fotos (armazenamento)
+## Fotos
 
 - As fotos **nunca** vão para o banco, Base64 ou Git; o banco guarda só as chaves.
-- O navegador corrige a orientação, remove metadados (inclusive GPS), redimensiona e converte para **WebP**
-  (JPEG como alternativa): grande até 1920 px (veículos) / 1600 px (propostas) e miniatura de 720 px.
+- O navegador corrige a orientação, remove metadados (inclusive GPS), redimensiona e converte para **WebP** (JPEG como
+  alternativa). Veículos: grande (até 1920 px), **média (1080 px, celulares)**, miniatura (720 px) e imagem de
+  compartilhamento (JPEG 1200×630 com a logo). Propostas: grande (1600 px) e miniatura.
 - O servidor **não confia** no navegador: confere o formato real (magic bytes), bytes, dimensões e proporção.
-- Chaves: `vehicles/{vehicleId}/{uuid}.webp` · `vehicles/{vehicleId}/{uuid}-thumb.webp` ·
+- Chaves: `vehicles/{vehicleId}/{uuid}.webp`, `…-md.webp`, `…-thumb.webp`, `…-og.jpg` ·
   `sell-leads/{leadId}/{uuid}.webp`. Ao converter uma proposta, as fotos são **copiadas** para `vehicles/`.
-- Entrega: fotos de veículos por `/media/...` (cache de 1 ano, CDN); fotos de propostas só por
-  `/api/admin/lead-media/...` (exige login, `no-store`).
+- Entrega: fotos de veículos por `/media/...` (cache imutável de 1 ano); fotos de propostas só por
+  `/api/admin/lead-media/...` (exige login, `no-store`). O storage é sempre privado.
 
 ## Autenticação do painel
 
-- **Agora (`AUTH_MODE=password`)**: senha única com hash **PBKDF2-SHA256 (600 mil iterações)**; cookie de sessão
-  assinado (HMAC), `HttpOnly`, `Secure`, `SameSite=Strict`, 12 h. Trocar a senha ou o `SESSION_SECRET` derruba todas
-  as sessões. Tentativas de login limitadas por IP. Não existe senha no código.
-- **Depois (`AUTH_MODE=cloudflare-access`)**: o Cloudflare Access protege `/admin/*` e `/api/admin/*` na borda e o
-  servidor **também** valida o JWT (`Cf-Access-Jwt-Assertion`) — não basta esconder o link.
+- **`AUTH_MODE=password`** (atual): senha única com hash **PBKDF2-SHA256** (50 mil iterações no Workers, 600 mil em
+  Node); cookie de sessão assinado (HMAC), `HttpOnly`, `Secure`, `SameSite=Strict`, 12 h. Trocar a senha ou o
+  `SESSION_SECRET` derruba todas as sessões. Tentativas de login limitadas por IP. Não existe senha no código.
+- **`AUTH_MODE=cloudflare-access`**: o Cloudflare Access protege `/admin*` e `/api/admin/*` na borda e o servidor
+  **também** valida o JWT (`Cf-Access-Jwt-Assertion`) — ideal para vários usuários, cada um com seu e-mail.
 
 ## Anti-spam (Turnstile + rate limit)
 
@@ -207,8 +213,9 @@ dados só são aceitas da própria origem (proteção CSRF).
 ## Testes
 
 ```bash
-npm test          # 128 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens,
-                  # auth/CSP + integração (veículos, propostas, conversão, fotos, configurações, rate limit)
+npm test          # 140 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens (4 versões),
+                  # auth/CSP, cache de borda + integração (veículos, propostas, conversão, fotos, configurações,
+                  # rate limit) + adaptadores Cloudflare (D1, KV, R2, cota diária do KV)
 npm run test:e2e  # 29 testes Playwright: compra, ofertas, repasses, anunciar+proposta, admin→converter→publicar,
                   # celular, headers/CSP/CSRF e ausência de rolagem horizontal em 11 larguras (320→1920 px)
 ```
@@ -217,45 +224,30 @@ npm run test:e2e  # 29 testes Playwright: compra, ofertas, repasses, anunciar+pr
 - **Pare o `npm run dev` antes do `npm run test:e2e`** (o Astro não permite dois servidores dev no mesmo projeto).
 - Usa o navegador instalado (Edge no Windows, Chrome nos demais) — não baixa navegadores.
 
-**Lighthouse** (build de produção local): desktop 100/100/100/100; mobile Acessibilidade, Boas práticas e SEO 100 e
-Performance 91–97 (sem compressão local). Detalhes e ressalvas em [docs/AUDITORIA.md](docs/AUDITORIA.md).
-
-## Preview, produção e domínio
-
-O fluxo é: **desenvolver local → preview na Vercel → validar com o cliente → configurar produção → comprar domínio →
-publicar**. O sistema não depende do domínio: sem `PUBLIC_SITE_URL`, usa a URL da requisição. Passo a passo completo
-(Turso, Blob, Turnstile, variáveis, região, domínio, Search Console): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+**Lighthouse na Cloudflare (URL publicada):** desktop 100 em todas as páginas; mobile 97–100 em Performance e 100 em
+Acessibilidade e Boas práticas. Detalhes em [docs/AUDITORIA.md](docs/AUDITORIA.md).
 
 ## Custos e planos gratuitos
 
-Limites consultados na documentação oficial em **24/09/2026**. Planos gratuitos mudam — **não há garantia de gratuidade
-permanente**; revise periodicamente.
+Limites consultados na documentação oficial da Cloudflare em **24/09/2026**. Planos gratuitos mudam — **não há
+garantia de gratuidade permanente**; revise periodicamente.
 
-| Serviço | Plano gratuito (resumo) | Fonte |
-| --- | --- | --- |
-| Vercel Hobby | 100 GB Fast Data Transfer, 1 mi de invocações de função, 4 h de CPU ativa, 1 mi de Edge Requests /mês. **Uso não comercial.** | [vercel.com/docs/plans/hobby](https://vercel.com/docs/plans/hobby) |
-| Vercel Blob (Hobby) | 1 GB armazenado, 10 mil operações simples, 2 mil operações avançadas (uploads), 10 GB de transferência /mês | [vercel.com/docs/vercel-blob/usage-and-pricing](https://vercel.com/docs/vercel-blob/usage-and-pricing) |
-| Turso Free | 100 bancos, 5 GB, 500 mi de linhas lidas e 10 mi escritas /mês, restauração de 1 dia | [turso.tech/pricing](https://turso.tech/pricing) |
-| Cloudflare Turnstile | Gratuito: até 20 widgets, desafios ilimitados | [developers.cloudflare.com/turnstile/plans](https://developers.cloudflare.com/turnstile/plans/) |
-| Cloudflare R2 (alternativa ao Blob) | 10 GB, 1 mi de operações classe A e 10 mi classe B /mês, **egress grátis** | [developers.cloudflare.com/r2/pricing](https://developers.cloudflare.com/r2/pricing/) |
-| Cloudflare Workers (futuro) | 100 mil requisições/dia, 10 ms de CPU por requisição; assets estáticos ilimitados | [developers.cloudflare.com/workers/platform/pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
-| Cloudflare D1 (futuro) | 5 mi linhas lidas/dia, 100 mil escritas/dia, 5 GB | [developers.cloudflare.com/d1/platform/pricing](https://developers.cloudflare.com/d1/platform/pricing/) |
-| Cloudflare Access (futuro) | Até 50 usuários grátis | [cloudflare.com/plans/zero-trust-services](https://www.cloudflare.com/plans/zero-trust-services/) |
+| Serviço             | Plano gratuito (resumo)                                                                            | Fonte                                                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workers             | 100 mil requisições/dia, 10 ms de CPU por requisição; estáticos ilimitados                         | [workers/platform/pricing](https://developers.cloudflare.com/workers/platform/pricing/)                                                         |
+| D1                  | 5 mi linhas lidas/dia, 100 mil escritas/dia, 500 MB por banco (5 GB por conta), Time Travel 7 dias | [d1/platform/pricing](https://developers.cloudflare.com/d1/platform/pricing/) · [limits](https://developers.cloudflare.com/d1/platform/limits/) |
+| Workers KV          | 100 mil leituras/dia, 1 mil gravações/dia, 1 GB                                                    | [kv/platform/pricing](https://developers.cloudflare.com/kv/platform/pricing/)                                                                   |
+| R2                  | 10 GB, 1 mi operações classe A e 10 mi classe B /mês, saída grátis                                 | [r2/pricing](https://developers.cloudflare.com/r2/pricing/)                                                                                     |
+| Turnstile           | Gratuito                                                                                           | [turnstile/plans](https://developers.cloudflare.com/turnstile/plans/)                                                                           |
+| Access (Zero Trust) | Até 50 usuários                                                                                    | [plans/zero-trust-services](https://www.cloudflare.com/plans/zero-trust-services/)                                                              |
 
-**Estimativa de uso da M&M** (estoque de dezenas de veículos): cada foto gera 2 uploads (grande + miniatura).
-Com ~20 veículos/mês × 15 fotos = 600 uploads, mais ~50 propostas × 6 fotos = 600 → ~1.200 operações avançadas no
-Blob (limite 2.000). Se o volume crescer, use o driver **R2** (1 milhão de operações). Páginas ficam 60 s no cache da
-CDN e fotos 1 ano, o que reduz invocações e leituras de banco.
+**Estimativa de uso da M&M:** uma visita típica gera ~5–15 requisições ao Worker (HTML + fotos; CSS/JS não contam) →
+capacidade de milhares de visitas por dia. O ponto de atenção é o **KV: 1.000 gravações/dia ≈ 250 fotos de veículo
+por dia** (cada foto gera 4 arquivos). Para o cadastro inicial do estoque, ative o **R2** (passo 7 do
+[DEPLOY.md](docs/DEPLOY.md#7-ativar-o-r2-para-as-fotos-recomendado)).
 
-**Custo obrigatório previsto:** apenas o **domínio** (ex.: `.com.br` no Registro.br) — somado à questão comercial do
-plano Hobby explicada acima.
-
-## Backup e restauração
-
-- `npm run db:backup` → banco em JSON + SQL; `-- --with-media` inclui todas as fotos.
-- `npm run db:restore -- backups/<pasta> [--with-media] [--yes]`.
-- Turso ainda oferece restauração pontual (1 dia no plano gratuito).
-- Procedimentos completos (produção, Blob, R2, D1): [docs/BACKUP.md](docs/BACKUP.md).
+**Custo obrigatório:** apenas o **domínio** (ex.: `.com.br` no Registro.br). Se um dia o tráfego passar dos limites
+gratuitos, o plano Workers Paid custa US$ 5/mês por conta.
 
 ## Estrutura de pastas
 
@@ -268,22 +260,24 @@ src/
   services/     regras de negócio
   repositories/ acesso ao banco (SQL parametrizado)
   schemas/      validação (Zod) e filtros de URL
-  lib/          db, storage, auth, turnstile, seo, erros
-  server/       middleware helpers, config (astro:env), container de dependências
+  lib/          db (libSQL, D1), storage (KV, R2, S3, Blob, local), auth, turnstile, seo, erros
+  server/       platform/ (cloudflare | node), middleware helpers, cache de borda, config, container
   config/       catálogo (categorias, combustíveis…), navegação, padrões
   types/ utils/ styles/
 migrations/     SQL (SQLite/D1)
-scripts/        migrate, seed, backup/restore, hash de senha, logo, servidor E2E
+scripts/        cf (deploy), cf-backup, migrate, seed, backup/restore, hash de senha, logo, servidor E2E
 tests/          unit/, integration/, e2e/
-docs/           DEPLOY, MANUAL_ADMIN, ARQUITETURA, BACKUP, AUDITORIA, brand/
+docs/           DEPLOY, RELATORIO_ENTREGA, MANUAL_ADMIN, ARQUITETURA, BACKUP, AUDITORIA, DEPLOY-VERCEL, brand/
 public/         logo, ícones, manifest, og-default.jpg
+wrangler.jsonc  configuração do Worker (bindings D1/KV/R2 e variáveis públicas)
 ```
 
 ## Dados que ainda faltam
 
 Não foram inventados e **não aparecem** no site até serem cadastrados no painel (Configurações):
 endereço completo, horário de funcionamento. Também ficam para depois: domínio definitivo, CNPJ (se desejarem exibir),
-história/tempo de mercado, avaliações e parceiros financeiros.
+história/tempo de mercado, avaliações e parceiros financeiros. Lista completa em
+[docs/RELATORIO_ENTREGA.md](docs/RELATORIO_ENTREGA.md).
 
 **Logo:** o arquivo original não estava na pasta do projeto; a versão vetorial (fundo transparente) foi recriada a
 partir da logo do perfil oficial do Instagram, preservando símbolo, cores e tipografia (referências em `docs/brand/`).

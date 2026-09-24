@@ -11,6 +11,8 @@ import type { AuditService } from './audit-service';
 export interface ImagePair {
   large: Uint8Array;
   thumb: Uint8Array;
+  /** Opcional: versão média (~1080 px) para celulares (gerada no navegador). */
+  medium?: Uint8Array | null;
   /** Opcional: JPEG 1200x630 para compartilhamento (gerado no navegador). */
   og?: Uint8Array | null;
 }
@@ -25,6 +27,27 @@ export function validateOgImage(bytes: Uint8Array): InspectedImage {
       throw new ImageValidationError('Imagem de compartilhamento deve ter 1200×630 px.');
     }
     return og;
+  } catch (error) {
+    if (error instanceof ImageValidationError) throw new ValidationError(error.message);
+    throw error;
+  }
+}
+
+/** Valida a versão média: mesmo formato aceito, menor que a grande e com a mesma proporção. */
+export function validateMediumImage(bytes: Uint8Array, large: InspectedImage): InspectedImage {
+  try {
+    const medium = inspectImage(bytes, {
+      maxBytes: IMAGE_LIMITS.vehicleMediumMaxBytes,
+      maxEdge: IMAGE_LIMITS.mediumMaxEdge + 8,
+    });
+    if (medium.width > large.width || medium.height > large.height) {
+      throw new ImageValidationError('Versão média maior que a imagem principal.');
+    }
+    const ratioLarge = large.width / large.height;
+    if (Math.abs(ratioLarge - medium.width / medium.height) / ratioLarge > 0.05) {
+      throw new ImageValidationError('Versão média com proporção diferente da imagem principal.');
+    }
+    return medium;
   } catch (error) {
     if (error instanceof ImageValidationError) throw new ValidationError(error.message);
     throw error;
@@ -81,9 +104,14 @@ export interface MediaServiceDeps {
 
 export const IMMUTABLE_CACHE_SECONDS = 60 * 60 * 24 * 365;
 
-/** Todas as chaves de storage de uma foto (grande, miniatura e compartilhamento). */
-export function storedKeys(image: { largeKey: string; thumbKey: string; ogKey?: string | null }): string[] {
-  return [image.largeKey, image.thumbKey, ...(image.ogKey ? [image.ogKey] : [])];
+/** Todas as chaves de storage de uma foto (grande, média, miniatura e compartilhamento). */
+export function storedKeys(image: {
+  largeKey: string;
+  thumbKey: string;
+  mediumKey?: string | null;
+  ogKey?: string | null;
+}): string[] {
+  return [image.largeKey, image.thumbKey, image.mediumKey, image.ogKey].filter((key): key is string => Boolean(key));
 }
 
 export class MediaService {
@@ -107,11 +135,13 @@ export class MediaService {
       thumbMaxEdge: IMAGE_LIMITS.thumbMaxEdge,
     });
 
+    const medium = pair.medium ? validateMediumImage(pair.medium, validated.large) : null;
     const og = pair.og ? validateOgImage(pair.og) : null;
 
     const imageId = this.idGen();
     const largeKey = vehicleImageKey(vehicleId, imageId, 'large', validated.large.extension);
     const thumbKey = vehicleImageKey(vehicleId, imageId, 'thumb', validated.thumb.extension);
+    const mediumKey = medium ? vehicleImageKey(vehicleId, imageId, 'medium', medium.extension) : null;
     const ogKey = og ? vehicleImageKey(vehicleId, imageId, 'og', og.extension) : null;
 
     await this.deps.storage.put(largeKey, pair.large, {
@@ -123,6 +153,12 @@ export class MediaService {
         contentType: validated.thumb.contentType,
         cacheControlMaxAge: IMMUTABLE_CACHE_SECONDS,
       });
+      if (medium && mediumKey && pair.medium) {
+        await this.deps.storage.put(mediumKey, pair.medium, {
+          contentType: medium.contentType,
+          cacheControlMaxAge: IMMUTABLE_CACHE_SECONDS,
+        });
+      }
       if (og && ogKey && pair.og) {
         await this.deps.storage.put(ogKey, pair.og, {
           contentType: og.contentType,
@@ -135,12 +171,15 @@ export class MediaService {
         largeKey,
         thumbKey,
         ogKey,
+        mediumKey,
+        mediumWidth: medium?.width ?? null,
+        mediumHeight: medium?.height ?? null,
         width: validated.large.width,
         height: validated.large.height,
         thumbWidth: validated.thumb.width,
         thumbHeight: validated.thumb.height,
         contentType: validated.large.contentType,
-        sizeBytes: validated.large.size + validated.thumb.size,
+        sizeBytes: validated.large.size + validated.thumb.size + (medium?.size ?? 0),
         position: await this.deps.images.nextPosition(vehicleId),
         createdAt: new Date().toISOString(),
       };
@@ -149,7 +188,7 @@ export class MediaService {
       await this.deps.audit.log(actor, 'vehicle.image.add', 'vehicle', vehicleId, { imageId });
       return image;
     } catch (error) {
-      await this.deps.storage.delete(storedKeys({ largeKey, thumbKey, ogKey })).catch(() => undefined);
+      await this.deps.storage.delete(storedKeys({ largeKey, thumbKey, mediumKey, ogKey })).catch(() => undefined);
       throw error;
     }
   }

@@ -306,8 +306,11 @@ export class VehicleService {
     }
     const visible = vehicle.published && ['available', 'reserved', 'sold'].includes(vehicle.status);
     if (!visible) return { kind: 'not-found' };
-    const detail = await this.getDetail(vehicle.id);
-    return detail ? { kind: 'ok', vehicle: detail } : { kind: 'not-found' };
+    const [images, features] = await Promise.all([
+      this.deps.images.listByVehicle(vehicle.id),
+      this.deps.vehicles.getFeatures(vehicle.id),
+    ]);
+    return { kind: 'ok', vehicle: { ...vehicle, images, features } };
   }
 
   async search(
@@ -335,15 +338,17 @@ export class VehicleService {
 
   async homeSections(limit: number = SITE_CONSTANTS.homeSectionSize): Promise<HomeSections> {
     const now = this.now();
-    const [featured, offers, repasses, offersTotal, repassesTotal] = await Promise.all([
+    // Tudo em paralelo (uma única "rodada" de consultas ao banco).
+    const [featured, offers, repasses, offersTotal, repassesTotal, recent] = await Promise.all([
       this.deps.vehicles.listSection('featured', { now, limit }),
       this.deps.vehicles.listSection('offers', { now, limit: 6 }),
       this.deps.vehicles.listSection('repasses', { now, limit: 4 }),
       this.deps.vehicles.countSection('offers', now),
       this.deps.vehicles.countSection('repasses', now),
+      this.deps.vehicles.listSection('latest', { now, limit }),
     ]);
     // Sem destaques definidos: mostra os mais recentes para a Home não ficar vazia.
-    const latest = featured.length > 0 ? [] : await this.deps.vehicles.listSection('latest', { now, limit });
+    const latest = featured.length > 0 ? [] : recent;
     return { featured, offers, repasses, latest, offersTotal, repassesTotal };
   }
 

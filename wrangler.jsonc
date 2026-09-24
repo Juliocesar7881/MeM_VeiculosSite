@@ -1,5 +1,5 @@
 // Cloudflare Workers — M&M Veículos
-// Build: npm run cf:build   ·   Deploy: npm run cf:deploy   ·   docs/DEPLOY-CLOUDFLARE.md
+// Build: npm run cf:build   ·   Deploy: npm run cf:deploy   ·   docs/DEPLOY.md
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mm-veiculos",

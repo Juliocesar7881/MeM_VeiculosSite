@@ -1,7 +1,7 @@
 import type { LeadStatus } from '@/config/catalog';
 import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
 import type { Database, SqlStatement } from '@/lib/db/types';
-import { ConflictError, NotFoundError, ValidationError } from '@/lib/errors';
+import { ConflictError, NotFoundError, StorageQuotaError, ValidationError } from '@/lib/errors';
 import { leadImageKey, vehicleImageKey } from '@/lib/storage/keys';
 import type { ObjectStorage } from '@/lib/storage/types';
 import type { LeadListFilters, LeadRepository } from '@/repositories/lead-repository';
@@ -60,6 +60,7 @@ export class LeadService {
     const nowIso = this.now().toISOString();
     const uploadedKeys: string[] = [];
     const images: LeadImage[] = [];
+    let adminNotes: string | null = null;
 
     try {
       for (const [index, pair] of photos.entries()) {
@@ -87,7 +88,16 @@ export class LeadService {
           createdAt: nowIso,
         });
       }
+    } catch (error) {
+      if (uploadedKeys.length) await this.deps.storage.delete(uploadedKeys).catch(() => undefined);
+      // Cota diária do armazenamento esgotada: o contato do cliente vale mais que as fotos.
+      if (!(error instanceof StorageQuotaError)) throw error;
+      uploadedKeys.length = 0;
+      images.length = 0;
+      adminNotes = `O cliente enviou ${photos.length} foto(s), mas o limite diário de armazenamento de fotos foi atingido. Peça as fotos pelo WhatsApp.`;
+    }
 
+    try {
       await this.deps.leads.insertWithImages(
         {
           id: leadId,
@@ -112,7 +122,7 @@ export class LeadService {
           description: input.description,
           consentText: LEAD_CONSENT_TEXT,
           consentAt: nowIso,
-          adminNotes: null,
+          adminNotes,
           convertedVehicleId: null,
           createdAt: nowIso,
           updatedAt: nowIso,
@@ -263,6 +273,9 @@ export class LeadService {
           largeKey,
           thumbKey,
           ogKey: null,
+          mediumKey: null,
+          mediumWidth: null,
+          mediumHeight: null,
           width: source.width,
           height: source.height,
           thumbWidth: source.thumbWidth,

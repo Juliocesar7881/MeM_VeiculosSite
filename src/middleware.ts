@@ -1,6 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { authenticateAdmin } from '@/server/admin-auth';
 import { getContainer } from '@/server/container';
+import { readEdgeCache, writeEdgeCache } from '@/server/edge-cache';
 import { applySecurityHeaders, CACHE } from '@/server/security-headers';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -31,6 +32,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const adminPage = isAdminPath(pathname);
   const adminApi = pathname.startsWith('/api/admin/');
   const isLogin = pathname === '/admin/login';
+
+  // Cloudflare (domínio próprio): página pública recente servida da borda, sem tocar no banco.
+  const cached = await readEdgeCache(request, url);
+  if (cached) return cached;
 
   let container;
   try {
@@ -98,6 +103,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set('Cache-Control', CACHE.publicPage);
   } else if (!response.headers.has('Cache-Control')) {
     response.headers.set('Cache-Control', CACHE.noStore);
+  }
+  if (!isPrivate) {
+    const cf = context.locals.cfContext;
+    writeEdgeCache(request, url, response, cf ? (promise) => cf.waitUntil(promise) : undefined);
   }
   return response;
 });

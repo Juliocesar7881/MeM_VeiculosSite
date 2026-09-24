@@ -16,6 +16,8 @@ export interface PairOptions {
   largeMaxBytes: number;
   thumbEdge: number;
   thumbMaxBytes: number;
+  /** Também gerar a versão média (celulares), com este lado maior e limite de bytes. */
+  medium?: { edge: number; maxBytes: number };
   /** Também gerar a imagem de compartilhamento (JPEG 1200x630). */
   withOg?: boolean;
 }
@@ -106,8 +108,13 @@ export async function makeImagePair(file: File, options: PairOptions) {
   try {
     const large = await render(source, options.largeEdge, options.largeMaxBytes);
     const thumb = await render(source, options.thumbEdge, options.thumbMaxBytes);
+    // Só vale a pena quando a foto grande é bem maior que a versão média.
+    const medium =
+      options.medium && Math.max(large.width, large.height) > options.medium.edge * 1.15
+        ? await render(source, options.medium.edge, options.medium.maxBytes)
+        : null;
     const og = options.withOg ? await renderOg(source) : null;
-    return { large, thumb, og };
+    return { large, thumb, medium, og };
   } finally {
     if ('close' in source) source.close();
   }
@@ -141,9 +148,8 @@ async function renderOg(source: ImageBitmap | HTMLImageElement): Promise<Blob> {
   ctx.fillStyle = '#f2c12e';
   ctx.fillRect(0, H - 8, W, 8);
 
-  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } = await import(
-    '@/components/brand/logo-data'
-  );
+  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } =
+    await import('@/components/brand/logo-data');
   const [vx = 0, vy = 0, vw = 1, vh = 1] = LOGO_VIEWBOX.split(' ').map(Number);
   const logoWidth = 300;
   const s = logoWidth / vw;

@@ -4,19 +4,30 @@
  *   - todas as fotos (KV ou R2) referenciadas no banco
  *
  *   npm run cf:backup
- *   npm run cf:restore -- backups/cf-2026-09-24T12-00-00      (restaura banco + fotos)
+ *   npm run cf:restore -- backups/cf-2026-09-24T12-00-00               (banco VAZIO + fotos)
+ *   npm run cf:restore -- backups/cf-2026-09-24T12-00-00 --media-only  (só fotos; ex.: migrar KV -> R2)
+ *
+ * O d1.sql contém CREATE TABLE: a restauração completa só funciona num banco D1 novo/vazio.
+ * Para voltar o banco atual a um momento anterior, use o Time Travel (docs/BACKUP.md).
  *
  * Saída: backups/cf-AAAA-MM-DDTHH-MM-SS/{d1.sql, media/...}
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { contentTypeForKey } from '../src/lib/storage/keys';
 
-const DB_NAME = 'mm-veiculos';
+// Binding do wrangler.jsonc: os comandos seguem o banco configurado lá (database_name/id).
+const DB_NAME = 'DB';
 const shell = process.platform === 'win32';
 
+/** No Windows o spawn usa o shell: argumentos com espaço precisam de aspas. */
+function quote(arg: string): string {
+  return shell && /[\s"]/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg;
+}
+
 function wrangler(args: string[], capture = false): string {
-  const result = spawnSync('npx', ['wrangler', ...args], {
+  const result = spawnSync('npx', ['wrangler', ...args.map(quote)], {
     stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
     shell,
     encoding: 'utf8',
@@ -27,6 +38,20 @@ function wrangler(args: string[], capture = false): string {
     process.exit(result.status ?? 1);
   }
   return capture ? result.stdout : '';
+}
+
+/** Executa o wrangler capturando a saída binária (valor de uma chave do KV). */
+function wranglerBinary(args: string[]): Buffer {
+  const result = spawnSync('npx', ['wrangler', ...args.map(quote)], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    console.error(`✖ wrangler ${args.join(' ')}\n${result.stderr.toString()}`);
+    process.exit(result.status ?? 1);
+  }
+  return result.stdout;
 }
 
 /** Lê o wrangler.jsonc (JSON com comentários) para descobrir o storage em uso. */
@@ -47,19 +72,21 @@ function readConfig(): { kvId?: string; r2Bucket?: string; driver: string } {
 }
 
 function mediaKeys(): string[] {
+  // Duas consultas simples (o D1 limita o número de termos em UNION).
   const sql =
-    'SELECT large_key AS k FROM vehicle_images UNION SELECT thumb_key FROM vehicle_images ' +
-    'UNION SELECT og_key FROM vehicle_images WHERE og_key IS NOT NULL ' +
-    'UNION SELECT large_key FROM vehicle_lead_images UNION SELECT thumb_key FROM vehicle_lead_images';
-  const out = wrangler(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', `"${sql}"`], true);
-  const parsed = JSON.parse(out.slice(out.indexOf('['))) as { results: { k: string }[] }[];
-  return parsed.flatMap((r) => r.results.map((row) => row.k)).filter(Boolean);
+    'SELECT large_key, thumb_key, medium_key, og_key FROM vehicle_images; ' +
+    'SELECT large_key, thumb_key FROM vehicle_lead_images';
+  const out = wrangler(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', sql], true);
+  const parsed = JSON.parse(out.slice(out.indexOf('['))) as { results: Record<string, string | null>[] }[];
+  const keys = parsed.flatMap((r) => r.results.flatMap((row) => Object.values(row)));
+  return [...new Set(keys.filter((k): k is string => Boolean(k)))];
 }
 
 function backup() {
   const { kvId, r2Bucket, driver } = readConfig();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const dir = path.resolve('backups', `cf-${stamp}`);
+  // Caminho relativo: o wrangler roda na raiz do projeto.
+  const dir = path.join('backups', `cf-${stamp}`);
   mkdirSync(dir, { recursive: true });
 
   wrangler(['d1', 'export', DB_NAME, '--remote', '--output', path.join(dir, 'd1.sql')]);
@@ -70,7 +97,7 @@ function backup() {
     if (driver === 'r2' && r2Bucket) {
       wrangler(['r2', 'object', 'get', `${r2Bucket}/${key}`, '--remote', '--file', file]);
     } else if (kvId) {
-      wrangler(['kv', 'key', 'get', key, '--namespace-id', kvId, '--remote', '--file', file]);
+      writeFileSync(file, wranglerBinary(['kv', 'key', 'get', key, '--namespace-id', kvId, '--remote']));
     }
   }
   console.log(`\n✔ Backup salvo em ${dir} (${keys.length} arquivos de foto).`);
@@ -85,27 +112,37 @@ function listFiles(dir: string): string[] {
   });
 }
 
-function restore(source: string) {
+function restore(source: string, mediaOnly: boolean) {
   const { kvId, r2Bucket, driver } = readConfig();
-  const dir = path.resolve(source);
-  wrangler(['d1', 'execute', DB_NAME, '--remote', '--file', path.join(dir, 'd1.sql')]);
+  const dir = path.relative(process.cwd(), path.resolve(source));
+  if (!existsSync(dir)) {
+    console.error(`✖ Pasta de backup não encontrada: ${dir}`);
+    process.exit(1);
+  }
+  if (!mediaOnly) {
+    wrangler(['d1', 'execute', DB_NAME, '--remote', '--yes', '--file', path.join(dir, 'd1.sql')]);
+  }
   const mediaDir = path.join(dir, 'media');
   const files = listFiles(mediaDir);
   for (const file of files) {
     const key = path.relative(mediaDir, file).split(path.sep).join('/');
     if (driver === 'r2' && r2Bucket) {
-      wrangler(['r2', 'object', 'put', `${r2Bucket}/${key}`, '--remote', '--file', file]);
+      const type = contentTypeForKey(key);
+      wrangler(['r2', 'object', 'put', `${r2Bucket}/${key}`, '--remote', '--file', file, '--content-type', type]);
     } else if (kvId) {
-      wrangler(['kv', 'key', 'put', key, '--namespace-id', kvId, '--remote', '--path', file]);
+      const metadata = JSON.stringify({ contentType: contentTypeForKey(key), size: statSync(file).size });
+      wrangler(['kv', 'key', 'put', key, '--namespace-id', kvId, '--remote', '--path', file, '--metadata', metadata]);
     }
   }
-  console.log(`\n✔ Restaurado: banco + ${files.length} arquivos de foto.`);
+  const target = driver === 'r2' && r2Bucket ? `R2 (${r2Bucket})` : 'KV';
+  console.log(`\n✔ Restaurado: ${mediaOnly ? '' : 'banco + '}${files.length} arquivos de foto no ${target}.`);
 }
 
-const [task, arg] = process.argv.slice(2);
+const [task, ...args] = process.argv.slice(2);
+const folder = args.find((a) => !a.startsWith('--'));
 if (task === 'backup') backup();
-else if (task === 'restore' && arg) restore(arg);
+else if (task === 'restore' && folder) restore(folder, args.includes('--media-only'));
 else {
-  console.error('Uso: tsx scripts/cf-backup.ts backup | restore <pasta>');
+  console.error('Uso: tsx scripts/cf-backup.ts backup | restore <pasta> [--media-only]');
   process.exit(1);
 }

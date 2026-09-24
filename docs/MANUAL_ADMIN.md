@@ -4,7 +4,8 @@ Guia rápido para quem vai cuidar do site no dia a dia. Funciona no computador e
 
 ## Entrar no painel
 
-1. Acesse **seusite.com.br/admin** (enquanto não houver domínio, use o endereço `…vercel.app/admin`).
+1. Acesse **seusite.com.br/admin** (enquanto não houver domínio, use
+   `https://mm-veiculos.visor-crypto.workers.dev/admin`).
 2. Digite a **senha do painel** e toque em **Entrar**.
 3. Para sair, use **Sair** (no menu lateral ou no ícone de saída no celular).
 
@@ -38,6 +39,11 @@ No celular, o menu fica na barra de baixo: **Dashboard · Veículos · Novo · P
 4. Para apagar uma foto, toque na **lixeira**.
 
 Dicas: fotos na horizontal, com boa luz, frente 3/4, traseira, interior, painel e bancos. Até 30 fotos por veículo.
+
+Cada foto é salva em versões para computador, celular e compartilhamento no WhatsApp — tudo automático. Se aparecer
+o aviso **“Limite diário de envio de fotos do plano gratuito atingido”**, continue no dia seguinte (a cota renova às
+21h, horário de Brasília). Isso só acontece em dias de muitas fotos e deixa de existir quando o responsável técnico
+ativar o armazenamento R2.
 
 ## Editar
 
@@ -85,6 +91,7 @@ Atalho: **Ações → Marcar como oferta**.
 ## Vender
 
 **Ações → Marcar como vendido**. O veículo:
+
 - sai dos destaques;
 - aparece como “Vendido” (no fim da lista do estoque, se “Mostrar vendidos” estiver ligado em Configurações);
 - quem abrir o link verá **“Procurando algo parecido?”** com botão para o WhatsApp.
@@ -105,6 +112,9 @@ veículo, mude o **Status** e marque **Publicado no site**.
 3. Toque numa foto para vê-la em tamanho real.
 
 Nada enviado pelos clientes aparece no site automaticamente.
+
+Se uma proposta chegar **sem fotos** e com a anotação “limite diário de armazenamento de fotos foi atingido”, o
+cliente tentou enviar fotos num dia de cota esgotada: peça as fotos pelo WhatsApp.
 
 ## Chamar o cliente
 
@@ -148,4 +158,6 @@ Salve e aguarde até 1 minuto para ver no site. Senhas e chaves técnicas não f
 - **O veículo não aparece no site:** confira se está **Publicado no site** e com status Disponível, Reservado ou
   Vendido (Rascunho e Arquivado não aparecem).
 - **Foto não subiu:** tente outra foto (JPG ou PNG). Fotos muito pequenas (menos de 320 px) são recusadas.
-- **Esqueci a senha:** peça ao responsável técnico para gerar uma nova (`npm run admin:hash-password`).
+- **Esqueci a senha:** peça ao responsável técnico para gerar uma nova (passo 4 do `docs/DEPLOY.md`).
+- **Quero voltar um veículo excluído por engano:** fale com o responsável técnico no mesmo dia — o banco guarda o
+  histórico dos últimos 7 dias (as fotos apagadas precisam ser enviadas de novo).

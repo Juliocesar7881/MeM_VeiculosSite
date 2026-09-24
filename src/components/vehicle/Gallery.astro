@@ -1,6 +1,6 @@
 ---
 import Icon from '@/components/ui/Icon.astro';
-import { mediaUrl } from '@/lib/storage/keys';
+import { mediaUrl, vehicleSrcset } from '@/lib/storage/keys';
 import type { VehicleImage } from '@/types/domain';
 import PhotoPlaceholder from './PhotoPlaceholder.astro';
 
@@ -37,8 +37,9 @@ const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
               aria-label={`Ampliar foto ${index + 1} de ${images.length}`}
             >
               <img
-                src={mediaUrl(image.largeKey)}
-                srcset={`${mediaUrl(image.thumbKey)} ${image.thumbWidth}w, ${mediaUrl(image.largeKey)} ${image.width}w`}
+                src={mediaUrl(index === 0 ? image.largeKey : image.thumbKey)}
+                srcset={index === 0 ? vehicleSrcset(image) : undefined}
+                data-srcset={index === 0 ? undefined : vehicleSrcset(image)}
                 sizes={sizes}
                 width={image.width}
                 height={image.height}
@@ -96,6 +97,7 @@ const sizes = '(min-width: 1280px) 58vw, (min-width: 1024px) 56vw, 100vw';
               height={image.thumbHeight}
               alt=""
               loading="lazy"
+              fetchpriority="low"
               decoding="async"
               class="h-full w-full object-cover"
             />

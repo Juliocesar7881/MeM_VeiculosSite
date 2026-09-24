@@ -64,6 +64,7 @@ async function main() {
         keys.add(String(row.large_key));
         keys.add(String(row.thumb_key));
         if (row.og_key) keys.add(String(row.og_key));
+        if (row.medium_key) keys.add(String(row.medium_key));
       }
     }
     let saved = 0;

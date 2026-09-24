@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { toFieldErrors } from '@/schemas/common';
 import { leadInputSchema } from '@/schemas/lead';
 import { settingsInputSchema } from '@/schemas/settings';
@@ -104,6 +104,21 @@ describe('vehicleInputSchema', () => {
   it('rejeita categoria/status inexistentes', () => {
     expect(vehicleInputSchema.safeParse({ ...validVehicle, category: 'aviao' }).success).toBe(false);
     expect(vehicleInputSchema.safeParse({ ...validVehicle, status: 'perdido' }).success).toBe(false);
+  });
+
+  it('ano máximo é calculado na validação (no Workers o relógio é 1970 ao carregar o módulo)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(0));
+    vi.resetModules();
+    const { vehicleInputSchema: loadedIn1970 } = await import('@/schemas/vehicle');
+    vi.useRealTimers();
+
+    const year = new Date().getFullYear();
+    const ok = { ...validVehicle, manufactureYear: String(year), modelYear: String(year + 1) };
+    expect(loadedIn1970.safeParse(ok).success).toBe(true);
+    const r = loadedIn1970.safeParse({ ...validVehicle, modelYear: String(year + 2) });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(toFieldErrors(r.error).modelYear).toContain(String(year + 1));
   });
 });
 

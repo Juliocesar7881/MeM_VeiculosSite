@@ -11,7 +11,10 @@ export const createPlatform: CreatePlatform = async (config) => {
   if (!env.DB) throw new Error('Binding D1 "DB" não configurado no wrangler.jsonc.');
 
   let storage: ObjectStorage;
-  switch (config.storage.driver) {
+  // Em `npm run cf:dev` o .env local (STORAGE_DRIVER=local) sobrepõe o wrangler.jsonc:
+  // no Workers não há disco, então usamos o KV (simulado localmente pelo Wrangler).
+  const driver = config.storage.driver === 'local' ? 'kv' : config.storage.driver;
+  switch (driver) {
     case 'r2':
       if (!env.MEDIA) throw new Error('Binding R2 "MEDIA" não configurado no wrangler.jsonc.');
       storage = new R2Storage(env.MEDIA);
@@ -35,7 +38,7 @@ export const createPlatform: CreatePlatform = async (config) => {
       break;
     }
     default:
-      throw new Error(`STORAGE_DRIVER=${config.storage.driver} não é suportado no Cloudflare. Use r2 ou kv.`);
+      throw new Error(`STORAGE_DRIVER=${driver} não é suportado no Cloudflare. Use r2 ou kv.`);
   }
 
   // Sem sharp no Workers: a imagem de compartilhamento é gerada no navegador durante o upload.

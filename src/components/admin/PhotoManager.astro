@@ -17,6 +17,8 @@ const config = {
   largeMaxBytes: IMAGE_LIMITS.vehicleLargeMaxBytes,
   thumbEdge: IMAGE_LIMITS.thumbMaxEdge,
   thumbMaxBytes: IMAGE_LIMITS.vehicleThumbMaxBytes,
+  medium: { edge: IMAGE_LIMITS.mediumMaxEdge, maxBytes: IMAGE_LIMITS.vehicleMediumMaxBytes - 30_000 },
+  withOg: true,
 };
 ---
 

@@ -1,3 +1,4 @@
+import { StorageQuotaError } from '@/lib/errors';
 import { contentTypeForKey } from './keys';
 import type { ObjectStorage, PutOptions, StoredObject } from './types';
 
@@ -6,10 +7,20 @@ interface KvMeta {
   size?: number;
 }
 
+/** Converte o erro de cota diária do KV (plano gratuito) numa mensagem clara para o painel. */
+async function withQuota<T>(operation: Promise<T>): Promise<T> {
+  try {
+    return await operation;
+  } catch (error) {
+    if (error instanceof Error && /limit exceeded|quota/i.test(error.message)) throw new StorageQuotaError();
+    throw error;
+  }
+}
+
 /**
  * Fotos no Cloudflare Workers KV — alternativa GRATUITA e sem cartão enquanto o R2 não é
  * ativado na conta. Limites do plano gratuito: 1 GB, 100 mil leituras e 1 mil gravações por dia.
- * Para trocar para o R2 basta mudar STORAGE_DRIVER=r2 e copiar os arquivos (docs/DEPLOY-CLOUDFLARE.md).
+ * Para trocar para o R2 basta mudar STORAGE_DRIVER=r2 e copiar os arquivos (docs/DEPLOY.md).
  */
 export class KvStorage implements ObjectStorage {
   readonly driver = 'kv';
@@ -18,7 +29,7 @@ export class KvStorage implements ObjectStorage {
 
   async put(key: string, data: Uint8Array, options: PutOptions): Promise<void> {
     const meta: KvMeta = { contentType: options.contentType, size: data.byteLength };
-    await this.kv.put(key, data, { metadata: meta });
+    await withQuota(this.kv.put(key, data, { metadata: meta }));
   }
 
   async get(key: string): Promise<StoredObject | null> {
@@ -40,6 +51,6 @@ export class KvStorage implements ObjectStorage {
   async copy(fromKey: string, toKey: string): Promise<void> {
     const { value, metadata } = await this.kv.getWithMetadata<KvMeta>(fromKey, { type: 'arrayBuffer' });
     if (!value) throw new Error(`Objeto não encontrado: ${fromKey}`);
-    await this.kv.put(toKey, value, { metadata: metadata ?? { contentType: contentTypeForKey(toKey) } });
+    await withQuota(this.kv.put(toKey, value, { metadata: metadata ?? { contentType: contentTypeForKey(toKey) } }));
   }
 }

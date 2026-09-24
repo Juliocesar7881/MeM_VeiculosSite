@@ -39,6 +39,15 @@ export class RateLimitError extends AppError {
   }
 }
 
+/** Cota diária do armazenamento de fotos esgotada (ex.: 1.000 gravações/dia no KV gratuito). */
+export class StorageQuotaError extends AppError {
+  constructor(
+    message = 'Limite diário de envio de fotos do plano gratuito atingido. Tente novamente amanhã (a cota renova às 21h, horário de Brasília).',
+  ) {
+    super(message, 507, 'storage_quota');
+  }
+}
+
 export class ConfigurationError extends AppError {
   constructor(message: string) {
     super(message, 503, 'misconfigured');
