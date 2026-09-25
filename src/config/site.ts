@@ -1,14 +1,13 @@
 /**
- * Valores padrão dos dados institucionais.
+ * Dados institucionais exibidos no site (contatos, redes, textos).
  *
- * Os dados editáveis (telefone, redes, e-mail, textos...) ficam na tabela `site_settings`
- * e são alterados pelo painel. Estes valores são usados apenas como semente (migration)
- * e como fallback caso o banco esteja indisponível. Componentes NUNCA devem usar
- * telefone/e-mail/redes diretamente daqui — use `SiteSettings` vindo do serviço.
+ * Esta é a fonte oficial: para trocar o WhatsApp, o e-mail ou incluir o endereço, edite aqui e
+ * publique (o painel não tem tela de configurações). Componentes recebem estes dados pelo
+ * `container.settings.get()`, nunca importando daqui direto.
  */
 import type { SiteSettings } from '@/types/settings';
 
-export const DEFAULT_SETTINGS: SiteSettings = {
+export const SITE_SETTINGS: SiteSettings = {
   businessName: 'M&M Veículos',
   slogan: 'Construindo credibilidade a cada negociação.',
   whatsapp: '554896410338',

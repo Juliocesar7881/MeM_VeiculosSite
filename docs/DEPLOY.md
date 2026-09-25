@@ -253,7 +253,7 @@ recém-criado, vazio). Detalhes em [BACKUP.md](BACKUP.md).
 ## 12. Checklist de entrega
 
 - [x] Senha de desenvolvimento substituída por senha forte (passo 4) — falta entregá-la ao cliente de forma segura
-- [ ] Configurações conferidas no painel (WhatsApp 554896410338, Instagram, Facebook, e-mail, slogan)
+- [ ] Contatos conferidos no site (WhatsApp 554896410338, Instagram, Facebook, e-mail, slogan — em `src/config/site.ts`)
 - [ ] Endereço e horário preenchidos, se o cliente quiser exibir
 - [ ] R2 ativado antes do cadastro do estoque inicial (passo 7)
 - [ ] Veículos reais cadastrados com fotos; destaques marcados

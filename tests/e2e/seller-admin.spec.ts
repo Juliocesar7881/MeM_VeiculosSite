@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { acceptDialogs, fakePhoto, loginAdmin } from './helpers';
+import { answerConfirm, fakePhoto, loginAdmin, trackNativeDialogs } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -44,7 +44,7 @@ test('Home → Anuncie seu veículo → Enviar proposta', async ({ page }) => {
 });
 
 test('Admin → Proposta → Converter → Publicar', async ({ page, context }) => {
-  acceptDialogs(page);
+  const nativeDialogs = trackNativeDialogs(page);
 
   // Sem login, o painel redireciona
   await page.goto('/admin/propostas');
@@ -86,8 +86,12 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await page.getByRole('button', { name: 'Contatado' }).click();
   await expect(page.getByText('Status alterado para “Contatado”.')).toBeVisible();
 
-  // Converter em rascunho
+  // Converter em rascunho (confirmação na própria página; "Cancelar" não faz nada)
   await page.getByRole('button', { name: 'Transformar em veículo' }).click();
+  await answerConfirm(page, 'Transformar em veículo?', 'Cancelar');
+  await expect(page).toHaveURL(/\/admin\/propostas\//);
+  await page.getByRole('button', { name: 'Transformar em veículo' }).click();
+  await answerConfirm(page, 'Transformar em veículo?', 'Criar rascunho');
   await expect(page).toHaveURL(/\/admin\/veiculos\/[0-9a-f-]{36}/);
   await expect(page.getByText('Rascunho criado a partir da proposta')).toBeVisible();
   await expect(page.getByText(/é um\s+rascunho/)).toBeVisible();
@@ -103,7 +107,9 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await expect(page.getByText('Publicado no site')).toHaveCount(0);
   await page.getByLabel('Status', { exact: true }).selectOption('available');
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
-  await expect(page.getByText('Alterações salvas.')).toBeVisible();
+  await expect(page.getByText('Alterações salvas. O veículo está no site.')).toBeVisible();
+  // Saiu do rascunho: comemoração da publicação
+  await expect(page.locator('[data-celebrate]')).toContainText('Publicado no site!');
 
   // Aparece no site público com os selos corretos
   const publicLink = page.getByRole('link', { name: 'Ver no site' }).first();
@@ -120,10 +126,11 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await expect(page.getByRole('link', { name: 'Gol', exact: true })).toBeVisible();
   await page.goto('/veiculos?repasse=true');
   await expect(page.getByRole('link', { name: 'Gol', exact: true })).toBeVisible();
+  expect(nativeDialogs).toEqual([]);
 });
 
-test('Admin: ações rápidas, configurações e logout', async ({ page }) => {
-  acceptDialogs(page);
+test('Admin: ações rápidas, confirmações e logout', async ({ page }) => {
+  const nativeDialogs = trackNativeDialogs(page);
   await loginAdmin(page, '/admin/veiculos');
 
   const row = page.locator('li.row', { hasText: 'Volkswagen Gol' });
@@ -132,28 +139,39 @@ test('Admin: ações rápidas, configurações e logout', async ({ page }) => {
   await expect(page.getByText('Veículo marcado como reservado.')).toBeVisible();
   await expect(page.locator('li.row', { hasText: 'Volkswagen Gol' }).getByText('Reservado')).toBeVisible();
 
-  // Configurações: altera o texto do botão e confere no site
-  await page.goto('/admin/configuracoes');
-  await page.getByLabel('Texto do botão “Anuncie seu veículo”').fill('Venda seu carro');
-  await page.getByRole('button', { name: 'Salvar configurações' }).click();
-  await expect(page.getByText(/Configurações salvas/)).toBeVisible();
-  await page.goto('/');
-  await expect(page.locator('header').getByRole('link', { name: 'Venda seu carro' })).toBeVisible();
+  // Ação com confirmação: Esc e "Cancelar" não mudam nada; confirmar aplica.
+  const gol = page.locator('li.row', { hasText: 'Volkswagen Gol' });
+  await gol.getByText('Ações').click();
+  await gol.getByRole('menuitem', { name: 'Marcar como vendido' }).click();
+  await expect(page.getByRole('dialog', { name: 'Marcar como vendido?' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(gol.getByText('Reservado')).toBeVisible();
+  await gol.getByRole('menuitem', { name: 'Marcar como vendido' }).click();
+  await answerConfirm(page, 'Marcar como vendido?', 'Marcar como vendido');
+  await expect(page.getByText('Veículo marcado como vendido.')).toBeVisible();
 
-  // Restaura
-  await page.goto('/admin/configuracoes');
-  await page.getByLabel('Texto do botão “Anuncie seu veículo”').fill('Anuncie seu veículo');
-  await page.getByRole('button', { name: 'Salvar configurações' }).click();
+  // A tela de configurações foi removida do painel
+  await expect(page.getByRole('link', { name: 'Configurações' })).toHaveCount(0);
+  const settings = await page.goto('/admin/configuracoes');
+  expect(settings?.status()).toBe(404);
 
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'Sair' }).first().click();
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/admin\/login/);
+  expect(nativeDialogs).toEqual([]);
 });
 
 test('Admin: novo veículo com fotos (upload, capa, exclusão)', async ({ page }) => {
-  acceptDialogs(page);
+  const nativeDialogs = trackNativeDialogs(page);
   await loginAdmin(page, '/admin/veiculos/novo');
+  // Sair com dados digitados e não salvos pede confirmação na própria página
+  await page.getByLabel('Marca *').fill('Yamaha');
+  await page.locator('.admin-sidebar').getByRole('link', { name: 'Dashboard' }).click();
+  await answerConfirm(page, 'Sair sem salvar?', 'Continuar aqui');
+  await expect(page).toHaveURL(/\/admin\/veiculos\/novo$/);
   await page.getByLabel('Categoria *').selectOption('moto');
   await page.getByLabel('Marca *').fill('Yamaha');
   await page.getByLabel('Modelo *').fill('Fazer 250');
@@ -162,6 +180,11 @@ test('Admin: novo veículo com fotos (upload, capa, exclusão)', async ({ page }
   await page.getByLabel('Preço (R$)').fill('21.500');
   await page.getByRole('button', { name: /Salvar e adicionar fotos/ }).click();
   await expect(page.getByText('Veículo cadastrado! Agora adicione as fotos.')).toBeVisible();
+  // Comemoração ao cadastrar (some sozinha ou com um clique)
+  const celebration = page.locator('[data-celebrate]');
+  await expect(celebration).toContainText('Veículo cadastrado!');
+  await celebration.click();
+  await expect(celebration).toHaveCount(0);
 
   await page.locator('[data-photo-input]').setInputFiles([
     { name: 'a.jpg', mimeType: 'image/jpeg', buffer: await fakePhoto('#ef4444') },
@@ -180,7 +203,13 @@ test('Admin: novo veículo com fotos (upload, capa, exclusão)', async ({ page }
   await page.reload();
   await expect(page.locator('[data-photo-list] li').first()).toHaveAttribute('data-photo-id', secondId ?? '');
 
-  // Excluir foto
-  await page.locator('[data-photo-list] li').nth(1).getByRole('button', { name: 'Excluir foto' }).click();
-  await expect(page.locator('[data-photo-list] li')).toHaveCount(1);
+  // Excluir foto: "Cancelar" mantém; confirmar exclui
+  const photos = page.locator('[data-photo-list] li');
+  await photos.nth(1).getByRole('button', { name: 'Excluir foto' }).click();
+  await answerConfirm(page, 'Excluir esta foto?', 'Cancelar');
+  await expect(photos).toHaveCount(2);
+  await photos.nth(1).getByRole('button', { name: 'Excluir foto' }).click();
+  await answerConfirm(page, 'Excluir esta foto?', 'Excluir foto');
+  await expect(photos).toHaveCount(1);
+  expect(nativeDialogs).toEqual([]);
 });

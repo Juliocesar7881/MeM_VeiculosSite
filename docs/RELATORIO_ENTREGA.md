@@ -1,6 +1,6 @@
 # Relatório de entrega — M&M Veículos
 
-Data: **24/09/2026** · Repositório: https://github.com/Juliocesar7881/MeM_VeiculosSite
+Data: **25/09/2026** · Repositório: https://github.com/Juliocesar7881/MeM_VeiculosSite
 
 ## 1. Resumo
 
@@ -45,7 +45,10 @@ mais rápida no Brasil. O código continua compilando para a Vercel como alterna
   no navegador em 4 versões (computador, celular, miniatura, WhatsApp).
 - Propostas recebidas: status, anotações internas, “Chamar no WhatsApp”, **transformar em veículo** (rascunho com as
   fotos copiadas), exclusão definitiva (LGPD).
-- Configurações: WhatsApp, telefone, e-mail, Instagram, Facebook, cidade, endereço, horário, textos.
+- Confirmações na própria tela (nunca as caixas do navegador), avisos animados ao salvar, animação ao cadastrar ou
+  publicar um veículo, barra de progresso no envio de fotos e aviso ao sair com dados não salvos.
+- Contatos, redes e textos institucionais ficam no código (`src/config/site.ts`): o painel não tem tela de
+  configurações; mudanças nesses dados são feitas pelo responsável técnico.
 
 **Técnico**
 
@@ -62,8 +65,8 @@ mais rápida no Brasil. O código continua compilando para a Vercel como alterna
 
 | Verificação                                                          | Resultado                                                                                                                                         |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Testes automáticos (unitários + integração)                          | 145 passando                                                                                                                                      |
-| Testes de navegador (E2E, computador e celular, 11 larguras de tela) | 29 passando                                                                                                                                       |
+| Testes automáticos (unitários + integração)                          | 176 passando                                                                                                                                      |
+| Testes de navegador (E2E, computador e celular, 11 larguras de tela) | 33 passando                                                                                                                                       |
 | Lint, tipos (TypeScript estrito), formatação                         | sem erros                                                                                                                                         |
 | Vulnerabilidades em dependências (`npm audit`)                       | 0                                                                                                                                                 |
 | Teste completo na produção                                           | login (senha antiga recusada, nova aceita), cadastro, fotos, publicação, página pública, prévia do WhatsApp, métricas no painel, exclusão, logout |
@@ -107,9 +110,9 @@ Nada disso foi inventado; o site simplesmente não mostra o que não foi informa
 | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | Confirmar o **nome do domínio** e quem será o titular                                                                            | Compra do domínio                    |
 | **Veículos reais**: dados, preços e fotos                                                                                        | Painel → Novo veículo                |
-| **Endereço** completo e **horário de funcionamento** (se quiserem exibir)                                                        | Painel → Configurações               |
-| Confirmar contatos já cadastrados: WhatsApp +55 48 9641-0338, Instagram @mmveiculos.sc, Facebook, e-mail mmveiculos.sc@gmail.com | Painel → Configurações               |
-| Texto sobre repasses (condições)                                                                                                 | Painel → Configurações               |
+| **Endereço** completo e **horário de funcionamento** (se quiserem exibir)                                                        | `src/config/site.ts` (técnico)       |
+| Confirmar contatos já cadastrados: WhatsApp +55 48 9641-0338, Instagram @mmveiculos.sc, Facebook, e-mail mmveiculos.sc@gmail.com | `src/config/site.ts` (técnico)       |
+| Texto sobre repasses (condições)                                                                                                 | `src/config/site.ts` (técnico)       |
 | **Logo original** em alta resolução (a atual foi redesenhada em vetor a partir do Instagram)                                     | `docs/brand/` → `npm run brand:logo` |
 | CNPJ, história/tempo de mercado, parceiros de financiamento (só se quiserem exibir)                                              | Pequena alteração nos textos         |
 | **Aprovação** do layout e dos textos (validação na URL temporária)                                                               | —                                    |

@@ -75,7 +75,7 @@ vehicles ─┬─< vehicle_images        (large_key, medium_key, thumb_key, og_
 vehicle_leads ──< vehicle_lead_images   (propostas "Anuncie seu veículo")
       └── converted_vehicle_id ──► vehicles.id   (vehicles.source_lead_id aponta de volta)
 
-site_settings (chave/valor)   admin_audit_log   rate_limits   d1_migrations
+site_settings (chave/valor: corte de sessões do "Sair")   admin_audit_log   rate_limits   d1_migrations
 ```
 
 Campos principais de `vehicles`: `category` (carro, moto, scooter, pesado, maquina_agricola), `status`
@@ -86,7 +86,7 @@ Campos principais de `vehicles`: `category` (carro, moto, scooter, pesado, maqui
 **Regras de negócio relevantes**
 
 - Visível no site = `published = 1` e status em (available, reserved, sold) e não excluído. Vendido só aparece nas
-  listagens se “Mostrar vendidos” estiver ligado, mas o link direto sempre funciona (mostra “Procurando algo parecido?”).
+  listagens se `showSoldVehicles` estiver ligado em `src/config/site.ts`, mas o link direto sempre funciona (mostra “Procurando algo parecido?”).
 - A publicação segue o status: `published` é gravado como 1 para available/reserved/sold e 0 para draft/archived
   (não existe caixa “Publicado” no painel). “Tirar do site” volta o veículo para rascunho.
 - **Oferta ativa** = `is_offer` e dentro do período (datas opcionais, fuso de Brasília). “De/Por” só com preço anterior
@@ -141,8 +141,8 @@ Detalhes e resultado da verificação em [AUDITORIA.md](AUDITORIA.md).
 | `sitemap.xml`, `robots.txt`              | 5 min no navegador, 1 h na CDN                                                                                                                 |
 | Painel, APIs, respostas de erro/redirect | `private, no-store` (nunca entram no cache de borda)                                                                                           |
 
-Configurações ficam em cache de memória por 30 s por instância. Resultado: alterações feitas no painel aparecem no
-site em até ~1 minuto.
+Os dados institucionais (contatos, redes, textos) vêm de `src/config/site.ts`, sem consulta ao banco. Alterações
+feitas no painel (veículos) aparecem no site em até ~1 minuto no domínio próprio (cache de borda).
 
 O cache de borda ignora cookies na chave (as páginas públicas são iguais para todos) e só guarda respostas marcadas
 como página pública — sem `Set-Cookie`, nunca `/admin`, `/api`, `/media` ou `/og`.

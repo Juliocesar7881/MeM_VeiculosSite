@@ -1,15 +1,16 @@
 ---
 import '@/styles/global.css';
 import fontLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-standard-normal.woff2?url';
+import AdminFeedback from '@/components/admin/AdminFeedback.astro';
 import Logo from '@/components/brand/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
-import { flashSecret, readFlash } from '@/server/flash';
+import { flashSecret, readFlash, type FlashEffect } from '@/server/flash';
 
 interface Props {
   title: string;
   /** Item ativo do menu. */
-  section: 'dashboard' | 'veiculos' | 'novo' | 'propostas' | 'ofertas' | 'repasses' | 'configuracoes';
+  section: 'dashboard' | 'veiculos' | 'novo' | 'propostas' | 'ofertas' | 'repasses';
 }
 
 const { title, section } = Astro.props;
@@ -20,6 +21,9 @@ const newLeads = leadCounts.new;
 const flash = await readFlash(Astro.url, flashSecret(container.config));
 const ok = flash?.kind === 'ok' ? flash.message : null;
 const erro = flash?.kind === 'erro' ? flash.message : null;
+// Comemoração (veículo cadastrado/publicado): só acompanha um aviso de sucesso assinado.
+const fx = Astro.url.searchParams.get('fx');
+const effect: FlashEffect | null = ok && (fx === 'novo' || fx === 'publicado') ? fx : null;
 
 const nav: { key: Props['section']; label: string; href: string; icon: IconName; badge?: number }[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin', icon: 'dashboard' },
@@ -28,9 +32,8 @@ const nav: { key: Props['section']; label: string; href: string; icon: IconName;
   { key: 'propostas', label: 'Propostas', href: '/admin/propostas', icon: 'inbox', badge: newLeads },
   { key: 'ofertas', label: 'Ofertas', href: '/admin/veiculos?filtro=ofertas', icon: 'tag' },
   { key: 'repasses', label: 'Repasses', href: '/admin/veiculos?filtro=repasses', icon: 'repasse' },
-  { key: 'configuracoes', label: 'Configurações', href: '/admin/configuracoes', icon: 'settings' },
 ];
-const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas', 'configuracoes'].includes(n.key));
+const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas'].includes(n.key));
 ---
 
 <!doctype html>
@@ -106,25 +109,13 @@ const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas
         </header>
 
         <main id="conteudo" class="mx-auto w-full max-w-[84rem] px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
-          {ok && (
-            <div class="flash flash-ok" role="status">
-              <Icon name="check-circle" size={20} />
-              <span>{ok}</span>
-            </div>
-          )}
-          {erro && (
-            <div class="flash flash-error" role="alert">
-              <Icon name="alert" size={20} />
-              <span>{erro}</span>
-            </div>
-          )}
           <slot />
         </main>
       </div>
     </div>
 
     <nav class="admin-tabbar lg:hidden" aria-label="Menu do painel">
-      <ul class="grid grid-cols-5">
+      <ul class="grid grid-cols-4">
         {mobileNav.map((item) => (
           <li>
             <a
@@ -136,14 +127,14 @@ const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas
                 <Icon name={item.icon} size={21} />
                 {item.badge ? <span class="tab-dot tabular">{item.badge}</span> : null}
               </span>
-              <span>
-                {item.label === 'Novo veículo' ? 'Novo' : item.label === 'Configurações' ? 'Ajustes' : item.label}
-              </span>
+              <span>{item.label === 'Novo veículo' ? 'Novo' : item.label}</span>
             </a>
           </li>
         ))}
       </ul>
     </nav>
+
+    <AdminFeedback ok={ok} erro={erro} effect={effect} />
 
     <script>
       import { initAdminUi } from '@/features/admin/ui';
@@ -192,25 +183,6 @@ const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas
     font-size: 0.72rem;
     font-weight: 800;
     text-align: center;
-  }
-  .flash {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    margin-bottom: 1.5rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: 0.9rem;
-    font-size: 0.93rem;
-  }
-  .flash-ok {
-    background: color-mix(in oklab, var(--color-success) 13%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-success) 35%, transparent);
-    color: #bbf7d0;
-  }
-  .flash-error {
-    background: color-mix(in oklab, var(--color-danger) 13%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-danger) 35%, transparent);
-    color: #fecaca;
   }
   .admin-tabbar {
     position: fixed;

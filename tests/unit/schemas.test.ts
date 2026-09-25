@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { toFieldErrors } from '@/schemas/common';
 import { leadInputSchema } from '@/schemas/lead';
-import { settingsInputSchema } from '@/schemas/settings';
 import { vehicleInputSchema } from '@/schemas/vehicle';
 
 const validLead = {
@@ -115,37 +114,5 @@ describe('vehicleInputSchema', () => {
     const r = loadedIn1970.safeParse({ ...validVehicle, modelYear: String(year + 2) });
     expect(r.success).toBe(false);
     if (!r.success) expect(toFieldErrors(r.error).modelYear).toContain(String(year + 1));
-  });
-});
-
-describe('settingsInputSchema', () => {
-  const base = {
-    businessName: 'M&M Veículos',
-    slogan: 'Construindo credibilidade a cada negociação.',
-    whatsapp: '+55 48 9641-0338',
-    phone: '+55 48 9641-0338',
-    instagram: 'https://www.instagram.com/mmveiculos.sc/',
-    facebook: 'https://www.facebook.com/profile.php?id=61573464239367',
-    email: 'MMVEICULOS.SC@GMAIL.COM',
-    city: 'Massaranduba',
-    state: 'SC',
-    sellVehicleCta: 'Anuncie seu veículo',
-    showSoldVehicles: 'on',
-  };
-
-  it('normaliza WhatsApp, Instagram e e-mail', () => {
-    const r = settingsInputSchema.safeParse(base);
-    expect(r.success).toBe(true);
-    if (!r.success) return;
-    expect(r.data.whatsapp).toBe('554896410338');
-    expect(r.data.instagram).toBe('mmveiculos.sc');
-    expect(r.data.email).toBe('mmveiculos.sc@gmail.com');
-    expect(r.data.showSoldVehicles).toBe(true);
-    expect(r.data.address).toBe('');
-  });
-
-  it('rejeita Facebook de outro domínio e WhatsApp sem DDI', () => {
-    expect(settingsInputSchema.safeParse({ ...base, facebook: 'https://evil.example.com/page' }).success).toBe(false);
-    expect(settingsInputSchema.safeParse({ ...base, whatsapp: '4896410338' }).success).toBe(false);
   });
 });

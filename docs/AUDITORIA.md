@@ -8,8 +8,8 @@ build local em Node (testes E2E) e runtime local da Cloudflare (`wrangler dev`/w
 | ESLint                                                                        | ✅ 0 problemas                                                                                                                                                                |
 | Typecheck (`astro check`, TypeScript strictest)                               | ✅ 0 erros, 0 avisos                                                                                                                                                          |
 | Prettier (`format:check`)                                                     | ✅                                                                                                                                                                            |
-| Testes unitários + integração (Vitest)                                        | ✅ 145 passando (inclui adaptadores D1, KV e R2, métricas e redirecionamento)                                                                                                 |
-| Testes E2E (Playwright, desktop + celular)                                    | ✅ 29 passando                                                                                                                                                                |
+| Testes unitários + integração (Vitest)                                        | ✅ 176 passando (inclui adaptadores D1, KV e R2, métricas e redirecionamento)                                                                                                 |
+| Testes E2E (Playwright, desktop + celular)                                    | ✅ 33 passando                                                                                                                                                                |
 | Builds (`cloudflare`, `vercel`, `node`)                                       | ✅ os três compilam                                                                                                                                                           |
 | `npm audit`                                                                   | ✅ 0 vulnerabilidades                                                                                                                                                         |
 | Responsividade (320, 360, 375, 390, 412, 430, 768, 1024, 1280, 1440, 1920 px) | ✅ sem rolagem horizontal (teste E2E)                                                                                                                                         |
@@ -167,6 +167,32 @@ Verificado sem achados nesta fase: SQL injection, XSS, CSRF, open redirect, auto
 (assinatura real + `nosniff`), fotos de propostas só com login, JWT do Cloudflare Access (issuer + audience),
 chaves de teste do Turnstile nunca usadas em produção, dependências (`npm audit`: 0 vulnerabilidades) e varredura
 do histórico do Git por segredos (nenhum encontrado).
+
+Fase 6 (teste completo como cliente e como administrador + novo teste de invasão, 25/09/2026):
+
+Feito no servidor de testes (Node, banco isolado) e no runtime da Cloudflare (`wrangler dev`/workerd com o build de
+produção): 103 verificações automáticas de ataque, os 33 testes de navegador e testes manuais das telas no computador e
+no celular. Correções:
+
+32. **Aviso errado depois de duas ações seguidas:** na lista de veículos, o "voltar para" das ações rápidas levava o
+    aviso anterior na URL; a segunda ação (ex.: "Marcar como vendido") exibia a mensagem da primeira ("marcado como
+    reservado"). O servidor agora limpa os avisos antigos antes de assinar o novo (teste unitário + E2E).
+33. **Login lia o envio inteiro, sem limite de tamanho:** um envio gigante (ex.: 2 MB) no formulário de login era
+    carregado na memória. Agora envios acima de 4 KB (ou sem tamanho declarado) nem são lidos e contam como senha
+    errada (verificado: 2 MB recusado em 40 ms; a senha certa continua entrando).
+34. **Caixas do navegador no painel:** as confirmações usavam o `confirm()` do navegador (caixa no topo da janela, com
+    o endereço do site) e o envio de fotos usava o aviso "sair do site?" do navegador. Tudo virou diálogo desenhado na
+    própria página; o teste E2E falha se qualquer caixa do navegador aparecer.
+
+Verificado sem achados: acesso ao painel e às APIs sem login (16 rotas), sessões forjadas (4 variações), CSRF (Origin de
+outro site, `null`, subdomínio parecido, sem Origin), redirecionamento aberto (7 variações de `next` e `returnTo`),
+XSS armazenado e refletido (conferido em navegador real: nenhuma tag injetada e nenhum alerta em Home, estoque, página
+do veículo, favoritos e painel), SQL injection (13 filtros × 7 payloads), entradas extremas, uploads maliciosos (HTML
+e SVG disfarçados, sem tamanho declarado), IDs de fotos de outro veículo, campos extras no formulário (`id`, `slug`,
+`published` ignorados), aviso falso no painel, comemoração sem aviso assinado, "Sair" invalidando cookie copiado e
+bloqueio após 5 senhas erradas. A tela de configurações foi removida (404 mesmo com login). Observação: no
+`wrangler dev` o proxy local às vezes derruba a conexão quando o Worker recusa (403/413) um envio antes de lê-lo — é
+do ambiente local; o próprio Worker registra a resposta correta.
 
 **Recomendações para os responsáveis (fora do código)**
 

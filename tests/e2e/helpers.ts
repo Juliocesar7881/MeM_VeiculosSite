@@ -18,6 +18,23 @@ export async function fakePhoto(color = '#3b82f6', width = 2400, height = 1800):
     .toBuffer();
 }
 
-export function acceptDialogs(page: Page) {
-  page.on('dialog', (dialog) => void dialog.accept());
+/**
+ * O painel nunca pode usar caixas do navegador (confirm/alert/"sair da página?"): as confirmações
+ * são desenhadas na própria página. Retorna a lista das que apareceram (deve ficar vazia).
+ */
+export function trackNativeDialogs(page: Page): string[] {
+  const seen: string[] = [];
+  page.on('dialog', (dialog) => {
+    seen.push(`${dialog.type()}: ${dialog.message()}`);
+    void dialog.dismiss();
+  });
+  return seen;
+}
+
+/** Confirma (ou cancela) o diálogo de confirmação do painel. */
+export async function answerConfirm(page: Page, title: RegExp | string, button: string) {
+  const dialog = page.getByRole('dialog', { name: title });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: button, exact: true }).click();
+  await expect(dialog).toHaveCount(0);
 }

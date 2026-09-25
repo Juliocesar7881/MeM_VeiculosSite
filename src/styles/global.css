@@ -233,25 +233,26 @@
    *  title    -> nomes de veículo, preços e números de destaque
    *  eyebrow  -> rótulo curto de contexto, em caixa normal (usado com moderação)
    */
+  /* Títulos levemente estreitos, com respiro entre as letras (legíveis também no celular). */
   .display {
-    font-stretch: 78%;
+    font-stretch: 86%;
     font-weight: 620;
-    letter-spacing: -0.03em;
-    line-height: 0.94;
+    letter-spacing: -0.018em;
+    line-height: 0.98;
     text-wrap: balance;
   }
   .heading {
-    font-stretch: 84%;
+    font-stretch: 92%;
     font-weight: 600;
-    letter-spacing: -0.022em;
-    line-height: 1.02;
+    letter-spacing: -0.008em;
+    line-height: 1.1;
     text-wrap: balance;
   }
   .title {
-    font-stretch: 88%;
+    font-stretch: 95%;
     font-weight: 600;
-    letter-spacing: -0.012em;
-    line-height: 1.1;
+    letter-spacing: -0.004em;
+    line-height: 1.15;
   }
   .eyebrow {
     display: inline-flex;
@@ -629,9 +630,9 @@
     color: #fff;
     font-size: 1.4rem;
     font-weight: 600;
-    font-stretch: 86%;
-    letter-spacing: -0.015em;
-    line-height: 1.15;
+    font-stretch: 92%;
+    letter-spacing: -0.008em;
+    line-height: 1.2;
   }
   .prose-mm ul {
     margin: 0.8rem 0 0.8rem 1.2rem;

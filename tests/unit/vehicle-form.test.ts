@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS } from '@/config/site';
+import { SITE_SETTINGS } from '@/config/site';
 import { emptyVehicleValues, parseVehicleForm } from '@/server/vehicle-form';
 
 function form(fields: Record<string, string>): FormData {
@@ -12,7 +12,7 @@ const base = { category: 'carro', brand: 'Toyota', model: 'Corolla', status: 'av
 
 describe('formulário de veículo: Ofertas e Repasses', () => {
   it('cadastro novo já vem marcado nas duas seções', () => {
-    const values = emptyVehicleValues(DEFAULT_SETTINGS);
+    const values = emptyVehicleValues(SITE_SETTINGS);
     expect(values.isOffer).toBe('on');
     expect(values.commercialType).toBe('repasse');
   });

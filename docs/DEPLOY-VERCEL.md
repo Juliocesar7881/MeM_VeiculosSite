@@ -136,7 +136,7 @@ Nunca coloque segredos em arquivos do repositório.
 
 1. **Deploy**. O log deve mostrar `✔ migration aplicada: 0001_initial.sql` e `0002_seed_settings.sql`.
 2. Acesse `https://<projeto>.vercel.app` — o site abre com “Novos veículos em breve” (estoque vazio, nada inventado).
-3. Acesse `/admin`, entre com a senha, confira **Configurações** (dados oficiais já preenchidos) e cadastre o primeiro
+3. Acesse `/admin`, entre com a senha, confira os contatos no site (dados oficiais em `src/config/site.ts`) e cadastre o primeiro
    veículo com fotos.
 
 As próximas migrations rodam sozinhas a cada deploy. Para rodar manualmente contra a produção:
@@ -157,7 +157,7 @@ mais próxima.
 - Compartilhe a URL `*.vercel.app` (ou a URL de um deploy de _Preview_).
 - Com `ALLOW_INDEXING=false`, o `robots.txt` bloqueia buscadores e todas as páginas enviam `noindex` — o Google não
   indexa a versão temporária.
-- Ajustes de textos/contatos são feitos no painel; ajustes de layout, pelo código (cada push gera um novo preview).
+- Ajustes de textos/contatos (`src/config/site.ts`) e de layout são feitos pelo código (cada push gera um novo preview).
 
 ## 12. Domínio (somente no final)
 
@@ -197,7 +197,7 @@ proposta no painel. Sem essas variáveis, nada é enviado.
 
 - [ ] Deploy de produção sem erros; migrations aplicadas
 - [ ] `/admin` exige senha; senha forte guardada em local seguro
-- [ ] Configurações conferidas (WhatsApp 554896410338, Instagram, Facebook, e-mail)
+- [ ] Contatos conferidos (WhatsApp 554896410338, Instagram, Facebook, e-mail)
 - [ ] Endereço e horário preenchidos (se o cliente quiser exibir)
 - [ ] Veículos reais cadastrados com fotos; destaques marcados
 - [ ] Formulário “Anuncie seu veículo” testado de ponta a ponta (proposta chegou no painel)

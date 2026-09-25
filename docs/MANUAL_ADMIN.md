@@ -13,7 +13,12 @@ Guia rápido para quem vai cuidar do site no dia a dia. Funciona no computador e
 > **30 minutos** naquela internet (a tela avisa quantas tentativas restam). Bloqueado, nem a senha certa entra:
 > espere os 30 minutos ou entre por outra rede (ex.: 4G do celular).
 
-No celular, o menu fica na barra de baixo: **Dashboard · Veículos · Novo · Propostas · Ajustes**.
+No celular, o menu fica na barra de baixo: **Dashboard · Veículos · Novo · Propostas**.
+
+**Confirmações e avisos:** antes de excluir, vender, arquivar, tirar do site ou converter uma proposta, o painel mostra
+uma janela de confirmação no meio da tela (com **Cancelar** e o botão da ação). Depois de salvar, um aviso verde aparece
+no canto e some sozinho; ao cadastrar ou publicar um veículo, uma animação comemora. Se tentar sair da página com dados
+não salvos ou fotos ainda enviando, o painel pergunta antes.
 
 ---
 
@@ -83,7 +88,7 @@ Publicado, o veículo sempre aparece na aba **Todos** da página Veículos.
 Em **Veículos → Ações**: **Marcar como oferta / Remover oferta** e **Marcar como repasse / Remover repasse**.
 Ao remover a oferta, o preço anterior fica guardado, mas não aparece.
 
-O texto explicativo sobre repasses é editado em **Configurações → Texto informativo sobre repasses**.
+O texto explicativo geral sobre repasses (condições) é definido pelo responsável técnico do site.
 
 > Destaque, Oferta e Repasse são independentes: um mesmo veículo pode ter os três, só um ou nenhum.
 
@@ -97,7 +102,7 @@ O texto explicativo sobre repasses é editado em **Configurações → Texto inf
 **Ações → Marcar como vendido**. O veículo:
 
 - sai dos destaques;
-- aparece como “Vendido” (no fim da lista do estoque, se “Mostrar vendidos” estiver ligado em Configurações);
+- aparece como “Vendido” no fim da lista do estoque;
 - quem abrir o link verá **“Procurando algo parecido?”** com botão para o WhatsApp.
 
 ## Arquivar
@@ -158,13 +163,10 @@ apagadas e não podem ser recuperadas.
 
 ---
 
-## Editar contatos e redes
+## Contatos, redes e textos do site
 
-**Configurações** (no celular: **Ajustes**) permite alterar: nome, slogan, **WhatsApp** (somente números com 55, ex.:
-`554896410338`), telefone exibido, e-mail, Instagram, Facebook, cidade, estado, **endereço** e **horário** (em branco =
-não aparece no site), “Mostrar veículos vendidos”, o texto do botão “Anuncie seu veículo” e o texto sobre repasses.
-
-Salve e aguarde até 1 minuto para ver no site. Senhas e chaves técnicas não ficam nesta tela.
+WhatsApp, telefone, e-mail, Instagram, Facebook, cidade, endereço, horário e o texto sobre repasses não ficam no
+painel: para mudar algum deles (ou incluir o endereço e o horário), peça ao responsável técnico do site.
 
 ## Dúvidas comuns
 

@@ -58,7 +58,9 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 **Painel (`/admin`)** — Dashboard (com **interesse por veículo**: visualizações e cliques no WhatsApp dos últimos 30
 dias, contados de forma anônima), Veículos (lista com filtros e ações rápidas), Novo veículo, fotos (upload múltiplo,
 arrastar, reordenar, capa, excluir), Propostas (status, WhatsApp do cliente, anotações, **transformar em veículo**,
-exclusão LGPD), Ofertas e Repasses (filtros da lista), Configurações (contatos, redes, textos).
+exclusão LGPD), Ofertas e Repasses (filtros da lista). Confirmações e avisos são desenhados na própria página (nunca
+as caixas do navegador), com animação ao salvar, cadastrar e publicar. Contatos, redes e textos institucionais ficam em
+`src/config/site.ts` (o painel não tem tela de configurações).
 
 **Destaque, Oferta e Repasse são independentes**: `featured`, `is_offer` (+ período e preço anterior) e
 `commercial_type = normal | repasse`. Um carro pode ser destaque + oferta, só repasse, os três, etc.
@@ -275,7 +277,7 @@ wrangler.jsonc  configuração do Worker (bindings D1/KV/R2 e variáveis públic
 
 ## Dados que ainda faltam
 
-Não foram inventados e **não aparecem** no site até serem cadastrados no painel (Configurações):
+Não foram inventados e **não aparecem** no site até serem informados (e incluídos em `src/config/site.ts`):
 endereço completo, horário de funcionamento. Também ficam para depois: domínio definitivo, CNPJ (se desejarem exibir),
 história/tempo de mercado, avaliações e parceiros financeiros. Lista completa em
 [docs/RELATORIO_ENTREGA.md](docs/RELATORIO_ENTREGA.md).

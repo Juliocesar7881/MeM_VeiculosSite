@@ -5,7 +5,7 @@ import { createD1Database } from '@/lib/db/d1';
 import { applyMigrations } from '@/lib/db/migrator';
 import { KvStorage } from '@/lib/storage/kv';
 import { R2Storage } from '@/lib/storage/r2';
-import { DEFAULT_SETTINGS } from '@/config/site';
+import { SITE_SETTINGS } from '@/config/site';
 import { parseInventoryFilters } from '@/schemas/filters';
 import { buildServices } from '@/server/services';
 import { loadMigrationFiles } from '../../scripts/lib/migrations';
@@ -129,7 +129,7 @@ describe('adaptador D1 + storage KV (como no Cloudflare Workers)', () => {
     expect(await readAll(stored!.body)).toBe(pair.large.byteLength);
 
     const result = await services.vehicles.search(parseInventoryFilters(new URLSearchParams('oferta=true')), {
-      ...DEFAULT_SETTINGS,
+      ...SITE_SETTINGS,
     });
     expect(result.items.map((v) => v.id)).toEqual([vehicle.id]);
     expect(result.items[0]?.cover?.largeKey).toBe(image.largeKey);

@@ -145,4 +145,15 @@ describe('avisos do painel assinados', () => {
     expect(await readFlash(swapped, secret)).toBeNull();
     expect(await readFlash(signed, 'outra-chave-com-mais-de-32-caracteres!!')).toBeNull();
   });
+
+  it('ação feita logo depois de outra mostra o aviso novo (não o anterior que estava na URL)', async () => {
+    const first = await flashUrl('/admin/veiculos?status=available', 'Veículo marcado como reservado.', 'ok', secret);
+    const second = await flashUrl(first, 'Veículo marcado como vendido.', 'ok', secret, 'publicado');
+    const url = new URL(second, 'http://x');
+    expect(url.searchParams.getAll('ok')).toEqual(['Veículo marcado como vendido.']);
+    expect(url.searchParams.getAll('fs')).toHaveLength(1);
+    expect(url.searchParams.get('status')).toBe('available');
+    expect(url.searchParams.get('fx')).toBe('publicado');
+    expect(await readFlash(url, secret)).toEqual({ kind: 'ok', message: 'Veículo marcado como vendido.' });
+  });
 });

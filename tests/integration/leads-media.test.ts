@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS } from '@/config/site';
+import { SITE_SETTINGS } from '@/config/site';
 import { leadInputSchema } from '@/schemas/lead';
-import { settingsInputSchema } from '@/schemas/settings';
 import { RATE_LIMITS } from '@/services/rate-limiter';
 import { actor, createTestEnv, vehicleInput, type TestEnv } from '../helpers/env';
 import { makeImage, makePair } from '../helpers/images';
@@ -125,7 +124,7 @@ describe('fotos de veículos', () => {
 
     const order = await env.media.reorderVehicleImages(v.id, [b.id, a.id], actor);
     expect(order.map((i) => i.id)).toEqual([b.id, a.id]);
-    const card = (await env.vehicles.listPublicByIds([v.id], DEFAULT_SETTINGS))[0];
+    const card = (await env.vehicles.listPublicByIds([v.id], SITE_SETTINGS))[0];
     expect(card?.cover?.largeKey).toBe(b.largeKey);
 
     await env.media.deleteVehicleImage(v.id, b.id, actor);
@@ -149,8 +148,8 @@ describe('fotos de veículos', () => {
   });
 });
 
-describe('configurações', () => {
-  it('seed inicial com os dados oficiais', async () => {
+describe('dados institucionais', () => {
+  it('são os dados oficiais da M&M', async () => {
     const s = await env.settings.get();
     expect(s).toMatchObject({
       businessName: 'M&M Veículos',
@@ -163,15 +162,6 @@ describe('configurações', () => {
       state: 'SC',
       showSoldVehicles: true,
     });
-  });
-
-  it('atualiza e lê de volta', async () => {
-    const input = settingsInputSchema.parse({ ...DEFAULT_SETTINGS, showSoldVehicles: '', address: 'Rua Exemplo, 100' });
-    await env.settings.update(input, actor);
-    env.settings.invalidate();
-    const s = await env.settings.get();
-    expect(s.showSoldVehicles).toBe(false);
-    expect(s.address).toBe('Rua Exemplo, 100');
   });
 });
 

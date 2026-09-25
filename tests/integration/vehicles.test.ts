@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_FILTERS, parseInventoryFilters } from '@/schemas/filters';
-import { DEFAULT_SETTINGS } from '@/config/site';
+import { SITE_SETTINGS } from '@/config/site';
 import { actor, createTestEnv, vehicleInput, type TestEnv } from '../helpers/env';
 import { makePair } from '../helpers/images';
 
 let env: TestEnv;
-const settings = { ...DEFAULT_SETTINGS, showSoldVehicles: true };
+const settings = { ...SITE_SETTINGS, showSoldVehicles: true };
 const filters = (qs = '') => parseInventoryFilters(new URLSearchParams(qs));
 
 beforeEach(async () => {

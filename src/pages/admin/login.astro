@@ -4,7 +4,10 @@ import Logo from '@/components/brand/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 import { authConfigProblem, authenticateAdmin, safeAdminRedirect, startAdminSession } from '@/server/admin-auth';
 import { attemptAdminLogin } from '@/server/admin-login';
-import { clientIp, socketAddressOf } from '@/server/http';
+import { clientIp, contentLength, socketAddressOf } from '@/server/http';
+
+/** Tamanho máximo do envio do login (a senha tem no máximo 256 caracteres). */
+const LOGIN_MAX_BODY = 4096;
 
 const { container } = Astro.locals;
 const { config } = container;
@@ -25,8 +28,13 @@ if (config.auth.mode === 'cloudflare-access') {
 
   if (Astro.request.method === 'POST') {
     const ip = clientIp(Astro.request, socketAddressOf(Astro), container.platform.name);
-    // O corpo só é lido se o IP não estiver bloqueado.
-    const readPassword = async () => String((await Astro.request.formData().catch(() => null))?.get('password') ?? '');
+    // O corpo só é lido se o IP não estiver bloqueado, e só se for pequeno (o formulário tem ~100 bytes):
+    // um envio gigante ou sem tamanho declarado conta como senha errada, sem ocupar a memória do servidor.
+    const length = contentLength(Astro.request);
+    const readPassword = async () =>
+      length !== null && length <= LOGIN_MAX_BODY
+        ? String((await Astro.request.formData().catch(() => null))?.get('password') ?? '')
+        : '';
     const result = await attemptAdminLogin(container.rateLimiter, ip, readPassword, config.auth.passwordHash as string);
     if (result.ok) {
       await startAdminSession(Astro.cookies, config, Astro.url.protocol === 'https:');

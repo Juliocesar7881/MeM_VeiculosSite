@@ -1,36 +1,96 @@
+import { confirmDialog, confirmOptionsFrom, leaveWarning } from './confirm-dialog';
+import { initFeedback } from './feedback';
+
+/** Estado "salvando" no botão que enviou o formulário (e evita envio duplo). */
+function markBusy(button: HTMLButtonElement) {
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  button.classList.add('is-busy');
+  const label = button.dataset.busyLabel;
+  const text = Array.from(button.childNodes).findLast(
+    (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+  );
+  if (label && text) {
+    button.dataset.idleLabel = text.textContent ?? '';
+    text.textContent = ` ${label}`;
+  }
+}
+
+function clearBusy(button: HTMLButtonElement) {
+  button.disabled = false;
+  button.removeAttribute('aria-busy');
+  button.classList.remove('is-busy');
+  const idle = button.dataset.idleLabel;
+  if (idle === undefined) return;
+  const text = Array.from(button.childNodes).findLast((node) => node.nodeType === Node.TEXT_NODE);
+  if (text) text.textContent = idle;
+  delete button.dataset.idleLabel;
+}
+
 /** Comportamentos gerais do painel (sem dependências). */
 export function initAdminUi() {
-  // Confirmação para ações destrutivas: <form data-confirm="Mensagem">
+  // Confirmações na própria página: <form data-confirm-title="Excluir?" data-confirm="Detalhes">
+  // (ou os mesmos atributos no botão). Com envio de fotos em andamento, pede para confirmar a saída.
   document.addEventListener(
     'submit',
     (event) => {
       const form = event.target as HTMLFormElement | null;
+      if (!form) return;
       const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
-      const message = submitter?.dataset.confirm ?? form?.dataset.confirm;
-      if (message && !window.confirm(message)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        return;
+      if (form.dataset.confirmed === 'true') {
+        delete form.dataset.confirmed;
+      } else {
+        const own = (submitter && confirmOptionsFrom(submitter)) ?? confirmOptionsFrom(form);
+        const leaving = leaveWarning(form);
+        if (own || leaving) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          void (async () => {
+            if (leaving && !(await confirmDialog(leaving))) return;
+            if (own && !(await confirmDialog(own))) return;
+            form.dataset.confirmed = 'true';
+            form.requestSubmit(submitter ?? undefined);
+          })();
+          return;
+        }
       }
-      // Evita envio duplo
       if (submitter && !submitter.hasAttribute('data-allow-repeat')) {
-        window.setTimeout(() => {
-          submitter.disabled = true;
-          submitter.setAttribute('aria-busy', 'true');
-        }, 0);
+        window.setTimeout(() => markBusy(submitter), 0);
       }
     },
     true,
   );
 
+  // Links internos com envio de fotos em andamento: confirma antes de sair.
+  document.addEventListener('click', (event) => {
+    const link = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (link.target === '_blank' || link.hasAttribute('download')) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+    const leaving = leaveWarning();
+    if (!leaving) return;
+    event.preventDefault();
+    void confirmDialog(leaving).then((ok) => {
+      if (ok) window.location.assign(url.href);
+    });
+  });
+
+  // Voltar pelo navegador (página restaurada do cache): botões voltam ao normal.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    document.querySelectorAll<HTMLButtonElement>('button.is-busy').forEach(clearBusy);
+  });
+
   // Remove mensagens (?ok= / ?erro=) da URL para não reaparecerem ao atualizar.
   const url = new URL(window.location.href);
   if (url.searchParams.has('ok') || url.searchParams.has('erro')) {
-    url.searchParams.delete('ok');
-    url.searchParams.delete('erro');
-    url.searchParams.delete('fs');
+    for (const key of ['ok', 'erro', 'fs', 'fx']) url.searchParams.delete(key);
     window.history.replaceState(null, '', url.pathname + (url.search || '') + url.hash);
   }
+
+  initFeedback();
 
   // Menus <details data-menu>: fecha ao clicar fora ou abrir outro.
   document.addEventListener('click', (event) => {
@@ -40,7 +100,7 @@ export function initAdminUi() {
     });
   });
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
+    if (event.key !== 'Escape' || document.querySelector('dialog[open]')) return;
     document.querySelectorAll<HTMLDetailsElement>('details[data-menu][open]').forEach((menu) => {
       menu.open = false;
       menu.querySelector('summary')?.focus();

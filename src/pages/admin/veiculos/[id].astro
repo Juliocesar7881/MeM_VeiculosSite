@@ -28,8 +28,18 @@ if (Astro.request.method === 'POST' && admin) {
   const parsed = parseVehicleForm(await formDataOrEmpty(Astro.request));
   if (parsed.ok) {
     try {
-      await container.vehicles.update(id, parsed.data, admin);
-      return Astro.redirect(await flash.url(`/admin/veiculos/${id}`, 'Alterações salvas.'), 303);
+      const updated = await container.vehicles.update(id, parsed.data, admin);
+      // Saiu do rascunho para o site: comemora a publicação.
+      const published = !vehicle.published && updated.published;
+      return Astro.redirect(
+        await flash.url(
+          `/admin/veiculos/${id}`,
+          published ? 'Alterações salvas. O veículo está no site.' : 'Alterações salvas.',
+          'ok',
+          published ? 'publicado' : undefined,
+        ),
+        303,
+      );
     } catch (error) {
       values = parsed.values;
       errors = { _form: isAppError(error) ? error.message : 'Não foi possível salvar. Tente novamente.' };

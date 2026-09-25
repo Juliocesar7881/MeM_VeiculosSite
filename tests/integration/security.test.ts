@@ -67,7 +67,6 @@ describe('sessão do painel encerrada no servidor', () => {
 
   it('o corte não aparece nas configurações do site', async () => {
     await env.settings.revokeAdminSessions(actor);
-    env.settings.invalidate();
     expect(Object.keys(await env.settings.get())).not.toContain('authSessionsValidAfter');
     expect(await env.settings.sessionsValidAfter()).toBeGreaterThan(0);
   });

@@ -35,7 +35,14 @@ const err = (name: string) => errors[name];
 const errorCount = Object.keys(errors).length;
 ---
 
-<form method="post" class="vehicle-form grid gap-6" novalidate>
+<!-- data-unsaved: voltou do servidor com erros, ou seja, os dados digitados ainda não foram salvos. -->
+<form
+  method="post"
+  class="vehicle-form grid gap-6"
+  novalidate
+  data-vehicle-form
+  data-unsaved={errorCount > 0 ? '' : undefined}
+>
   {errorCount > 0 && (
     <div class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-red-200" role="alert">
       <p class="font-semibold">
@@ -412,11 +419,11 @@ const errorCount = Object.keys(errors).length;
       Cancelar
     </a>
     {mode === 'create' ? (
-      <button type="submit" class="btn btn-gold">
+      <button type="submit" class="btn btn-gold" data-busy-label="Salvando…">
         <Icon name="image" size={18} /> Salvar e adicionar fotos
       </button>
     ) : (
-      <button type="submit" class="btn btn-gold">
+      <button type="submit" class="btn btn-gold" data-busy-label="Salvando…">
         <Icon name="check" size={18} /> Salvar alterações
       </button>
     )}
@@ -493,6 +500,22 @@ const errorCount = Object.keys(errors).length;
 </style>
 
 <script>
+  import { setLeaveWarning } from '@/features/admin/confirm-dialog';
+
+  // Alterações não salvas: sair por um link do painel pede confirmação (na própria página).
+  const vehicleForm = document.querySelector<HTMLFormElement>('[data-vehicle-form]');
+  if (vehicleForm) {
+    const markUnsaved = () =>
+      setLeaveWarning(vehicleForm, {
+        title: 'Sair sem salvar?',
+        message: 'Você alterou os dados deste veículo e ainda não salvou. As alterações serão perdidas.',
+        ok: 'Sair sem salvar',
+      });
+    if (vehicleForm.hasAttribute('data-unsaved')) markUnsaved();
+    vehicleForm.addEventListener('input', markUnsaved, { once: true });
+    vehicleForm.addEventListener('change', markUnsaved, { once: true });
+  }
+
   // Formatação leve dos campos numéricos (o servidor aceita os dois formatos).
   document.querySelectorAll<HTMLInputElement>('[data-int-input]').forEach((input) => {
     input.addEventListener('input', () => {

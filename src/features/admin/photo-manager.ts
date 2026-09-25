@@ -1,4 +1,5 @@
 import { extensionFor, ImageProcessingError, makeImagePair, type PairOptions } from '../image-compress';
+import { confirmDialog, setLeaveWarning } from './confirm-dialog';
 
 interface Config extends PairOptions {
   vehicleId: string;
@@ -31,6 +32,9 @@ export function initPhotoManager() {
   const errorBox = root.querySelector<HTMLElement>('[data-photo-error]');
   const countLabel = root.querySelector<HTMLElement>('[data-photo-count]');
   const empty = root.querySelector<HTMLElement>('[data-photo-empty]');
+  const progress = root.querySelector<HTMLElement>('[data-photo-progress]');
+  const progressText = progress?.querySelector<HTMLElement>('[data-photo-progress-text]');
+  const progressBar = progress?.querySelector<HTMLElement>('[data-photo-progress-bar]');
   const template = document.querySelector<HTMLTemplateElement>('[data-photo-template]');
   if (!list || !template) return;
   const api = `/api/admin/vehicles/${config.vehicleId}/images`;
@@ -45,6 +49,13 @@ export function initPhotoManager() {
     if (!errorBox) return;
     errorBox.textContent = message;
     errorBox.hidden = !message;
+  };
+
+  /** Destaque rápido na foto que mudou de lugar. */
+  const flash = (li: HTMLLIElement) => {
+    li.classList.remove('is-moved');
+    void li.offsetWidth; // reinicia a animação
+    li.classList.add('is-moved');
   };
 
   // ---------------------------------------------------------------- ordem
@@ -69,6 +80,7 @@ export function initPhotoManager() {
     if (!target) return;
     if (delta < 0) list.insertBefore(li, target);
     else list.insertBefore(li, target.nextSibling);
+    flash(li);
     saveOrder();
   };
 
@@ -80,16 +92,29 @@ export function initPhotoManager() {
     if (btn.dataset.move) move(li, Number(btn.dataset.move));
     if (btn.hasAttribute('data-make-cover')) {
       list.prepend(li);
+      flash(li);
       saveOrder();
     }
     if (btn.hasAttribute('data-delete')) {
-      if (!window.confirm('Excluir esta foto? Esta ação não pode ser desfeita.')) return;
+      const confirmed = await confirmDialog({
+        title: 'Excluir esta foto?',
+        message: 'Ela sai do anúncio e é apagada de vez. Esta ação não pode ser desfeita.',
+        confirmLabel: 'Excluir foto',
+        tone: 'danger',
+        imageSrc: li.querySelector('img')?.currentSrc || undefined,
+      });
+      if (!confirmed) return;
       btn.disabled = true;
+      li.classList.add('is-deleting');
       const res = await fetch(`${api}/${li.dataset.photoId}`, { method: 'DELETE' }).catch(() => null);
       if (res?.ok) {
-        li.remove();
-        refresh();
+        li.classList.add('is-removed');
+        window.setTimeout(() => {
+          li.remove();
+          refresh();
+        }, 260);
       } else {
+        li.classList.remove('is-deleting');
         btn.disabled = false;
         showError(res ? await readError(res) : 'Falha de conexão ao excluir a foto.');
       }
@@ -134,7 +159,8 @@ export function initPhotoManager() {
     return li;
   };
 
-  const upload = async (file: File) => {
+  /** Envia uma foto; retorna se deu certo. */
+  const upload = async (file: File): Promise<boolean> => {
     const li = createItem();
     const status = li.querySelector<HTMLElement>('.photo-status');
     const img = li.querySelector('img');
@@ -152,7 +178,9 @@ export function initPhotoManager() {
       const data = (await res.json()) as { image: UploadedImage };
       li.dataset.photoId = data.image.id;
       li.classList.remove('is-pending');
+      li.classList.add('is-done');
       status?.remove();
+      window.setTimeout(() => li.classList.remove('is-done'), 1600);
       if (img) {
         const blobUrl = img.src;
         img.src = data.image.thumbUrl;
@@ -161,6 +189,7 @@ export function initPhotoManager() {
         img.alt = 'Foto do veículo';
         img.addEventListener('load', () => URL.revokeObjectURL(blobUrl), { once: true });
       }
+      return true;
     } catch (error) {
       li.classList.add('is-failed');
       if (status) status.textContent = 'Falhou';
@@ -171,8 +200,35 @@ export function initPhotoManager() {
         li.remove();
         refresh();
       }, 4000);
+      return false;
     } finally {
       refresh();
+    }
+  };
+
+  // Envios em andamento (várias seleções seguidas entram na mesma fila).
+  let queued = 0;
+  let finished = 0;
+  let failed = 0;
+  const showProgress = () => {
+    if (!progress) return;
+    const active = queued > 0 && finished < queued;
+    progress.hidden = !active && finished === 0;
+    progress.classList.toggle('is-complete', !active && !failed);
+    if (progressText) {
+      progressText.textContent = active
+        ? `Enviando foto ${finished + 1} de ${queued}… Não feche esta página.`
+        : failed
+          ? `${finished - failed} de ${finished} fotos enviadas.`
+          : finished === 1
+            ? 'Foto enviada!'
+            : 'Fotos enviadas!';
+    }
+    if (progressBar) progressBar.style.transform = `scaleX(${queued ? finished / queued : 1})`;
+    if (!active) {
+      window.setTimeout(() => {
+        if (queued === 0) progress.hidden = true;
+      }, 2200);
     }
   };
 
@@ -181,8 +237,27 @@ export function initPhotoManager() {
     const available = config.maxPhotos - list.querySelectorAll('li').length;
     const selected = Array.from(files).slice(0, Math.max(0, available));
     if (selected.length < files.length) showError(`Limite de ${config.maxPhotos} fotos por veículo.`);
+    if (!selected.length) return;
+    // Sair da página interromperia o envio: o painel pede confirmação (na própria tela).
+    setLeaveWarning(root, {
+      title: 'Fotos ainda sendo enviadas',
+      message: 'Se sair agora, as fotos que ainda não terminaram de enviar serão perdidas.',
+      ok: 'Sair mesmo assim',
+    });
+    queued += selected.length;
     // Sequencial: evita estourar memória no celular e mantém a ordem de escolha.
-    for (const file of selected) await upload(file);
+    for (const file of selected) {
+      showProgress();
+      if (!(await upload(file))) failed += 1;
+      finished += 1;
+    }
+    if (finished >= queued) {
+      showProgress();
+      queued = 0;
+      finished = 0;
+      failed = 0;
+      setLeaveWarning(root, null);
+    }
   };
 
   input?.addEventListener('change', () => {
@@ -206,8 +281,4 @@ export function initPhotoManager() {
       });
     });
   }
-
-  window.addEventListener('beforeunload', (event) => {
-    if (list.querySelector('.is-pending')) event.preventDefault();
-  });
 }

@@ -48,12 +48,26 @@ const data: [string, string][] = (
   ] as [string, string][]
 ).filter(([, v]) => v);
 
-const statusActions: { status: LeadStatus; label: string; icon: IconName; confirm?: string }[] = [
+const statusActions: {
+  status: LeadStatus;
+  label: string;
+  icon: IconName;
+  confirm?: { title: string; message: string; ok: string };
+}[] = [
   { status: 'reviewing', label: 'Em análise', icon: 'search' },
   { status: 'contacted', label: 'Contatado', icon: 'whatsapp' },
   { status: 'negotiating', label: 'Em negociação', icon: 'handshake' },
   { status: 'accepted', label: 'Aceitar', icon: 'check-circle' },
-  { status: 'rejected', label: 'Recusar', icon: 'x', confirm: 'Marcar esta proposta como recusada?' },
+  {
+    status: 'rejected',
+    label: 'Recusar',
+    icon: 'x',
+    confirm: {
+      title: 'Recusar esta proposta?',
+      message: 'Ela fica marcada como recusada. Dá para mudar o status depois, se precisar.',
+      ok: 'Recusar',
+    },
+  },
   { status: 'archived', label: 'Arquivar', icon: 'archive' },
 ];
 const action = `/admin/propostas/${lead.id}/acao`;
@@ -81,7 +95,9 @@ const action = `/admin/propostas/${lead.id}/acao`;
       <form
         method="post"
         action={action}
-        data-confirm="Criar um RASCUNHO de veículo com os dados e fotos desta proposta? Nada será publicado automaticamente."
+        data-confirm-title="Transformar em veículo?"
+        data-confirm="Vamos criar um rascunho com os dados e as fotos desta proposta. Nada é publicado automaticamente."
+        data-confirm-ok="Criar rascunho"
       >
         <input type="hidden" name="action" value="convert" />
         <button type="submit" class="btn btn-gold">
@@ -178,7 +194,13 @@ const action = `/admin/propostas/${lead.id}/acao`;
         </h2>
         <div class="mt-4 grid grid-cols-2 gap-2">
           {statusActions.map((item) => (
-            <form method="post" action={action} data-confirm={item.confirm}>
+            <form
+              method="post"
+              action={action}
+              data-confirm-title={item.confirm?.title}
+              data-confirm={item.confirm?.message}
+              data-confirm-ok={item.confirm?.ok}
+            >
               <input type="hidden" name="action" value="status" />
               <input type="hidden" name="status" value={item.status} />
               <button
@@ -211,7 +233,7 @@ const action = `/admin/propostas/${lead.id}/acao`;
             maxlength="4000"
             placeholder="Valor avaliado, condições, próximos passos..."
           >{lead.adminNotes ?? ''}</textarea>
-          <button type="submit" class="btn btn-ghost btn-sm justify-self-start">
+          <button type="submit" class="btn btn-ghost btn-sm justify-self-start" data-busy-label="Salvando…">
             Salvar anotações
           </button>
         </form>
@@ -228,7 +250,10 @@ const action = `/admin/propostas/${lead.id}/acao`;
           method="post"
           action={action}
           class="mt-4"
-          data-confirm="Excluir DEFINITIVAMENTE esta proposta e todas as fotos? Esta ação não pode ser desfeita."
+          data-confirm-title="Excluir esta proposta de vez?"
+          data-confirm="A proposta e todas as fotos enviadas pelo cliente serão apagadas definitivamente. Esta ação não pode ser desfeita."
+          data-confirm-ok="Excluir definitivamente"
+          data-confirm-tone="danger"
         >
           <input type="hidden" name="action" value="delete" />
           <button type="submit" class="btn btn-danger btn-sm">

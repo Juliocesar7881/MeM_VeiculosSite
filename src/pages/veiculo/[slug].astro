@@ -135,14 +135,21 @@ const preload = cover
   <div class="container-site pb-28 pt-5 lg:pb-8" data-vehicle-id={vehicle.id}>
     <Breadcrumbs items={breadcrumbs} class="mb-5" />
 
-    <div class="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
+    <!--
+      Computador: galeria e detalhes na coluna da esquerda; resumo fixo na direita (sem vão embaixo da foto).
+      Celular: galeria → resumo → detalhes.
+    -->
+    <div class="vehicle-layout">
       <!-- Galeria -->
-      <div class="min-w-0">
+      <div class="vehicle-gallery min-w-0">
         <Gallery images={vehicle.images} alt={`${fullName} ${years}`} sold={sold} transitionPath={pagePath} />
       </div>
 
       <!-- Resumo e ação -->
-      <aside class="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start" aria-label="Resumo do veículo">
+      <aside
+        class="vehicle-aside lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start"
+        aria-label="Resumo do veículo"
+      >
         <Badges vehicle={vehicle} max={3} />
         <p class="mt-5 text-base font-medium text-mist-400">{vehicle.brand}</p>
         <h1 class="display mt-1 text-[2.9rem] text-white sm:text-6xl">
@@ -256,11 +263,9 @@ const preload = cover
           {location}
         </p>
       </aside>
-    </div>
 
-    <!-- Detalhes -->
-    <div class="mt-14 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
-      <div class="min-w-0 space-y-12">
+      <!-- Detalhes -->
+      <div class="vehicle-details min-w-0 space-y-12">
         {vehicle.description && (
           <section aria-labelledby="descricao">
             <h2 id="descricao" class="heading text-2xl text-white">
@@ -275,7 +280,7 @@ const preload = cover
             <h2 id="opcionais" class="heading text-2xl text-white">
               Opcionais
             </h2>
-            <ul class="mt-5 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+            <ul class="mt-5 grid gap-x-8 gap-y-3.5 sm:grid-cols-2">
               {vehicle.features.map((feature) => (
                 <li class="flex items-start gap-2.5 text-mist-100">
                   <Icon name="check-circle" size={19} class="mt-0.5 shrink-0 text-gold-400" />
@@ -285,21 +290,21 @@ const preload = cover
             </ul>
           </section>
         )}
-      </div>
 
-      <section aria-labelledby="ficha">
-        <h2 id="ficha" class="heading text-2xl text-white">
-          Ficha técnica
-        </h2>
-        <dl class="mt-5 divide-y divide-white/[0.07] rounded-2xl border hairline bg-ink-850 px-5">
-          {specs.map(([label, value]) => (
-            <div class="flex items-center justify-between gap-4 py-3.5 text-sm">
-              <dt class="text-mist-400">{label}</dt>
-              <dd class="text-right font-medium text-white tabular">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+        <section aria-labelledby="ficha">
+          <h2 id="ficha" class="heading text-2xl text-white">
+            Ficha técnica
+          </h2>
+          <dl class="specs mt-5 rounded-2xl border hairline bg-ink-850">
+            {specs.map(([label, value]) => (
+              <div class="spec">
+                <dt class="text-mist-400">{label}</dt>
+                <dd class="text-right font-medium text-white tabular">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
     </div>
 
     {similar.length > 0 && (
@@ -339,6 +344,60 @@ const preload = cover
 </BaseLayout>
 
 <style>
+  .vehicle-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'gallery' 'aside' 'details';
+    gap: 2.5rem;
+  }
+  .vehicle-gallery {
+    grid-area: gallery;
+  }
+  .vehicle-aside {
+    grid-area: aside;
+  }
+  .vehicle-details {
+    grid-area: details;
+  }
+  @media (min-width: 1024px) {
+    .vehicle-layout {
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas: 'gallery aside' 'details aside';
+      column-gap: 2.5rem;
+      row-gap: 3rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .vehicle-layout {
+      column-gap: 3.5rem;
+    }
+  }
+  /* Ficha técnica: uma coluna no celular, duas no computador, separadas por fios. */
+  .specs {
+    display: grid;
+    padding-inline: 1.25rem;
+  }
+  .spec {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.95rem;
+    font-size: 0.93rem;
+  }
+  .spec + .spec {
+    border-top: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  @media (min-width: 640px) {
+    .specs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2.5rem;
+    }
+    .spec:nth-child(2) {
+      border-top: 0;
+    }
+  }
   /* Destaques em grade 2x2 separada por fios, sem caixinhas. */
   .highlights li:nth-child(2n) {
     padding-left: 1.1rem;

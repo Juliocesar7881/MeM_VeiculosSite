@@ -14,14 +14,24 @@ interface Props {
 const { vehicle: v, returnTo } = Astro.props;
 const action = `/admin/veiculos/${v.id}/acao`;
 
-const items: { action: VehicleQuickAction; label: string; icon: IconName; confirm?: string; danger?: boolean }[] = [];
+/** Confirmação exibida na própria página antes da ação (ver features/admin/confirm-dialog.ts). */
+interface Confirm {
+  title: string;
+  message: string;
+  ok: string;
+}
+const items: { action: VehicleQuickAction; label: string; icon: IconName; confirm?: Confirm; danger?: boolean }[] = [];
 if (!v.published && v.status !== 'archived') items.push({ action: 'publish', label: 'Publicar no site', icon: 'eye' });
 if (v.published)
   items.push({
     action: 'unpublish',
     label: 'Tirar do site (rascunho)',
     icon: 'eye-off',
-    confirm: 'Tirar este veículo do site? Ele volta a ser rascunho e fica só no painel.',
+    confirm: {
+      title: 'Tirar este veículo do site?',
+      message: 'Ele volta a ser rascunho e fica só no painel, até você publicar de novo.',
+      ok: 'Tirar do site',
+    },
   });
 if (v.status !== 'available' && v.status !== 'draft')
   items.push({ action: 'mark-available', label: 'Marcar como disponível', icon: 'check' });
@@ -32,7 +42,11 @@ if (v.status !== 'sold' && v.status !== 'archived')
     action: 'mark-sold',
     label: 'Marcar como vendido',
     icon: 'handshake',
-    confirm: 'Marcar este veículo como VENDIDO?',
+    confirm: {
+      title: 'Marcar como vendido?',
+      message: 'O anúncio passa a mostrar o selo “Vendido” e sai dos destaques da Home.',
+      ok: 'Marcar como vendido',
+    },
   });
 items.push(
   v.featured
@@ -54,15 +68,22 @@ if (v.status !== 'archived')
     action: 'archive',
     label: 'Arquivar',
     icon: 'archive',
-    confirm: 'Arquivar este veículo? Ele sai do site, mas continua no painel.',
+    confirm: {
+      title: 'Arquivar este veículo?',
+      message: 'Ele sai do site, mas continua guardado no painel.',
+      ok: 'Arquivar',
+    },
   });
 items.push({
   action: 'delete',
   label: 'Excluir',
   icon: 'trash',
   danger: true,
-  confirm:
-    'Excluir este veículo? As fotos serão apagadas e ele deixará de aparecer no painel. Esta ação não pode ser desfeita.',
+  confirm: {
+    title: 'Excluir este veículo?',
+    message: 'As fotos serão apagadas e ele deixará de aparecer no painel. Esta ação não pode ser desfeita.',
+    ok: 'Excluir veículo',
+  },
 });
 const offerWarning = v.isOffer && !isOfferActive(v);
 ---
@@ -84,7 +105,14 @@ const offerWarning = v.isOffer && !isOfferActive(v);
     {offerWarning && <p class="px-3 py-1.5 text-xs text-gold-300">Oferta fora do período definido.</p>}
     <div class="my-1 border-t hairline"></div>
     {items.map((item) => (
-      <form method="post" action={action} data-confirm={item.confirm}>
+      <form
+        method="post"
+        action={action}
+        data-confirm-title={item.confirm?.title}
+        data-confirm={item.confirm?.message}
+        data-confirm-ok={item.confirm?.ok}
+        data-confirm-tone={item.danger ? 'danger' : undefined}
+      >
         <input type="hidden" name="action" value={item.action} />
         <input type="hidden" name="returnTo" value={returnTo} />
         <button type="submit" class:list={['menu-item w-full', { 'is-danger': item.danger }]} role="menuitem">

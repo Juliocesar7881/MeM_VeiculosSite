@@ -1,0 +1,546 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import type { FlashEffect } from '@/server/flash';
+
+interface Props {
+  ok: string | null;
+  erro: string | null;
+  effect: FlashEffect | null;
+}
+
+const { ok, erro, effect } = Astro.props;
+const CELEBRATIONS: Record<FlashEffect, { title: string; subtitle: string }> = {
+  novo: { title: 'Veículo cadastrado!', subtitle: 'Agora é só adicionar as fotos.' },
+  publicado: { title: 'Publicado no site!', subtitle: 'O veículo já aparece para os clientes.' },
+};
+const celebration = ok && effect ? CELEBRATIONS[effect] : null;
+---
+
+{(ok || erro) && (
+  <div class="toast-region">
+    {ok && (
+      <div class="toast toast-ok" role="status" data-toast data-autoclose="5200">
+        <span class="toast-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle class="toast-ring" cx="12" cy="12" r="9" pathLength="1" />
+            <path
+              class="toast-tick"
+              d="m8 12.3 2.7 2.7L16.2 9.5"
+              pathLength="1"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <p class="toast-text">{ok}</p>
+        <button type="button" class="toast-close" aria-label="Fechar aviso" data-toast-close>
+          <Icon name="x" size={16} />
+        </button>
+        <span class="toast-timer" aria-hidden="true" />
+      </div>
+    )}
+    {erro && (
+      <div class="toast toast-error" role="alert" data-toast>
+        <span class="toast-icon" aria-hidden="true">
+          <Icon name="alert" size={21} />
+        </span>
+        <p class="toast-text">{erro}</p>
+        <button type="button" class="toast-close" aria-label="Fechar aviso" data-toast-close>
+          <Icon name="x" size={16} />
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+{celebration && (
+  <div class="celebrate" data-celebrate aria-hidden="true" hidden>
+    <div class="celebrate-card">
+      <div class="celebrate-stage">
+        <span class="celebrate-confetti" data-confetti />
+        <span class="celebrate-lines">
+          <i />
+          <i />
+          <i />
+        </span>
+        <svg class="celebrate-car" viewBox="0 0 120 56" width="168" height="78">
+          <defs>
+            <linearGradient id="celebrate-gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f8d970" />
+              <stop offset="1" stop-color="#d8a813" />
+            </linearGradient>
+          </defs>
+          <path
+            class="celebrate-body"
+            d="M10 40V33q0-4 4-4.5L32 26 44 15q2-2 5-2h25q3 0 5 2l11 11 14 2q6 1 6 6v6q0 2-2 2H98a10 10 0 0 0-20 0H42a10 10 0 0 0-20 0H12q-2 0-2-2Z"
+            fill="url(#celebrate-gold)"
+          />
+          <path d="M47.5 26 51 17.5h9V26ZM64 17.5h9.5l8 8.5H64Z" fill="#15181b" />
+          <path d="M103 31.5h4" stroke="#fff" stroke-width="2.4" stroke-linecap="round" />
+          <g class="celebrate-wheel" style="transform-origin: 32px 42px">
+            <circle cx="32" cy="42" r="8" fill="#0d0f11" stroke="#f2c12e" stroke-width="2" />
+            <path d="M32 36.5v11M26.5 42h11" stroke="#7d848d" stroke-width="1.6" stroke-linecap="round" />
+          </g>
+          <g class="celebrate-wheel" style="transform-origin: 88px 42px">
+            <circle cx="88" cy="42" r="8" fill="#0d0f11" stroke="#f2c12e" stroke-width="2" />
+            <path d="M88 36.5v11M82.5 42h11" stroke="#7d848d" stroke-width="1.6" stroke-linecap="round" />
+          </g>
+        </svg>
+        <span class="celebrate-check">
+          <Icon name="check" size={22} strokeWidth={2.6} />
+        </span>
+      </div>
+      <p class="celebrate-title">{celebration.title}</p>
+      <p class="celebrate-sub">{celebration.subtitle}</p>
+    </div>
+  </div>
+)}
+
+<style is:global>
+  /* ------------------------------------------------------------ avisos (toast) */
+  .toast-region {
+    position: fixed;
+    z-index: 70;
+    top: calc(3.5rem + 0.75rem);
+    inset-inline: 1rem;
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+    pointer-events: none;
+  }
+  @media (min-width: 1024px) {
+    .toast-region {
+      top: 1.25rem;
+      left: auto;
+      right: 1.5rem;
+      justify-items: end;
+    }
+  }
+  .toast {
+    position: relative;
+    display: flex;
+    width: min(100%, 26rem);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 0.6rem 0.85rem 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--color-ink-800) 92%, transparent);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.85);
+    backdrop-filter: blur(14px);
+    pointer-events: auto;
+    animation: toast-in 520ms var(--ease-expo) both;
+  }
+  .toast.is-leaving {
+    animation: toast-out 260ms ease-in both;
+  }
+  .toast-ok {
+    border-color: color-mix(in oklab, var(--color-success) 40%, transparent);
+  }
+  .toast-error {
+    border-color: color-mix(in oklab, var(--color-danger) 45%, transparent);
+  }
+  .toast-icon {
+    display: grid;
+    width: 2.1rem;
+    height: 2.1rem;
+    flex: none;
+    place-items: center;
+    border-radius: 999px;
+  }
+  .toast-ok .toast-icon {
+    background: color-mix(in oklab, var(--color-success) 16%, transparent);
+    color: #86efac;
+  }
+  .toast-error .toast-icon {
+    background: color-mix(in oklab, var(--color-danger) 16%, transparent);
+    color: #fca5a5;
+  }
+  .toast-ring,
+  .toast-tick {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  .toast-ring {
+    animation: adm-draw 520ms 120ms var(--ease-out-soft) forwards;
+  }
+  .toast-tick {
+    animation: adm-draw 360ms 480ms var(--ease-out-soft) forwards;
+  }
+  .toast-text {
+    flex: 1;
+    font-size: 0.93rem;
+    font-weight: 550;
+    color: var(--color-mist-100);
+  }
+  .toast-close {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    place-items: center;
+    border-radius: 0.6rem;
+    color: var(--color-mist-400);
+  }
+  .toast-close:hover {
+    background: color-mix(in oklab, white 8%, transparent);
+    color: #fff;
+  }
+  .toast-timer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--color-success);
+    transform-origin: left;
+    animation: toast-timer 5200ms linear both;
+  }
+  .toast.is-paused .toast-timer {
+    animation-play-state: paused;
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-14px) scale(0.96);
+    }
+  }
+  @keyframes toast-out {
+    to {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.97);
+    }
+  }
+  @keyframes toast-timer {
+    to {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes adm-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* ----------------------------------------------------- diálogo de confirmação */
+  .confirm-dialog {
+    width: min(calc(100% - 2rem), 27rem);
+    max-width: none;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    overflow: visible;
+  }
+  .confirm-dialog::backdrop {
+    background: rgb(4 5 6 / 0.72);
+    backdrop-filter: blur(4px);
+    animation: adm-fade-in 180ms ease both;
+  }
+  .confirm-dialog.is-closing::backdrop {
+    animation: adm-fade-out 150ms ease both;
+  }
+  .confirm-card {
+    display: grid;
+    justify-items: center;
+    gap: 0.6rem;
+    padding: 1.6rem 1.4rem 1.3rem;
+    border-radius: 1.3rem;
+    background: var(--color-ink-800);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    box-shadow: 0 32px 70px -20px rgb(0 0 0 / 0.9);
+    text-align: center;
+    animation: dialog-in 280ms var(--ease-expo) both;
+  }
+  .confirm-dialog.is-closing .confirm-card {
+    animation: dialog-out 150ms ease-in both;
+  }
+  .confirm-icon {
+    display: grid;
+    width: 3.4rem;
+    height: 3.4rem;
+    place-items: center;
+    margin-bottom: 0.2rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-gold-500) 14%, transparent);
+    color: var(--color-gold-300);
+  }
+  .confirm-dialog.is-danger .confirm-icon {
+    background: color-mix(in oklab, var(--color-danger) 15%, transparent);
+    color: #fca5a5;
+  }
+  .confirm-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .confirm-text {
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: var(--color-mist-300);
+    text-wrap: pretty;
+  }
+  .confirm-image {
+    width: 9rem;
+    aspect-ratio: 4 / 3;
+    margin-top: 0.3rem;
+    border-radius: 0.7rem;
+    object-fit: cover;
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+  }
+  .confirm-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+  }
+  .confirm-actions .btn {
+    white-space: normal;
+  }
+  .btn-confirm-danger {
+    background: var(--color-danger);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
+  }
+  @media (hover: hover) {
+    .btn-confirm-danger:hover {
+      background: #dc2626;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.94);
+    }
+  }
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes adm-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes adm-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* ------------------------------------------------- botão "salvando..." */
+  .btn.is-busy {
+    cursor: progress;
+  }
+  .btn.is-busy:disabled {
+    opacity: 0.85;
+  }
+  .btn.is-busy > svg {
+    display: none;
+  }
+  .btn.is-busy::before {
+    content: '';
+    width: 1.05em;
+    height: 1.05em;
+    flex: none;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 999px;
+    animation: adm-spin 650ms linear infinite;
+  }
+  @keyframes adm-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* ------------------------------------------------------------- comemoração */
+  .celebrate {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: radial-gradient(
+      circle at 50% 45%,
+      color-mix(in oklab, var(--color-gold-500) 16%, rgb(4 5 6 / 0.8)),
+      rgb(4 5 6 / 0.82) 60%
+    );
+    backdrop-filter: blur(3px);
+    cursor: pointer;
+    animation: adm-fade-in 220ms ease both;
+  }
+  .celebrate[hidden] {
+    display: none;
+  }
+  .celebrate.is-leaving {
+    animation: adm-fade-out 320ms ease both;
+  }
+  .celebrate-card {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+  .celebrate-stage {
+    position: relative;
+    display: grid;
+    width: 16rem;
+    height: 7.5rem;
+    place-items: center;
+  }
+  .celebrate-car {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.55));
+    animation:
+      car-in 720ms var(--ease-expo) both,
+      car-settle 420ms 640ms ease-out both;
+  }
+  .celebrate-wheel {
+    animation: wheel-spin 720ms var(--ease-expo) both;
+  }
+  .celebrate-lines {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    display: grid;
+    gap: 0.55rem;
+    translate: 0 -50%;
+  }
+  .celebrate-lines i {
+    display: block;
+    height: 3px;
+    width: 3.2rem;
+    border-radius: 999px;
+    background: linear-gradient(to right, transparent, var(--color-gold-400));
+    transform-origin: right;
+    animation: speed-line 760ms ease-out both;
+  }
+  .celebrate-lines i:nth-child(2) {
+    width: 4.4rem;
+    animation-delay: 60ms;
+  }
+  .celebrate-lines i:nth-child(3) {
+    width: 2.6rem;
+    animation-delay: 120ms;
+  }
+  .celebrate-check {
+    position: absolute;
+    z-index: 2;
+    top: 0.1rem;
+    right: 2.1rem;
+    display: grid;
+    width: 2.6rem;
+    height: 2.6rem;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--color-success);
+    color: #04210f;
+    box-shadow:
+      0 0 0 4px var(--color-ink-950),
+      0 10px 24px -6px rgb(55 196 126 / 0.7);
+    animation: adm-pop 520ms 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .celebrate-confetti {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+  }
+  .celebrate-confetti i {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.8rem;
+    border-radius: 2px;
+    background: var(--c);
+    opacity: 0;
+    animation: confetti 1500ms var(--d) cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  }
+  .celebrate-confetti i.is-round {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+  }
+  .celebrate-title {
+    margin-top: 1rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: #fff;
+    animation: adm-rise 520ms 700ms var(--ease-expo) both;
+  }
+  .celebrate-sub {
+    margin-top: 0.3rem;
+    color: var(--color-gold-200);
+    animation: adm-rise 520ms 800ms var(--ease-expo) both;
+  }
+  @keyframes car-in {
+    from {
+      opacity: 0;
+      transform: translateX(-60vw) skewX(-8deg);
+    }
+    70% {
+      opacity: 1;
+      transform: translateX(6px) skewX(4deg);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes car-settle {
+    40% {
+      transform: translateY(-3px) rotate(-1.2deg);
+    }
+  }
+  @keyframes wheel-spin {
+    from {
+      transform: rotate(-900deg);
+    }
+  }
+  @keyframes speed-line {
+    from {
+      opacity: 0;
+      transform: translateX(-40vw) scaleX(2.4);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateX(0) scaleX(0.4);
+    }
+  }
+  @keyframes adm-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.2) rotate(-40deg);
+    }
+  }
+  @keyframes adm-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes confetti {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) scale(0.4) rotate(0);
+    }
+    35% {
+      opacity: 1;
+      transform: translate(var(--x), var(--y)) scale(1) rotate(calc(var(--r) * 0.5));
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(var(--x) * 1.15), calc(var(--y) + 190px)) scale(0.9) rotate(var(--r));
+    }
+  }
+</style>
