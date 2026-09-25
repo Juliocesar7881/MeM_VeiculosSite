@@ -63,6 +63,18 @@ Secrets já gravados no Worker: `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, `IP_HAS
 
 ## 3. Publicar uma nova versão
 
+**Automático (padrão):** o Worker está ligado ao repositório do GitHub pelo Workers Builds da Cloudflare
+(painel → Workers → mm-veiculos → Settings → Builds). Todo push na `main` gera o build e publica sozinho:
+
+- Build command: `npm run cf:build`
+- Deploy command: `npx wrangler deploy`
+
+O andamento aparece no painel (mm-veiculos → Deployments) e como verificação no commit do GitHub.
+Esse fluxo **não aplica migrations** do D1: quando houver migration nova em `migrations/`, rode antes
+`npm run cf:migrate` (ou use o deploy manual abaixo).
+
+**Manual (pelo computador):**
+
 ```bash
 npm run verify        # lint + typecheck + testes + build (recomendado)
 npm run cf:deploy     # aplica migrations novas no D1, gera o build e publica o Worker
