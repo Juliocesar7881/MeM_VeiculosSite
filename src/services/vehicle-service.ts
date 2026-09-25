@@ -1,4 +1,4 @@
-import { CATEGORY_INFO, FUEL_LABELS, TRANSMISSION_LABELS } from '@/config/catalog';
+import { CATEGORY_INFO, FUEL_LABELS, isPublicStatus, TRANSMISSION_LABELS } from '@/config/catalog';
 import { SITE_CONSTANTS } from '@/config/site';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import type { ObjectStorage } from '@/lib/storage/types';
@@ -86,10 +86,9 @@ export class VehicleService {
 
   /** Aplica os dados do formulário a um veículo (novo ou existente), com as regras de negócio. */
   private applyInput(base: Vehicle | null, input: VehicleInput, id: string, nowIso: string): Vehicle {
-    let status = input.status;
-    // Publicar um rascunho o torna disponível automaticamente.
-    if (input.published && status === 'draft') status = 'available';
-    const published = input.published && status !== 'archived';
+    const status = input.status;
+    // Não existe "publicar" à parte: fora de Rascunho/Arquivado, o veículo está no site.
+    const published = isPublicStatus(status);
 
     const wasSold = base?.status === 'sold';
     const soldAt = status === 'sold' ? (wasSold ? (base?.soldAt ?? nowIso) : nowIso) : null;
@@ -198,11 +197,11 @@ export class VehicleService {
           throw new ValidationError('Desarquive o veículo (altere o status) antes de publicar.');
         }
         if (next.status === 'draft') next.status = 'available';
-        next.published = true;
-        next.publishedAt = next.publishedAt ?? nowIso;
         break;
       case 'unpublish':
-        next.published = false;
+        // Tirar do site = voltar para rascunho (a publicação segue o status).
+        next.status = 'draft';
+        next.soldAt = null;
         break;
       case 'mark-available':
         next.status = 'available';
@@ -219,7 +218,6 @@ export class VehicleService {
         break;
       case 'archive':
         next.status = 'archived';
-        next.published = false;
         next.featured = false;
         break;
       case 'feature':
@@ -246,6 +244,8 @@ export class VehicleService {
       }
     }
 
+    next.published = isPublicStatus(next.status);
+    if (next.published) next.publishedAt = next.publishedAt ?? nowIso;
     await this.deps.vehicles.update(next, buildSearchText(next), null, null);
     await this.deps.audit.log(actor, `vehicle.${action}`, 'vehicle', id);
     return next;

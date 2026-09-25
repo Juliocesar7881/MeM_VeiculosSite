@@ -5,7 +5,7 @@ import { flasher } from '@/server/flash';
 
 const MESSAGES: Record<VehicleQuickAction, string> = {
   publish: 'Veículo publicado no site.',
-  unpublish: 'Veículo ocultado do site.',
+  unpublish: 'Veículo tirado do site (voltou para rascunho).',
   'mark-available': 'Veículo marcado como disponível.',
   'mark-reserved': 'Veículo marcado como reservado.',
   'mark-sold': 'Veículo marcado como vendido.',

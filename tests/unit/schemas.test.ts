@@ -97,10 +97,6 @@ describe('vehicleInputSchema', () => {
     expect(r.success).toBe(false);
   });
 
-  it('não permite arquivado publicado', () => {
-    expect(vehicleInputSchema.safeParse({ ...validVehicle, status: 'archived', published: 'on' }).success).toBe(false);
-  });
-
   it('rejeita categoria/status inexistentes', () => {
     expect(vehicleInputSchema.safeParse({ ...validVehicle, category: 'aviao' }).success).toBe(false);
     expect(vehicleInputSchema.safeParse({ ...validVehicle, status: 'perdido' }).success).toBe(false);

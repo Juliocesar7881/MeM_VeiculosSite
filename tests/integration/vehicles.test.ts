@@ -27,12 +27,27 @@ describe('cadastro e edição', () => {
     expect((await env.vehicles.search(filters('q=COROLLA xei'), settings)).total).toBe(1);
   });
 
-  it('publicar rascunho o torna disponível', async () => {
-    const v = await env.vehicles.create(vehicleInput({ status: 'draft', published: 'on' }), actor);
-    expect(v.status).toBe('available');
-    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
-    expect(draft.status).toBe('draft');
-    expect(draft.published).toBe(false);
+  it('a publicação segue o status: só Rascunho e Arquivado ficam fora do site', async () => {
+    for (const status of ['available', 'reserved', 'sold'] as const) {
+      expect((await env.vehicles.create(vehicleInput({ status }), actor)).published).toBe(true);
+    }
+    for (const status of ['draft', 'archived'] as const) {
+      expect((await env.vehicles.create(vehicleInput({ status }), actor)).published).toBe(false);
+    }
+    // Um campo "published" enviado à parte é ignorado.
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: 'on' }), actor);
+    expect([draft.status, draft.published]).toEqual(['draft', false]);
+  });
+
+  it('salvar como Disponível publica; voltar para Rascunho tira do site', async () => {
+    const v = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
+    const live = await env.vehicles.update(v.id, vehicleInput({ status: 'available' }), actor);
+    expect(live.published).toBe(true);
+    expect(live.publishedAt).not.toBeNull();
+    expect((await env.vehicles.getPublicBySlug(live.slug)).kind).toBe('ok');
+    const back = await env.vehicles.update(v.id, vehicleInput({ status: 'draft' }), actor);
+    expect(back.published).toBe(false);
+    expect((await env.vehicles.getPublicBySlug(back.slug)).kind).toBe('not-found');
   });
 
   it('ao mudar marca/modelo gera novo slug e o antigo redireciona', async () => {
@@ -52,11 +67,12 @@ describe('cadastro e edição', () => {
 });
 
 describe('visibilidade pública', () => {
-  it('rascunho, oculto e arquivado não aparecem; vendido abre pelo link', async () => {
-    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
-    const hidden = await env.vehicles.create(vehicleInput({ published: undefined }), actor);
+  it('rascunho, tirado do site e arquivado não aparecem; vendido abre pelo link', async () => {
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
+    const listed = await env.vehicles.create(vehicleInput(), actor);
+    const hidden = await env.vehicles.quickAction(listed.id, 'unpublish', actor);
     const sold = await env.vehicles.create(vehicleInput({ status: 'sold' }), actor);
-    const archived = await env.vehicles.create(vehicleInput({ status: 'archived', published: undefined }), actor);
+    const archived = await env.vehicles.create(vehicleInput({ status: 'archived' }), actor);
 
     expect((await env.vehicles.getPublicBySlug(draft.slug)).kind).toBe('not-found');
     expect((await env.vehicles.getPublicBySlug(hidden.slug)).kind).toBe('not-found');
@@ -216,6 +232,16 @@ describe('ações rápidas e status', () => {
     const archived = await env.vehicles.quickAction(v.id, 'archive', actor);
     expect(archived.published).toBe(false);
     await expect(env.vehicles.quickAction(v.id, 'publish', actor)).rejects.toThrow(/Desarquive/);
+    // Marcar como disponível (a partir de arquivado) volta para o site.
+    expect((await env.vehicles.quickAction(v.id, 'mark-available', actor)).published).toBe(true);
+  });
+
+  it('ações rápidas: publicar rascunho e tirar do site', async () => {
+    const v = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
+    const live = await env.vehicles.quickAction(v.id, 'publish', actor);
+    expect([live.status, live.published]).toEqual(['available', true]);
+    const off = await env.vehicles.quickAction(v.id, 'unpublish', actor);
+    expect([off.status, off.published]).toEqual(['draft', false]);
   });
 
   it('excluir remove do site e apaga as fotos do storage', async () => {
@@ -231,7 +257,7 @@ describe('ações rápidas e status', () => {
   it('estatísticas do dashboard', async () => {
     await env.vehicles.create(vehicleInput(), actor);
     await env.vehicles.create(vehicleInput({ status: 'reserved', commercialType: 'repasse' }), actor);
-    await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
+    await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
     const stats = await env.vehicles.stats();
     expect(stats).toMatchObject({ total: 3, available: 1, reserved: 1, drafts: 1, repasses: 1 });
   });

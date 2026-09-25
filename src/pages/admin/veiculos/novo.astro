@@ -40,7 +40,59 @@ const brands = await container.vehicles.distinctBrands();
       ← Veículos
     </a>
     <h1 class="heading mt-2 text-3xl text-white">Novo veículo</h1>
-    <p class="mt-1 text-sm text-mist-400">Preencha os dados principais. As fotos são adicionadas no próximo passo.</p>
+    <ol class="steps mt-4" aria-label="Etapas do cadastro">
+      <li class="step is-current" aria-current="step">
+        <span class="step-dot">1</span>
+        <span>Dados do veículo</span>
+      </li>
+      <li class="step">
+        <span class="step-dot">2</span>
+        <span>
+          Fotos <span class="text-mist-500">(abre ao salvar)</span>
+        </span>
+      </li>
+    </ol>
   </div>
   <VehicleForm values={values} errors={errors} brands={brands} mode="create" />
 </AdminLayout>
+
+<style>
+  .steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    color: var(--color-mist-400);
+  }
+  .step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .step + .step::before {
+    content: '';
+    width: 1.5rem;
+    height: 1px;
+    margin-right: 0.75rem;
+    background: color-mix(in oklab, white 18%, transparent);
+  }
+  .step-dot {
+    display: grid;
+    width: 1.6rem;
+    height: 1.6rem;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, white 20%, transparent);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .step.is-current {
+    color: #fff;
+    font-weight: 600;
+  }
+  .step.is-current .step-dot {
+    border-color: var(--color-gold-500);
+    background: var(--color-gold-500);
+    color: #14110a;
+  }
+</style>

@@ -39,19 +39,32 @@ const config = {
       </h2>
       <p class="mt-0.5 text-sm text-mist-400">A primeira foto é a capa. Arraste para reordenar ou use as setas.</p>
     </div>
-    <label class="btn btn-gold btn-sm cursor-pointer">
-      <Icon name="upload" size={17} />
+    <label for="fotos-input" class="btn btn-gold cursor-pointer">
+      <Icon name="upload" size={18} />
       Adicionar fotos
-      <input type="file" accept="image/*" multiple class="sr-only" data-photo-input />
     </label>
   </div>
 
-  <div class="dropzone mt-4" data-dropzone>
-    <p class="text-sm text-mist-400">
-      <Icon name="image" size={18} class="mr-1 inline" />
-      Solte as fotos aqui — elas são otimizadas (WebP, até {config.largeEdge}px) antes do envio.
-    </p>
-  </div>
+  <!-- A área inteira abre o seletor de fotos (toque ou clique) e também recebe fotos arrastadas. -->
+  <label class="dropzone mt-4" data-dropzone>
+    <input
+      id="fotos-input"
+      type="file"
+      accept="image/*"
+      multiple
+      class="sr-only"
+      data-photo-input
+      aria-describedby="fotos-dica"
+    />
+    <span class="dropzone-icon" aria-hidden="true">
+      <Icon name="image" size={24} />
+    </span>
+    <span class="dropzone-title">Toque aqui para escolher as fotos</span>
+    <span id="fotos-dica" class="dropzone-hint">
+      <span class="hidden sm:inline">ou arraste as fotos para cá. </span>Pode escolher várias de uma vez; elas são
+      otimizadas antes do envio.
+    </span>
+  </label>
 
   <p class="mt-3 text-sm text-red-300" data-photo-error role="alert" hidden></p>
 
@@ -123,17 +136,62 @@ const config = {
     }
   }
   .dropzone {
-    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 9rem;
+    padding: 1.4rem 1rem;
     border-radius: 0.9rem;
-    border: 1.5px dashed color-mix(in oklab, white 16%, transparent);
+    border: 1.5px dashed color-mix(in oklab, white 18%, transparent);
+    background: color-mix(in oklab, white 2%, transparent);
     text-align: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
     transition:
-      border-color 140ms ease,
-      background-color 140ms ease;
+      border-color 160ms ease,
+      background-color 160ms ease,
+      transform 160ms var(--ease-out-soft);
+  }
+  /* Com fotos já enviadas, a área fica mais baixa (continua clicável). */
+  .photo-manager:has([data-photo-list] li) .dropzone {
+    min-height: 6rem;
+  }
+  .dropzone-icon {
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-gold-500) 14%, transparent);
+    color: var(--color-gold-300);
+  }
+  .dropzone-title {
+    font-weight: 650;
+    color: #fff;
+  }
+  .dropzone-hint {
+    max-width: 30rem;
+    font-size: 0.85rem;
+    color: var(--color-mist-400);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .dropzone:hover {
+      border-color: color-mix(in oklab, var(--color-gold-500) 70%, transparent);
+      background: color-mix(in oklab, var(--color-gold-500) 5%, transparent);
+    }
+  }
+  .dropzone:active {
+    transform: scale(0.99);
+  }
+  .dropzone:focus-within {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
   }
   .dropzone.is-over {
     border-color: var(--color-gold-500);
-    background: color-mix(in oklab, var(--color-gold-500) 7%, transparent);
+    background: color-mix(in oklab, var(--color-gold-500) 9%, transparent);
   }
   .photo-item {
     position: relative;

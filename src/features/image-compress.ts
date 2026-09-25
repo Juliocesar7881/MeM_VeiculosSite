@@ -106,6 +106,11 @@ export async function makeImagePair(file: File, options: PairOptions) {
   if (file.size > 40 * 1024 * 1024) throw new ImageProcessingError('Imagem muito grande (máx. 40 MB).');
   const source = await decode(file);
   try {
+    // Mesmo limite do servidor: avisa já na escolha, em vez de recusar o envio inteiro depois.
+    const { width: sw, height: sh } = sourceSize(source);
+    if (Math.max(sw, sh) < 320 || Math.min(sw, sh) < 240) {
+      throw new ImageProcessingError('Foto muito pequena (mínimo 320×240 px). Escolha uma foto maior.');
+    }
     const large = await render(source, options.largeEdge, options.largeMaxBytes);
     const thumb = await render(source, options.thumbEdge, options.thumbMaxBytes);
     // Só vale a pena quando a foto grande é bem maior que a versão média.

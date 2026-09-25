@@ -655,6 +655,153 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
+  /*
+   * Lista de opções (features/select-menu.ts): o <select> nativo fica escondido e envia o valor;
+   * o botão mostra a escolha e abre a lista, com uma linha entre as opções.
+   */
+  .select-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    pointer-events: none !important;
+  }
+  .select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-align: left;
+    cursor: pointer;
+    background-image: none !important;
+  }
+  .select-trigger.input {
+    padding-right: 0.8rem;
+  }
+  .select-trigger:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .select-trigger-value {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .select-trigger-chevron {
+    flex-shrink: 0;
+    color: var(--color-mist-400);
+    transition: transform 200ms var(--ease-out-soft);
+  }
+  .select-trigger[aria-expanded='true'] {
+    border-color: var(--color-gold-500);
+  }
+  .select-trigger[aria-expanded='true'] .select-trigger-chevron {
+    transform: rotate(180deg);
+    color: var(--color-gold-400);
+  }
+
+  .select-menu {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0.35rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in oklab, white 12%, transparent);
+    background: var(--color-ink-850);
+    color: var(--color-paper);
+    box-shadow:
+      0 1px 0 color-mix(in oklab, white 6%, transparent) inset,
+      0 24px 60px -18px rgb(0 0 0 / 0.85);
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, white 18%, transparent) transparent;
+    transform-origin: top center;
+    animation: select-menu-in 170ms var(--ease-out-soft);
+  }
+  .select-menu[data-side='top'] {
+    transform-origin: bottom center;
+  }
+  .select-menu:focus {
+    outline: none;
+  }
+  @keyframes select-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+  .select-menu[data-side='top'] {
+    animation-name: select-menu-in-up;
+  }
+  @keyframes select-menu-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.97);
+    }
+  }
+  .select-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.9rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.55rem;
+    font-size: 0.95rem;
+    color: var(--color-mist-100);
+    cursor: pointer;
+    user-select: none;
+  }
+  /* A linha entre as opções: some ao redor da opção ativa para o realce não ficar "cortado". */
+  .select-option + .select-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0.8rem;
+    right: 0.8rem;
+    height: 1px;
+    background: color-mix(in oklab, white 8%, transparent);
+  }
+  .select-option.is-active::before,
+  .select-option.is-active + .select-option::before {
+    opacity: 0;
+  }
+  .select-option-label {
+    min-width: 0;
+    flex: 1;
+  }
+  .select-option-check {
+    flex-shrink: 0;
+    color: var(--color-gold-400);
+    opacity: 0;
+  }
+  .select-option.is-active {
+    background: color-mix(in oklab, white 7%, transparent);
+    color: #fff;
+  }
+  .select-option[aria-selected='true'] {
+    color: #fff;
+    font-weight: 600;
+  }
+  .select-option[aria-selected='true'] .select-option-check {
+    opacity: 1;
+  }
+  .select-option[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .select-menu {
+      animation: none;
+    }
+  }
 }
 
 /*

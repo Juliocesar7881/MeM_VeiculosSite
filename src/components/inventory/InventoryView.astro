@@ -118,7 +118,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
           <label for="f-categoria" class="field-label">
             Categoria
           </label>
-          <select id="f-categoria" name="categoria" class="input" data-autosubmit>
+          <select id="f-categoria" data-select-menu name="categoria" class="input" data-autosubmit>
             <option value="">Todas</option>
             {VEHICLE_CATEGORIES.map((c: VehicleCategory) => (
               <option value={CATEGORY_INFO[c].slug} selected={filters.category === c}>
@@ -133,7 +133,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
             <label for="f-marca" class="field-label">
               Marca
             </label>
-            <select id="f-marca" name="marca" class="input" data-autosubmit data-brand-select>
+            <select id="f-marca" data-select-menu name="marca" class="input" data-autosubmit data-brand-select>
               <option value="">Todas</option>
               {facets.brands.map((b) => (
                 <option value={b.value} selected={filters.brand?.toLowerCase() === b.value.toLowerCase()}>
@@ -146,7 +146,14 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
             <label for="f-modelo" class="field-label">
               Modelo
             </label>
-            <select id="f-modelo" name="modelo" class="input" data-autosubmit disabled={!filters.brand}>
+            <select
+              id="f-modelo"
+              data-select-menu
+              name="modelo"
+              class="input"
+              data-autosubmit
+              disabled={!filters.brand}
+            >
               <option value="">{filters.brand ? 'Todos' : 'Escolha a marca'}</option>
               {facets.models.map((m) => (
                 <option value={m.value} selected={filters.model?.toLowerCase() === m.value.toLowerCase()}>
@@ -164,7 +171,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
               <label for="f-ano-min" class="sr-only">
                 Ano mínimo
               </label>
-              <select id="f-ano-min" name="ano_min" class="input" data-autosubmit>
+              <select id="f-ano-min" data-select-menu name="ano_min" class="input" data-autosubmit>
                 <option value="">De</option>
                 {years.map((y) => (
                   <option value={y} selected={filters.yearMin === y}>
@@ -177,7 +184,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
               <label for="f-ano-max" class="sr-only">
                 Ano máximo
               </label>
-              <select id="f-ano-max" name="ano_max" class="input" data-autosubmit>
+              <select id="f-ano-max" data-select-menu name="ano_max" class="input" data-autosubmit>
                 <option value="">Até</option>
                 {years.map((y) => (
                   <option value={y} selected={filters.yearMax === y}>
@@ -232,7 +239,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
             <label for="f-combustivel" class="field-label">
               Combustível
             </label>
-            <select id="f-combustivel" name="combustivel" class="input" data-autosubmit>
+            <select id="f-combustivel" data-select-menu name="combustivel" class="input" data-autosubmit>
               <option value="">Todos</option>
               {FUELS.map((f) => (
                 <option value={f} selected={filters.fuel === f}>
@@ -245,7 +252,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
             <label for="f-cambio" class="field-label">
               Câmbio
             </label>
-            <select id="f-cambio" name="cambio" class="input" data-autosubmit>
+            <select id="f-cambio" data-select-menu name="cambio" class="input" data-autosubmit>
               <option value="">Todos</option>
               {TRANSMISSIONS.map((t) => (
                 <option value={t} selected={filters.transmission === t}>
@@ -261,7 +268,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
             <label for="f-status" class="field-label">
               Status
             </label>
-            <select id="f-status" name="status" class="input" data-autosubmit>
+            <select id="f-status" data-select-menu name="status" class="input" data-autosubmit>
               <option value="">Todos</option>
               <option value={PUBLIC_STATUS_SLUGS.available} selected={filters.status === 'available'}>
                 Disponível
@@ -321,6 +328,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
         form="inventory-filters"
         class="input h-10 min-h-0 w-auto py-0 text-sm"
         data-sort-select
+        data-select-menu
       >
         {SORT_OPTIONS.map((s) => (
           <option value={s} selected={filters.sort === s}>
@@ -428,5 +436,7 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
 
 <script>
   import { initInventoryFilters } from '@/features/inventory-filters';
+  import { initSelectMenus } from '@/features/select-menu';
   initInventoryFilters();
+  initSelectMenus();
 </script>

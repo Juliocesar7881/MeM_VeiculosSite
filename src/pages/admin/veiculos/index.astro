@@ -60,7 +60,7 @@ const quickFilters = [
   { key: 'ofertas', label: 'Ofertas', icon: 'tag' as const },
   { key: 'repasses', label: 'Repasses', icon: 'repasse' as const },
   { key: 'destaques', label: 'Destaques', icon: 'star' as const },
-  { key: 'nao-publicados', label: 'Não publicados', icon: 'eye-off' as const },
+  { key: 'nao-publicados', label: 'Fora do site', icon: 'eye-off' as const },
 ];
 const section = filtro === 'ofertas' ? 'ofertas' : filtro === 'repasses' ? 'repasses' : 'veiculos';
 const heading = filtro === 'ofertas' ? 'Ofertas' : filtro === 'repasses' ? 'Repasses' : 'Veículos';
@@ -75,7 +75,7 @@ const returnTo = `${Astro.url.pathname}${Astro.url.search}`;
         {filtro === 'ofertas'
           ? 'Veículos marcados como oferta. Oferta, destaque e repasse são independentes entre si.'
           : filtro === 'repasses'
-            ? 'Veículos com tipo comercial "repasse".'
+            ? 'Veículos marcados como repasse.'
             : 'Cadastre, edite e controle o que aparece no site.'}
       </p>
     </div>

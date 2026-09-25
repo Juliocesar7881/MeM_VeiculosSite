@@ -53,6 +53,13 @@ describe('validateImagePair', () => {
     const pair = { large: await makeImage(300, 200), thumb: await makeImage(300, 200) };
     expect(() => validateImagePair(pair, limits)).toThrow(/pequena/);
   });
+
+  it('o tamanho mínimo vale em pé ou deitada (320×240 ou 240×320)', async () => {
+    const standing = { large: await makeImage(240, 320), thumb: await makeImage(240, 320) };
+    expect(validateImagePair(standing, limits).large.height).toBe(320);
+    const narrow = { large: await makeImage(200, 400), thumb: await makeImage(200, 400) };
+    expect(() => validateImagePair(narrow, limits)).toThrow(/pequena/);
+  });
 });
 
 describe('validateMediumImage / validateOgImage', () => {

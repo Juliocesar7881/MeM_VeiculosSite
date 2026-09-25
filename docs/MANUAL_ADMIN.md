@@ -24,8 +24,8 @@ No celular, o menu fica na barra de baixo: **Dashboard · Veículos · Novo · P
    quilometragem (ou horas, para máquinas), combustível, câmbio, cor, carroceria, cidade.
 3. **Preço**: digite como no dia a dia (ex.: `89.900`). Em branco, o site mostra “Preço sob consulta”.
 4. Marque os **opcionais** da lista; opcionais diferentes vão em “Outros opcionais” (um por linha).
-5. Em **Publicação**, escolha o **Status** e marque **Publicado no site** quando estiver pronto.
-   Se ainda for revisar, deixe desmarcado — o veículo fica só no painel.
+5. Em **Status**, deixe **Disponível** (já vem assim): o veículo entra no site ao salvar.
+   Se ainda for revisar, escolha **Rascunho** — o veículo fica só no painel.
 6. Toque em **Salvar e adicionar fotos**.
 
 ## Subir fotos
@@ -103,7 +103,7 @@ O texto explicativo sobre repasses é editado em **Configurações → Texto inf
 ## Arquivar
 
 **Ações → Arquivar**: tira o veículo do site sem apagar (fica no painel, filtro “Arquivado”). Para voltar, abra o
-veículo, mude o **Status** e marque **Publicado no site**.
+veículo e mude o **Status** para Disponível (ou use **Ações → Marcar como disponível**).
 
 **Excluir** (Ações → Excluir) tira o veículo do painel e apaga as fotos — use só para cadastros errados.
 
@@ -147,7 +147,7 @@ Quando a M&M comprar o veículo:
 1. Abra a proposta e toque em **Transformar em veículo**.
 2. O sistema cria um **rascunho** com os dados e **copia as fotos** — nada é publicado ainda.
 3. Revise tudo, **defina o preço**, confira Ofertas/Repasses (já vêm marcados), marque Destaque se quiser, troque ou adicione fotos.
-4. Marque **Publicado no site** e **Salvar alterações**.
+4. Mude o **Status** para **Disponível** e toque em **Salvar alterações** (ou use **Ações → Publicar no site**).
 
 A proposta fica com o status “Convertida em veículo” e um link para o veículo criado.
 
@@ -169,8 +169,8 @@ Salve e aguarde até 1 minuto para ver no site. Senhas e chaves técnicas não f
 ## Dúvidas comuns
 
 - **Mudei algo e não apareceu:** aguarde 1 minuto e atualize a página.
-- **O veículo não aparece no site:** confira se está **Publicado no site** e com status Disponível, Reservado ou
-  Vendido (Rascunho e Arquivado não aparecem).
+- **O veículo não aparece no site:** confira o **Status**: Disponível, Reservado e Vendido aparecem; Rascunho e
+  Arquivado não. Para tirar um veículo do site sem arquivar, use **Ações → Tirar do site (rascunho)**.
 - **Foto não subiu:** tente outra foto (JPG ou PNG). Fotos muito pequenas (menos de 320 px) são recusadas.
 - **Esqueci a senha:** peça ao responsável técnico para gerar uma nova (passo 4 do `docs/DEPLOY.md`).
 - **Quero voltar um veículo excluído por engano:** fale com o responsável técnico no mesmo dia — o banco guarda o

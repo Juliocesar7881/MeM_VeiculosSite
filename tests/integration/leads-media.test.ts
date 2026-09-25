@@ -99,7 +99,7 @@ describe('propostas (Anuncie seu veículo)', () => {
     // Admin revisa, define preço e publica
     await env.vehicles.update(
       vehicle.id,
-      vehicleInput({ brand: 'Chevrolet', model: 'Onix', price: '58.900', published: 'on', status: 'draft' }),
+      vehicleInput({ brand: 'Chevrolet', model: 'Onix', price: '58.900', status: 'available' }),
       actor,
     );
     const published = await env.vehicles.getPublicBySlug((await env.vehicles.getDetail(vehicle.id))?.slug ?? '');

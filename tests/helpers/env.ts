@@ -47,7 +47,6 @@ export function vehicleInput(overrides: Record<string, unknown> = {}): VehicleIn
     transmission: 'cvt',
     status: 'available',
     commercialType: 'normal',
-    published: 'on',
     features: ['Ar-condicionado'],
     ...overrides,
   });

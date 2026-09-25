@@ -20,7 +20,12 @@ test.describe('Experiência no celular', () => {
     await page.getByRole('button', { name: /Filtros/ }).click();
     const panel = page.locator('[data-filter-panel]');
     await expect(panel).toHaveClass(/is-open/);
-    await panel.getByLabel('Categoria').selectOption('motos');
+    // Lista própria (com linha entre as opções) no lugar do select nativo.
+    await panel.getByRole('button', { name: 'Categoria' }).click();
+    const list = page.getByRole('listbox', { name: 'Categoria' });
+    await expect(list.getByRole('option')).not.toHaveCount(0);
+    await list.getByRole('option', { name: /^Motos/ }).click();
+    await expect(panel.getByRole('button', { name: 'Categoria' })).toContainText('Motos');
     await panel.getByRole('button', { name: 'Ver resultados' }).click();
     await expect(page).toHaveURL(/categoria=motos/);
     expect(page.url()).not.toContain('marca=&');

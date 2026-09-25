@@ -57,6 +57,23 @@ test.describe('Cliente que quer comprar', () => {
     await expect(page).toHaveURL(/\/empresa$/);
   });
 
+  test('lista de categorias da busca: opções com linha, teclado e busca limpa', async ({ page }) => {
+    await page.goto('/');
+    const trigger = page.getByRole('button', { name: 'Categoria' });
+    await trigger.click();
+    const list = page.getByRole('listbox', { name: 'Categoria' });
+    await expect(list).toBeVisible();
+    await expect(list.getByRole('option', { name: 'Todas as categorias' })).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(list).toBeHidden();
+    await expect(trigger).toHaveText('Carros');
+    await expect(trigger).toBeFocused();
+    await page.getByRole('button', { name: 'Buscar' }).click();
+    // Campo de texto vazio não vai para a URL
+    await expect(page).toHaveURL(/\/veiculos\?categoria=carros$/);
+  });
+
   test('filtros por query string e ordenação', async ({ page }) => {
     await page.goto('/veiculos?marca=Toyota');
     await expect(page.getByText('1 veículo encontrado')).toBeVisible();

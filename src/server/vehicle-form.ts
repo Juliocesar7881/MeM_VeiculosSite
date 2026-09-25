@@ -54,7 +54,6 @@ export function vehicleToFormValues(v: VehicleDetail): FormValues {
   };
   if (v.featured) values.featured = 'on';
   if (v.isOffer) values.isOffer = 'on';
-  if (v.published) values.published = 'on';
   return values;
 }
 

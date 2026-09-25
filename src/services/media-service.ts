@@ -84,7 +84,8 @@ export function validateImagePair(
     if (Math.abs(ratioLarge - ratioThumb) / ratioLarge > 0.05) {
       throw new ImageValidationError('Miniatura com proporção diferente da imagem principal.');
     }
-    if (large.width < 320 || large.height < 240) {
+    // Vale em pé ou deitada: lado maior ≥ 320 e lado menor ≥ 240.
+    if (Math.max(large.width, large.height) < 320 || Math.min(large.width, large.height) < 240) {
       throw new ImageValidationError('Foto muito pequena. Use imagens com pelo menos 320×240 px.');
     }
     return { large, thumb };

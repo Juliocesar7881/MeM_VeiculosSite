@@ -16,7 +16,13 @@ const action = `/admin/veiculos/${v.id}/acao`;
 
 const items: { action: VehicleQuickAction; label: string; icon: IconName; confirm?: string; danger?: boolean }[] = [];
 if (!v.published && v.status !== 'archived') items.push({ action: 'publish', label: 'Publicar no site', icon: 'eye' });
-if (v.published) items.push({ action: 'unpublish', label: 'Ocultar do site', icon: 'eye-off' });
+if (v.published)
+  items.push({
+    action: 'unpublish',
+    label: 'Tirar do site (rascunho)',
+    icon: 'eye-off',
+    confirm: 'Tirar este veículo do site? Ele volta a ser rascunho e fica só no painel.',
+  });
 if (v.status !== 'available' && v.status !== 'draft')
   items.push({ action: 'mark-available', label: 'Marcar como disponível', icon: 'check' });
 if (v.status !== 'reserved' && v.status !== 'archived')

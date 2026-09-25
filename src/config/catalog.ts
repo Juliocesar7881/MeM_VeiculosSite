@@ -39,9 +39,14 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   archived: 'Arquivado',
 };
 
-/** Status que podem aparecer no site público (desde que publicado). */
+/** Status que aparecem no site público. Rascunho e Arquivado ficam só no painel. */
 export const PUBLIC_STATUSES = ['available', 'reserved', 'sold'] as const;
 export type PublicStatus = (typeof PUBLIC_STATUSES)[number];
+
+/** Publicação segue o status: todo veículo fora de rascunho/arquivado está no site. */
+export function isPublicStatus(status: VehicleStatus): status is PublicStatus {
+  return (PUBLIC_STATUSES as readonly VehicleStatus[]).includes(status);
+}
 
 export const PUBLIC_STATUS_SLUGS: Record<PublicStatus, string> = {
   available: 'disponivel',

@@ -59,7 +59,6 @@ export const vehicleInputSchema = z
     commercialType: z.enum(COMMERCIAL_TYPES, { error: 'Tipo comercial inválido.' }),
     offerStartDate: optionalDate('Data de início da oferta'),
     offerEndDate: optionalDate('Data de fim da oferta'),
-    published: checkbox,
   })
   .superRefine((data, ctx) => {
     if (data.manufactureYear !== null && data.modelYear !== null) {
@@ -91,13 +90,6 @@ export const vehicleInputSchema = z
         code: 'custom',
         path: ['offerEndDate'],
         message: 'A data de fim deve ser igual ou posterior à data de início.',
-      });
-    }
-    if (data.published && data.status === 'archived') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['published'],
-        message: 'Veículos arquivados não podem ficar publicados.',
       });
     }
   });

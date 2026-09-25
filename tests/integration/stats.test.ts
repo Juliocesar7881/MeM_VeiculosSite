@@ -29,7 +29,7 @@ describe('métricas anônimas (visualizações e cliques no WhatsApp)', () => {
   });
 
   it('ignora IDs inválidos e veículos fora do site (rascunho, despublicado, excluído)', async () => {
-    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
     const hidden = await env.vehicles.create(vehicleInput(), actor);
     await env.vehicles.quickAction(hidden.id, 'unpublish', actor);
     const deleted = await env.vehicles.create(vehicleInput(), actor);

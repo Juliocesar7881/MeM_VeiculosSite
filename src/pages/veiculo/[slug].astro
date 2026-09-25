@@ -135,7 +135,7 @@ const preload = cover
   <div class="container-site pb-28 pt-5 lg:pb-8" data-vehicle-id={vehicle.id}>
     <Breadcrumbs items={breadcrumbs} class="mb-5" />
 
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
       <!-- Galeria -->
       <div class="min-w-0">
         <Gallery images={vehicle.images} alt={`${fullName} ${years}`} sold={sold} transitionPath={pagePath} />
@@ -259,7 +259,7 @@ const preload = cover
     </div>
 
     <!-- Detalhes -->
-    <div class="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
+    <div class="mt-14 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
       <div class="min-w-0 space-y-12">
         {vehicle.description && (
           <section aria-labelledby="descricao">

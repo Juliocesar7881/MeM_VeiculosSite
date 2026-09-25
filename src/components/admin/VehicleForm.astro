@@ -388,32 +388,23 @@ const errorCount = Object.keys(errors).length;
   </section>
 
   <section class="panel">
-    <h2 class="panel-title">Publicação</h2>
-    <div class="grid gap-5 lg:grid-cols-2">
-      <div>
-        <label for="v-status" class="field-label">
-          Status
-        </label>
-        <select id="v-status" name="status" class="input">
-          {VEHICLE_STATUSES.map((s) => (
-            <option value={s} selected={val('status') === s}>
-              {VEHICLE_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <p class="field-hint">Vendidos continuam acessíveis pelo link (com opção “Procurando algo parecido?”).</p>
-      </div>
-      <label class="check toggle-row self-start">
-        <input type="checkbox" name="published" checked={checked('published')} />
-        <span>
-          <strong class="text-white">Publicado no site</strong>
-          <span class="block text-sm text-mist-400">
-            Desmarcado, o veículo fica visível apenas no painel. Publicar um rascunho o torna “Disponível”.
-          </span>
-        </span>
+    <h2 class="panel-title">Status</h2>
+    <div class="max-w-md">
+      <label for="v-status" class="field-label">
+        Status
       </label>
+      <select id="v-status" name="status" class="input" aria-describedby="v-status-hint">
+        {VEHICLE_STATUSES.map((s) => (
+          <option value={s} selected={val('status') === s}>
+            {VEHICLE_STATUS_LABELS[s]}
+          </option>
+        ))}
+      </select>
+      <p id="v-status-hint" class="field-hint">
+        Disponível, Reservado e Vendido aparecem no site. Rascunho e Arquivado ficam só no painel. Vendidos continuam
+        abrindo pelo link (com “Procurando algo parecido?”).
+      </p>
     </div>
-    {err('published') && <p class="field-error">{err('published')}</p>}
   </section>
 
   <div class="save-bar">

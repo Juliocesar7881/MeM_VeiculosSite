@@ -99,7 +99,9 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await expect(page.getByRole('checkbox', { name: /^Repasses/ })).toBeChecked();
   await page.getByLabel('Preço (R$)').fill('47.900');
   await page.getByLabel('Preço anterior (R$)').fill('49.900');
-  await page.getByText('Publicado no site', { exact: true }).click();
+  // Não há "publicar" à parte: sair de Rascunho já coloca no site.
+  await expect(page.getByText('Publicado no site')).toHaveCount(0);
+  await page.getByLabel('Status', { exact: true }).selectOption('available');
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(page.getByText('Alterações salvas.')).toBeVisible();
 

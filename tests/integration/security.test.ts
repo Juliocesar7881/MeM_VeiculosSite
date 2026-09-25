@@ -108,7 +108,7 @@ describe('limite de tentativas', () => {
 
 describe('fotos de rascunhos', () => {
   it('só veículos publicados têm fotos públicas', async () => {
-    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
     expect(await env.media.isVehiclePublic(draft.id)).toBe(false);
 
     const published = await env.vehicles.create(vehicleInput({ status: 'available' }), actor);

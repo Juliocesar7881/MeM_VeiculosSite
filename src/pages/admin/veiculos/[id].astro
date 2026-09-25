@@ -71,7 +71,7 @@ const ACTION_LABELS: Record<string, string> = {
   'vehicle.image.delete': 'Foto excluída',
   'vehicle.image.reorder': 'Fotos reordenadas',
   'vehicle.publish': 'Publicado',
-  'vehicle.unpublish': 'Ocultado do site',
+  'vehicle.unpublish': 'Tirado do site (rascunho)',
   'vehicle.mark-available': 'Marcado como disponível',
   'vehicle.mark-reserved': 'Marcado como reservado',
   'vehicle.mark-sold': 'Marcado como vendido',
@@ -96,7 +96,7 @@ const ACTION_LABELS: Record<string, string> = {
       </h1>
       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
         <StatusPill kind="vehicle" status={vehicle.status} />
-        <span class="text-mist-400">{vehicle.published ? 'Publicado' : 'Não publicado'}</span>
+        <span class="text-mist-400">{vehicle.published ? 'No site' : 'Fora do site'}</span>
         {(publicVisible || interest.views > 0) && (
           <span class="inline-flex items-center gap-3 text-mist-400" title={`Últimos ${STATS_PERIOD_DAYS} dias`}>
             <span class="inline-flex items-center gap-1">
@@ -134,8 +134,9 @@ const ACTION_LABELS: Record<string, string> = {
     <div class="mb-6 flex items-start gap-3 rounded-xl border border-gold-500/30 bg-gold-500/[0.06] px-4 py-3 text-sm text-gold-200">
       <Icon name="info" size={19} class="mt-0.5 shrink-0" />
       <p>
-        Este veículo é um <strong>rascunho</strong> e não aparece no site. Revise os dados, defina o preço e marque
-        <strong>“Publicado no site”</strong> quando estiver pronto.
+        Este veículo é um <strong>rascunho</strong> e não aparece no site. Revise os dados, defina o preço e, quando
+        estiver pronto, mude o <strong>Status</strong> para “Disponível” (ou use{' '}
+        <strong>Ações → Publicar no site</strong>).
       </p>
     </div>
   )}

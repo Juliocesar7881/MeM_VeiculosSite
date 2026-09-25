@@ -13,11 +13,11 @@ interface Props {
 const { settings, availableCount, suggestions } = Astro.props;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
 
-// Foto da loja (public/brand), em AVIF com WebP de reserva, nas larguras geradas.
-const STORE_WIDTHS = [640, 960, 1360];
-const STORE_SIZES = '(min-width: 1408px) 660px, (min-width: 1024px) 47vw, calc(100vw - 2rem)';
+// Foto da loja ao entardecer (public/brand), em AVIF com WebP de reserva. Retrato 4:5.
+const STORE_WIDTHS = [480, 720, 1122];
+const STORE_SIZES = '(min-width: 1408px) 600px, (min-width: 1024px) 44vw, calc(100vw - 2rem)';
 const storeSrcset = (format: 'avif' | 'webp') =>
-  STORE_WIDTHS.map((w) => `/brand/loja-mm-veiculos-${w}.${format} ${w}w`).join(', ');
+  STORE_WIDTHS.map((w) => `/brand/loja-entardecer-${w}.${format} ${w}w`).join(', ');
 const cityState = `${settings.city} - ${settings.state}`;
 const storePlace = settings.address ? `${settings.address}, ${cityState}` : cityState;
 const mapsQuery = settings.address ? `${settings.address}, ${cityState}` : `${settings.businessName}, ${cityState}`;
@@ -32,7 +32,7 @@ const stockLabel =
 <section class="hero relative isolate" aria-labelledby="hero-title">
   <div class="hero-light pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
 
-  <div class="container-site grid grid-cols-[minmax(0,1fr)] items-center gap-10 pb-14 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-14 lg:pb-20 lg:pt-16 xl:gap-20">
+  <div class="container-site grid grid-cols-[minmax(0,1fr)] items-center gap-10 pb-14 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:gap-14 lg:pb-20 lg:pt-16 xl:gap-20">
     <div class="relative">
       <h1 id="hero-title" class="display hero-title text-white">
         {headline.map((word, index) => (
@@ -86,7 +86,7 @@ const stockLabel =
         <label for="hero-cat" class="sr-only">
           Categoria
         </label>
-        <select id="hero-cat" name="categoria" class="hero-select hidden sm:block">
+        <select id="hero-cat" name="categoria" class="hero-select hidden sm:flex" data-select-menu>
           <option value="">Todas as categorias</option>
           {VEHICLE_CATEGORIES.map((c) => (
             <option value={CATEGORY_INFO[c].slug}>{CATEGORY_INFO[c].plural}</option>
@@ -115,17 +115,19 @@ const stockLabel =
       </div>
     </div>
 
-    <figure class="stage store">
-      <div class="stage-media" data-showroom>
+    <figure class="stage store" data-showroom>
+      <!-- Brilho ambiente: a luz do pôr do sol "vaza" do quadro para a página. -->
+      <span class="stage-glow" aria-hidden="true"></span>
+      <div class="stage-media">
         <picture>
           <source type="image/avif" srcset={storeSrcset('avif')} sizes={STORE_SIZES} />
           <img
-            src="/brand/loja-mm-veiculos-1360.webp"
+            src="/brand/loja-entardecer-1122.webp"
             srcset={storeSrcset('webp')}
             sizes={STORE_SIZES}
-            width="1360"
-            height="765"
-            alt={`Loja da ${settings.businessName} em ${settings.city}: placa “Compra, vende, troca, financia” sob a cobertura, com carros no pátio`}
+            width="1122"
+            height="1402"
+            alt={`Loja da ${settings.businessName} ao entardecer: placa “Compra, vende, troca, financia” e carros alinhados sob a cobertura`}
             loading="eager"
             fetchpriority="high"
             decoding="async"
@@ -134,15 +136,17 @@ const stockLabel =
         </picture>
         <span class="stage-sheen" aria-hidden="true"></span>
         <span class="stage-torch" aria-hidden="true" data-showroom-light></span>
+        <span class="stage-scrim" aria-hidden="true"></span>
       </div>
-      <figcaption class="stage-caption store-caption">
-        <div class="min-w-0 flex-[1_1_13rem]">
-          <p class="title text-2xl text-white sm:text-[1.75rem]">
-            <a href="/empresa" class="stage-link">
-              Venha conhecer a loja
-            </a>
+      <!-- O quadro inteiro leva a "Sobre nós"; "Como chegar" fica por cima e abre o mapa. -->
+      <a href="/empresa" class="stage-cover" aria-label={`Conheça a ${settings.businessName}`}></a>
+      <figcaption class="store-caption">
+        <div class="min-w-0 flex-[1_1_12rem]">
+          <p class="store-place">
+            <Icon name="map-pin" size={15} />
+            {storePlace}
           </p>
-          <p class="mt-1 text-sm text-mist-300">{storePlace}</p>
+          <p class="title mt-1.5 text-[1.75rem] leading-tight text-white sm:text-[2.1rem]">Venha conhecer a loja</p>
         </div>
         <a href={mapsUrl} target="_blank" rel="noopener noreferrer" class="stage-map">
           <Icon name="map-pin" size={18} />
@@ -230,6 +234,7 @@ const stockLabel =
       0 0 0 3px color-mix(in oklab, var(--color-gold-500) 20%, transparent),
       0 24px 50px -28px rgb(0 0 0 / 0.9);
   }
+  /* Categoria da busca: com JS vira o botão da lista própria (features/select-menu.ts). */
   .hero-select {
     height: 3rem;
     max-width: 13rem;
@@ -239,6 +244,12 @@ const stockLabel =
     color: var(--color-mist-100);
     font-size: 0.92rem;
     appearance: none;
+  }
+  button.hero-select {
+    min-width: 12.5rem;
+    padding-right: 0.9rem;
+  }
+  select.hero-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23b3b8bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.8rem center;
@@ -251,21 +262,45 @@ const stockLabel =
     background: var(--color-ink-850);
   }
 
-  /* Vitrine: foto da loja + legenda embaixo (fora da imagem). O quadro inteiro leva a "Sobre nós". */
+  /* Vitrine: foto da loja em retrato, com a legenda sobre o piso (parte de baixo da foto). */
   .stage {
     position: relative;
     display: block;
     border-radius: var(--radius-panel);
-    background: linear-gradient(to bottom, var(--color-ink-850), var(--color-ink-900));
     box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, white 8%, transparent),
-      0 50px 90px -50px rgb(0 0 0 / 0.95);
+      0 0 0 1px color-mix(in oklab, white 9%, transparent),
+      0 50px 90px -40px rgb(0 0 0 / 0.95);
+  }
+  /*
+   * Brilho ambiente: a própria foto, bem pequena e borrada, atrás do quadro. Aparece depois
+   * que a "capa" abre, como a luz do fim de tarde se espalhando pela página.
+   */
+  .stage-glow {
+    position: absolute;
+    inset: 8% 4% -2%;
+    z-index: -1;
+    border-radius: 50%;
+    background: url('/brand/loja-entardecer-brilho.webp') center / cover no-repeat;
+    filter: blur(56px) saturate(1.6);
+    opacity: 0.6;
+    transform: scale(1.08);
+    animation: glow-in 1600ms var(--ease-out-soft) 700ms both;
+    pointer-events: none;
+  }
+  @keyframes glow-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
   }
   .stage-media {
     position: relative;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
+    /* Telas baixas: o quadro não passa da dobra; o corte sai do piso, embaixo. */
+    max-height: max(30rem, calc(100svh - 9rem));
+    width: 100%;
     overflow: hidden;
-    border-radius: var(--radius-panel) var(--radius-panel) var(--radius-card) var(--radius-card);
+    border-radius: var(--radius-panel);
     background: var(--color-ink-800);
   }
   .stage-img {
@@ -273,14 +308,14 @@ const stockLabel =
     height: 100%;
     object-fit: cover;
     animation: stage-settle 1600ms var(--ease-expo) backwards;
-    transition: transform 700ms var(--ease-out-soft);
+    transition: transform 900ms var(--ease-out-soft);
   }
   .stage-media picture {
     display: contents;
   }
-  /* A placa inteira no quadro 4:3 (o corte tira só as bordas da foto 16:9). */
+  /* Placa no alto e carros no meio: cortes de altura saem do piso. */
   .store-img {
-    object-position: 36% 50%;
+    object-position: 50% 12%;
   }
   @keyframes stage-settle {
     from {
@@ -292,7 +327,7 @@ const stockLabel =
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     background: var(--color-ink-900);
     transform-origin: right;
     animation: unveil 1000ms var(--ease-in-out-strong) 150ms both;
@@ -341,9 +376,17 @@ const stockLabel =
       transform: translateX(70%);
     }
   }
+  /* Escurece só o piso, onde fica a legenda. */
+  .stage-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(to top, rgb(8 8 10 / 0.92) 0%, rgb(8 8 10 / 0.6) 17%, rgb(8 8 10 / 0) 38%);
+    pointer-events: none;
+  }
   @media (hover: hover) and (pointer: fine) {
     .stage:hover .stage-img {
-      transform: scale(1.025);
+      transform: scale(1.03);
     }
     .stage:hover .stage-media::before {
       transform: translateX(70%);
@@ -365,57 +408,90 @@ const stockLabel =
     pointer-events: none;
     transition: opacity 500ms ease;
   }
-  .stage-media:global(.is-lit) .stage-torch {
+  .stage:global(.is-lit) .stage-torch {
     opacity: 1;
   }
-  .stage-caption {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.1rem 1.25rem 1.25rem;
-  }
-  @media (min-width: 640px) {
-    .stage-caption {
-      padding: 1.25rem 1.6rem 1.5rem;
-    }
-  }
-  /* No celular, "Como chegar" desce para a linha de baixo quando não cabe ao lado do título. */
-  .store-caption {
-    flex-wrap: wrap;
-    row-gap: 0.9rem;
-  }
-  /* Link "esticado": o título leva a /empresa e cobre o quadro todo (foto + legenda). */
-  .stage-link::after {
-    content: '';
+  /* Link que cobre o quadro todo (foto + legenda). */
+  .stage-cover {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 4;
     border-radius: var(--radius-panel);
   }
-  .stage-link:focus-visible {
-    outline: none;
-  }
-  .stage-link:focus-visible::after {
+  .stage-cover:focus-visible {
     outline: 2px solid var(--color-gold-400);
     outline-offset: 3px;
   }
-  /* "Como chegar" fica acima do link esticado. */
+  .store-caption {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 4;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.9rem 1rem;
+    padding: 1.25rem;
+    pointer-events: none;
+    animation: fade-rise 800ms var(--ease-expo) 1050ms backwards;
+  }
+  @media (min-width: 640px) {
+    .store-caption {
+      padding: 1.6rem 1.75rem 1.75rem;
+    }
+  }
+  /* Celular: legenda embaixo da foto (sobre ela, cobriria os carros). */
+  @media (max-width: 639px) {
+    .stage {
+      background: var(--color-ink-850);
+    }
+    .stage-media {
+      border-radius: var(--radius-panel) var(--radius-panel) var(--radius-card) var(--radius-card);
+    }
+    .stage-scrim {
+      display: none;
+    }
+    .store-caption {
+      position: relative;
+      padding: 1.1rem 1.25rem 1.3rem;
+    }
+    .store-caption .title {
+      text-shadow: none;
+    }
+  }
+  .store-place {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-gold-200);
+  }
+  .store-place :global(svg) {
+    color: var(--color-gold-400);
+  }
+  .store-caption .title {
+    text-shadow: 0 2px 18px rgb(0 0 0 / 0.55);
+  }
+  /* "Como chegar": vidro escuro sobre a foto, acima do link do quadro. */
   .stage-map {
     position: relative;
-    z-index: 4;
+    z-index: 5;
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
     gap: 0.45rem;
     min-height: 2.75rem;
-    padding: 0 1rem 0 0.85rem;
+    padding: 0 1.05rem 0 0.9rem;
     border-radius: 999px;
-    border: 1px solid color-mix(in oklab, white 16%, transparent);
-    color: var(--color-mist-100);
+    border: 1px solid color-mix(in oklab, white 22%, transparent);
+    background: rgb(12 12 14 / 0.5);
+    backdrop-filter: blur(10px);
+    color: #fff;
     font-size: 0.9rem;
     font-weight: 500;
     white-space: nowrap;
+    pointer-events: auto;
     transition:
       background-color 200ms ease,
       border-color 200ms ease,
@@ -443,9 +519,29 @@ const stockLabel =
     outline: 2px solid var(--color-gold-400);
     outline-offset: 2px;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .stage-glow,
+    .store-caption {
+      animation: none;
+    }
+  }
 </style>
 
 <script>
+  import { initSelectMenus } from '@/features/select-menu';
   import { initShowroomLight } from '@/features/showroom-light';
   initShowroomLight();
+  initSelectMenus();
+
+  // Busca: campos vazios não vão para a URL (/veiculos em vez de /veiculos?q=&categoria=).
+  const search = document.querySelector<HTMLFormElement>('.search-box');
+  search?.addEventListener('submit', () => {
+    const empty = Array.from(search.elements).filter(
+      (el): el is HTMLInputElement | HTMLSelectElement =>
+        (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) && !!el.name && !el.value.trim(),
+    );
+    empty.forEach((el) => (el.disabled = true));
+    // Voltar pelo histórico (bfcache) reabilita os campos.
+    window.addEventListener('pageshow', () => empty.forEach((el) => (el.disabled = false)), { once: true });
+  });
 </script>

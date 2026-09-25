@@ -87,7 +87,8 @@ Campos principais de `vehicles`: `category` (carro, moto, scooter, pesado, maqui
 
 - Visível no site = `published = 1` e status em (available, reserved, sold) e não excluído. Vendido só aparece nas
   listagens se “Mostrar vendidos” estiver ligado, mas o link direto sempre funciona (mostra “Procurando algo parecido?”).
-- Publicar um rascunho o torna “Disponível”. Arquivado não pode ficar publicado.
+- A publicação segue o status: `published` é gravado como 1 para available/reserved/sold e 0 para draft/archived
+  (não existe caixa “Publicado” no painel). “Tirar do site” volta o veículo para rascunho.
 - **Oferta ativa** = `is_offer` e dentro do período (datas opcionais, fuso de Brasília). “De/Por” só com preço anterior
   maior que o atual; percentual arredondado **para baixo** (nunca exagera o desconto).
 - **Hierarquia de selos**: Vendido (exclusivo) › Reservado › Oferta › Repasse › Destaque; no máximo 2 por card.
