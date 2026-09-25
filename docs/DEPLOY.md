@@ -105,6 +105,9 @@ npx wrangler secret put ADMIN_PASSWORD_HASH
 npx wrangler secret put SESSION_SECRET
 ```
 
+- Sem terminal: painel da Cloudflare → **Workers & Pages → mm-veiculos → Settings → Variables and Secrets** →
+  `ADMIN_PASSWORD_HASH` → **Edit** → cole o hash (tipo **Secret**) → **Deploy**.
+- Trocar o hash já encerra todas as sessões abertas: quem estava logado com a senha antiga precisa entrar de novo.
 - O novo `SESSION_SECRET` encerra todas as sessões abertas (inclusive a de desenvolvimento).
 - Não é preciso refazer o deploy: gravar um secret já publica uma nova versão.
 - O hash usa PBKDF2-SHA256 com **50 mil iterações** no Workers (limite de CPU do runtime); combinado com o bloqueio

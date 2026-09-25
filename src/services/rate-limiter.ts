@@ -12,15 +12,51 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
+/**
+ * Bloqueio por tentativas erradas seguidas: depois de `maxAttempts` erros, a chave fica
+ * bloqueada por `lockSeconds`. Sem tentativas por `resetAfterSeconds`, a contagem recomeça.
+ */
+export interface LockoutRule {
+  bucket: string;
+  maxAttempts: number;
+  resetAfterSeconds: number;
+  lockSeconds: number;
+}
+
+export interface LockoutAttempt {
+  allowed: boolean;
+  retryAfterSeconds: number;
+  /** Quantas tentativas ainda restam se esta der errado (0 = esta é a última). */
+  remaining: number;
+}
+
 /** Regras padrão do sistema. */
 export const RATE_LIMITS = {
   leadHourly: { bucket: 'lead-h', limit: 5, windowSeconds: 60 * 60 },
   leadDaily: { bucket: 'lead-d', limit: 15, windowSeconds: 60 * 60 * 24 },
-  loginFailures: { bucket: 'login', limit: 6, windowSeconds: 15 * 60 },
-  /** Teto diário por IP: impede o "conta-gotas" de 6 tentativas a cada 15 minutos o dia inteiro. */
+  /** Teto diário por IP: impede o "conta-gotas" de 5 tentativas a cada bloqueio o dia inteiro. */
   loginDaily: { bucket: 'login-d', limit: 30, windowSeconds: 60 * 60 * 24 },
   favoritesPartial: { bucket: 'fav', limit: 120, windowSeconds: 60 },
 } as const satisfies Record<string, RateLimitRule>;
+
+/** Login do painel: 5 senhas erradas seguidas bloqueiam o IP por 30 minutos. */
+export const LOGIN_LOCKOUT: LockoutRule = {
+  bucket: 'login',
+  maxAttempts: 5,
+  resetAfterSeconds: 30 * 60,
+  lockSeconds: 30 * 60,
+};
+
+/**
+ * Teto somando todos os IPs (ataque distribuído, cada IP com poucas tentativas): 100 tentativas
+ * seguidas pausam o login de todos por 30 minutos. Quem já está logado continua usando o painel.
+ */
+export const LOGIN_GLOBAL_LOCKOUT: LockoutRule = {
+  bucket: 'login-all',
+  maxAttempts: 100,
+  resetAfterSeconds: 60 * 60,
+  lockSeconds: 30 * 60,
+};
 
 export interface RateLimitCheckOptions {
   /**
@@ -93,6 +129,75 @@ export class RateLimiter {
       if (options.failClosed) return { allowed: false, count: 0, retryAfterSeconds: 60 };
       // Formulários públicos: falha no banco não derruba o site (o Turnstile continua ativo).
       return { allowed: true, count: 0, retryAfterSeconds: 0 };
+    }
+  }
+
+  private async lockoutKeys(rule: LockoutRule, identifier: string) {
+    const hashed = (await this.hashIdentifier(identifier)).slice(0, 32);
+    return { counter: `${rule.bucket}-n:${hashed}`, lock: `${rule.bucket}-b:${hashed}` };
+  }
+
+  /**
+   * Registra uma tentativa ANTES de conferir a senha. Contar antes (e não só depois do erro)
+   * impede que várias requisições em paralelo escapem do limite. Bloqueado, recusa sem gravar.
+   */
+  async beginAttempt(
+    rule: LockoutRule,
+    identifier: string,
+    options: RateLimitCheckOptions = {},
+  ): Promise<LockoutAttempt> {
+    const nowSeconds = Math.floor(this.now() / 1000);
+    const keys = await this.lockoutKeys(rule, identifier);
+
+    const cached = blockedUntil.get(keys.lock);
+    if (cached !== undefined) {
+      if (cached > nowSeconds) return { allowed: false, retryAfterSeconds: cached - nowSeconds, remaining: 0 };
+      blockedUntil.delete(keys.lock);
+    }
+
+    try {
+      const until = await this.repo.lockedUntil(keys.lock);
+      if (until > nowSeconds) {
+        rememberBlocked(keys.lock, until);
+        return { allowed: false, retryAfterSeconds: until - nowSeconds, remaining: 0 };
+      }
+      const count = await this.repo.hitStreak(keys.counter, nowSeconds, nowSeconds - rule.resetAfterSeconds);
+      if (count > rule.maxAttempts) {
+        // Só acontece com requisições simultâneas: bloqueia já, sem conferir a senha.
+        await this.lock(rule, keys, nowSeconds);
+        return { allowed: false, retryAfterSeconds: rule.lockSeconds, remaining: 0 };
+      }
+      return { allowed: true, retryAfterSeconds: 0, remaining: rule.maxAttempts - count };
+    } catch (error) {
+      console.error('[rate-limit] falha ao registrar tentativa', error);
+      if (options.failClosed) return { allowed: false, retryAfterSeconds: 60, remaining: 0 };
+      return { allowed: true, retryAfterSeconds: 0, remaining: rule.maxAttempts };
+    }
+  }
+
+  /** Chamado quando a tentativa deu errado. Retorna true se ela bloqueou a chave. */
+  async recordFailure(rule: LockoutRule, identifier: string, attempt: LockoutAttempt): Promise<boolean> {
+    if (attempt.remaining > 0) return false;
+    const nowSeconds = Math.floor(this.now() / 1000);
+    await this.lock(rule, await this.lockoutKeys(rule, identifier), nowSeconds);
+    return true;
+  }
+
+  /** Tentativa certa: zera a sequência de erros. */
+  async clearAttempts(rule: LockoutRule, identifier: string): Promise<void> {
+    const keys = await this.lockoutKeys(rule, identifier);
+    await this.repo.reset(keys.counter).catch(() => undefined);
+  }
+
+  private async lock(rule: LockoutRule, keys: { counter: string; lock: string }, nowSeconds: number) {
+    const until = nowSeconds + rule.lockSeconds;
+    rememberBlocked(keys.lock, until);
+    try {
+      await this.repo.lock(keys.lock, until);
+      await this.repo.reset(keys.counter);
+    } catch (error) {
+      // O bloqueio em memória já vale nesta instância; a próxima leitura do banco decide nas outras.
+      console.error('[rate-limit] falha ao gravar bloqueio', error);
     }
   }
 

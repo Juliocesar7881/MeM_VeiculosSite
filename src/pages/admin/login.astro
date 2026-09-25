@@ -2,9 +2,8 @@
 import '@/styles/global.css';
 import Logo from '@/components/brand/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { verifyPassword } from '@/lib/auth/password';
-import { RATE_LIMITS } from '@/services/rate-limiter';
 import { authConfigProblem, authenticateAdmin, safeAdminRedirect, startAdminSession } from '@/server/admin-auth';
+import { attemptAdminLogin } from '@/server/admin-login';
 import { clientIp, socketAddressOf } from '@/server/http';
 
 const { container } = Astro.locals;
@@ -26,31 +25,15 @@ if (config.auth.mode === 'cloudflare-access') {
 
   if (Astro.request.method === 'POST') {
     const ip = clientIp(Astro.request, socketAddressOf(Astro), container.platform.name);
-    // Janela curta (6 em 15 min) + teto diário (30/dia) por IP. Se o banco falhar, o login
-    // fica bloqueado em vez de aceitar tentativas sem contar.
-    let limit = { allowed: true, retryAfterSeconds: 0 };
-    for (const rule of [RATE_LIMITS.loginFailures, RATE_LIMITS.loginDaily]) {
-      limit = await container.rateLimiter.check(rule, ip, { failClosed: true });
-      if (!limit.allowed) break;
+    // O corpo só é lido se o IP não estiver bloqueado.
+    const readPassword = async () => String((await Astro.request.formData().catch(() => null))?.get('password') ?? '');
+    const result = await attemptAdminLogin(container.rateLimiter, ip, readPassword, config.auth.passwordHash as string);
+    if (result.ok) {
+      await startAdminSession(Astro.cookies, config, Astro.url.protocol === 'https:');
+      await container.audit.log('Administrador', 'auth.login', 'session', null);
+      return Astro.redirect(next, 303);
     }
-    if (!limit.allowed) {
-      error = `Muitas tentativas. Aguarde ${Math.ceil(limit.retryAfterSeconds / 60)} minuto(s) e tente novamente.`;
-    } else {
-      const form = await Astro.request.formData();
-      const password = String(form.get('password') ?? '');
-      const ok =
-        password.length > 0 &&
-        password.length <= 256 &&
-        (await verifyPassword(password, config.auth.passwordHash as string));
-      if (ok) {
-        await container.rateLimiter.reset(RATE_LIMITS.loginFailures, ip);
-        await container.rateLimiter.reset(RATE_LIMITS.loginDaily, ip);
-        await startAdminSession(Astro.cookies, config, Astro.url.protocol === 'https:');
-        await container.audit.log('Administrador', 'auth.login', 'session', null);
-        return Astro.redirect(next, 303);
-      }
-      error = 'Senha incorreta.';
-    }
+    error = result.error;
   }
 }
 ---
