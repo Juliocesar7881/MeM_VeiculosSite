@@ -13,6 +13,7 @@ import type { VehicleCard } from '@/types/domain';
 import { formatDateTime } from '@/utils/dates';
 import { STATS_PERIOD_DAYS } from '@/services/stats-service';
 import { vehicleFullName, yearLabel } from '@/utils/vehicle-format';
+import { formDataOrEmpty } from '@/server/http';
 
 const { container, admin } = Astro.locals;
 const id = Astro.params.id ?? '';
@@ -24,7 +25,7 @@ let values: FormValues = vehicleToFormValues(vehicle);
 let errors: FieldErrors = {};
 
 if (Astro.request.method === 'POST' && admin) {
-  const parsed = parseVehicleForm(await Astro.request.formData());
+  const parsed = parseVehicleForm(await formDataOrEmpty(Astro.request));
   if (parsed.ok) {
     try {
       await container.vehicles.update(id, parsed.data, admin);

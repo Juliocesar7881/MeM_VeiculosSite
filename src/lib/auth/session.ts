@@ -29,13 +29,21 @@ async function sign(data: string, key: CryptoKey): Promise<Uint8Array> {
   return new Uint8Array(signature);
 }
 
+/**
+ * @param nowSeconds momento da emissão, em segundos COM fração (milissegundos): o corte do "Sair"
+ *   compara nessa precisão, então uma sessão criada no mesmo segundo do "Sair" também cai.
+ */
 export async function createSessionToken(
   secret: string,
   binding: string,
   subject = 'admin',
-  nowSeconds = Math.floor(Date.now() / 1000),
+  nowSeconds = Date.now() / 1000,
 ): Promise<string> {
-  const payload: SessionPayload = { sub: subject, iat: nowSeconds, exp: nowSeconds + SESSION_TTL_SECONDS };
+  const payload: SessionPayload = {
+    sub: subject,
+    iat: Math.round(nowSeconds * 1000) / 1000,
+    exp: Math.floor(nowSeconds) + SESSION_TTL_SECONDS,
+  };
   const encoded = toBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
   const key = await hmacKey(secret, binding);
   return `${encoded}.${toBase64Url(await sign(encoded, key))}`;

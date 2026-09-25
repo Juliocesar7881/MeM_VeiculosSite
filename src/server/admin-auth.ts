@@ -44,7 +44,7 @@ export async function authenticateAdmin(
   if (!payload) return null;
   try {
     // Sessão emitida antes do último "Sair" foi encerrada no servidor.
-    if (payload.iat < (await sessionsValidAfter())) return null;
+    if (payload.iat <= (await sessionsValidAfter())) return null;
   } catch (error) {
     console.error('[auth] falha ao ler o corte de sessões; acesso negado', error);
     return null;

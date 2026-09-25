@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { isAppError } from '@/lib/errors';
 import { vehicleQuickActionSchema, type VehicleQuickAction } from '@/schemas/vehicle';
 import { flasher } from '@/server/flash';
+import { formDataOrEmpty } from '@/server/http';
 
 const MESSAGES: Record<VehicleQuickAction, string> = {
   publish: 'Veículo publicado no site.',
@@ -26,7 +27,7 @@ function safeReturn(value: FormDataEntryValue | null, fallback: string): string 
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const id = params.id ?? '';
-  const form = await request.formData();
+  const form = await formDataOrEmpty(request);
   const parsed = vehicleQuickActionSchema.safeParse(form.get('action'));
   const back = safeReturn(form.get('returnTo'), `/admin/veiculos/${id}`);
   const flash = flasher(locals.container.config);

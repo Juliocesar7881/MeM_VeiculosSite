@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { IMAGE_LIMITS } from '@/config/site';
 import { ValidationError } from '@/lib/errors';
 import { mediaUrl } from '@/lib/storage/keys';
-import { contentLength, errorToResponse, fileBytes, json, jsonError } from '@/server/http';
+import { contentLength, errorToResponse, fileBytes, json, jsonError, readFormData } from '@/server/http';
 
 /** Upload de UMA foto (grande + média + miniatura + compartilhamento, já geradas no navegador). */
 export const POST: APIRoute = async ({ params, request, locals }) => {
@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     if (length > IMAGE_LIMITS.vehicleRequestMaxBytes) {
       return jsonError(413, 'Foto muito grande após a compressão.');
     }
-    const form = await request.formData();
+    const form = await readFormData(request);
     const large = await fileBytes(form.get('large'));
     const thumb = await fileBytes(form.get('thumb'));
     const medium = await fileBytes(form.get('medium'));

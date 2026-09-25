@@ -3,7 +3,7 @@ import { bool, type Database, type SqlStatement, type SqlValue } from '@/lib/db/
 import type { InventoryFilters } from '@/schemas/filters';
 import type { Vehicle, VehicleCard } from '@/types/domain';
 import { reaisToCents } from '@/utils/money';
-import { escapeLike, searchTerms } from '@/utils/text';
+import { likeContains, searchTerms } from '@/utils/text';
 import { mapVehicle, mapVehicleCard, type VehicleCardRow, type VehicleRow } from './mappers';
 
 const CARD_SELECT = `
@@ -41,7 +41,7 @@ function applyInventoryFilters(where: Where, filters: InventoryFilters, nowIso: 
   if (filters.q) {
     for (const term of searchTerms(filters.q)) {
       where.clauses.push(`v.search_text LIKE ? ESCAPE '\\'`);
-      where.args.push(`%${escapeLike(term)}%`);
+      where.args.push(likeContains(term));
     }
   }
   if (filters.category) {
@@ -557,7 +557,7 @@ export class VehicleRepository {
     if (filters.q) {
       for (const term of searchTerms(filters.q)) {
         where.clauses.push(`v.search_text LIKE ? ESCAPE '\\'`);
-        where.args.push(`%${escapeLike(term)}%`);
+        where.args.push(likeContains(term));
       }
     }
     if (filters.offersOnly) {

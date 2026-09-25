@@ -6,7 +6,16 @@ import { formDataToObject, toFieldErrors } from '@/schemas/common';
 import { leadInputSchema } from '@/schemas/lead';
 import type { ImagePair } from '@/services/media-service';
 import { RATE_LIMITS } from '@/services/rate-limiter';
-import { clientIp, contentLength, errorToResponse, fileBytes, json, jsonError, socketAddressOf } from '@/server/http';
+import {
+  clientIp,
+  contentLength,
+  errorToResponse,
+  fileBytes,
+  json,
+  jsonError,
+  readFormData,
+  socketAddressOf,
+} from '@/server/http';
 
 /**
  * Recebe propostas do formulário "Anuncie seu veículo".
@@ -37,7 +46,7 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    const form = await request.formData();
+    const form = await readFormData(request);
 
     // Honeypot preenchido: responde "ok" sem gravar nada (não dá pistas ao robô).
     if (String(form.get('website') ?? '').trim() !== '') return json({ ok: true });

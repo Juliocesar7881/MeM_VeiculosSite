@@ -3,6 +3,7 @@ import { LEAD_STATUS_LABELS } from '@/config/catalog';
 import { isAppError } from '@/lib/errors';
 import { leadNotesSchema, leadStatusSchema } from '@/schemas/lead';
 import { flasher } from '@/server/flash';
+import { formDataOrEmpty } from '@/server/http';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const id = params.id ?? '';
@@ -10,7 +11,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const { admin, container } = locals;
   const flash = flasher(container.config);
   if (!admin) return flash.redirect('/admin/login');
-  const form = await request.formData();
+  const form = await formDataOrEmpty(request);
   const action = String(form.get('action') ?? '');
 
   try {

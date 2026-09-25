@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout.astro';
 import { isAppError } from '@/lib/errors';
 import { emptyVehicleValues, parseVehicleForm, type FormValues } from '@/server/vehicle-form';
 import type { FieldErrors } from '@/schemas/common';
+import { formDataOrEmpty } from '@/server/http';
 
 const { container, admin } = Astro.locals;
 const settings = await container.settings.get();
@@ -12,7 +13,7 @@ let values: FormValues = emptyVehicleValues(settings);
 let errors: FieldErrors = {};
 
 if (Astro.request.method === 'POST' && admin) {
-  const parsed = parseVehicleForm(await Astro.request.formData());
+  const parsed = parseVehicleForm(await formDataOrEmpty(Astro.request));
   values = parsed.values;
   if (parsed.ok) {
     try {

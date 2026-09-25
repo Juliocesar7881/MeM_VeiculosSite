@@ -6,6 +6,8 @@ test.describe('Experiência no celular', () => {
     const tabbar = page.getByRole('navigation', { name: 'Navegação rápida' });
     await expect(tabbar).toBeVisible();
     await expect(tabbar.getByRole('link', { name: 'Anunciar' })).toBeVisible();
+    // Só Início, Anunciar e Veículos (sem WhatsApp e Favoritos na barra)
+    await expect(tabbar.getByRole('link')).toHaveText(['Início', 'Anunciar', 'Veículos']);
 
     await page.getByRole('button', { name: 'Abrir menu' }).click();
     const menu = page.getByRole('dialog', { name: 'Menu' });

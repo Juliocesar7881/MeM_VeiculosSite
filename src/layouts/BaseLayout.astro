@@ -53,7 +53,7 @@ const settings = await Astro.locals.container.settings.get();
       <slot />
     </main>
     <SiteFooter settings={settings} />
-    {!hideTabBar && <MobileTabBar settings={settings} />}
+    {!hideTabBar && <MobileTabBar />}
     <slot name="after" />
   </body>
 </html>

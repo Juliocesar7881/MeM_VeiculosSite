@@ -6,13 +6,14 @@ import { BRAZIL_STATES } from '@/config/catalog';
 import { formDataToObject, toFieldErrors, type FieldErrors } from '@/schemas/common';
 import { settingsInputSchema } from '@/schemas/settings';
 import type { SiteSettings } from '@/types/settings';
+import { formDataOrEmpty } from '@/server/http';
 
 const { container, admin } = Astro.locals;
 let values: Record<string, string | boolean> = { ...(await container.settings.get()) };
 let errors: FieldErrors = {};
 
 if (Astro.request.method === 'POST' && admin) {
-  const raw = formDataToObject(await Astro.request.formData());
+  const raw = formDataToObject(await formDataOrEmpty(Astro.request));
   const parsed = settingsInputSchema.safeParse(raw);
   if (parsed.success) {
     await container.settings.update(parsed.data, admin);

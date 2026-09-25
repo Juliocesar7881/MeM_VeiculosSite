@@ -26,6 +26,24 @@ export function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
+/** O Cloudflare D1 recusa padrões de LIKE com mais de 50 bytes ("LIKE or GLOB pattern too complex"). */
+export const LIKE_PATTERN_MAX_BYTES = 50;
+
+/**
+ * Padrão `%termo%` para LIKE, escapado e cortado para caber no limite do D1.
+ * Um termo gigante (colado ou malicioso) só perde o fim — a busca não quebra.
+ */
+export function likeContains(term: string): string {
+  const encoder = new TextEncoder();
+  let chars = Array.from(term);
+  let pattern = `%${escapeLike(chars.join(''))}%`;
+  while (encoder.encode(pattern).length > LIKE_PATTERN_MAX_BYTES && chars.length > 1) {
+    chars = chars.slice(0, -1);
+    pattern = `%${escapeLike(chars.join(''))}%`;
+  }
+  return pattern;
+}
+
 /** Limpa espaços e retorna null quando vazio. */
 export function cleanOptional(value: string | null | undefined): string | null {
   if (value === null || value === undefined) return null;

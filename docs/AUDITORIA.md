@@ -131,6 +131,38 @@ Fase 4 (auditoria de segurança completa, 25/09/2026):
     tentativas seguidas somando todos os IPs pausam o login por 30 minutos (quem já está logado segue usando o
     painel). A tela avisa quantas tentativas restam. Testes em `tests/integration/login-lockout.test.ts`.
 
+Fase 5 (teste de invasão no runtime da Cloudflare — `wrangler dev`/workerd com D1 e KV locais — 25/09/2026):
+
+140 ataques automatizados, repetidos depois das correções. Correções:
+
+29. **Busca longa derrubava a página (500):** o D1 recusa padrões de `LIKE` acima de 50 bytes ("LIKE or GLOB
+    pattern too complex"); uma palavra de 49+ letras na busca do site, do painel ou das propostas gerava erro 500 (o
+    SQLite local não tem esse limite, por isso os testes não pegavam). Agora cada termo é cortado para caber
+    (`likeContains`, testes em `tests/unit/text.test.ts`).
+30. **Formulário malformado (500):** corpo `multipart` quebrado em `/api/leads`, no upload de fotos e nos formulários
+    do painel gerava erro 500. Agora vira mensagem de "envio inválido" (422) ou formulário vazio com os erros.
+31. **"Sair" no mesmo segundo:** o corte de sessões era em segundos inteiros; uma sessão criada no mesmo segundo do
+    "Sair" continuava valendo. Agora emissão e corte usam milissegundos (teste de integração).
+
+Resultado dos ataques (todos bloqueados): sessão forjada (payload alterado, assinatura trocada, cookie vazio/gigante,
+"alg none"); CSRF (Origin de outro site, `null`, subdomínio parecido, sem Origin); redirecionamento aberto em `next` e
+`returnTo` (8 variações); todas as rotas do painel e da API sem login (15 rotas × métodos); fotos e imagem de
+compartilhamento de rascunhos; rascunho via busca, favoritos forjados e sitemap; apagar/reordenar foto de outro
+veículo; path traversal em `/media` e `/api/admin/lead-media`; XSS armazenado (campos do veículo com `<script>`,
+`onerror`, `</script>`) e refletido (filtros, busca do painel, 404, `next`, aviso `?ok=`) — conferido também em navegador
+real: nada executa, o JSON-LD continua válido; SQL injection (104 combinações em 13 filtros + painel); entradas extremas
+(página 1e308, preço com 20 dígitos, 800 parâmetros); uploads maliciosos (HTML disfarçado, SVG com script, PNG,
+bomba de descompressão 8000×8000, sem miniatura, proporção diferente, arquivo poliglota — servido só como
+`image/webp` com `nosniff`); upload sem tamanho declarado (411); força bruta (5 erros → 30 min, senha certa recusada
+durante o bloqueio, 20 tentativas simultâneas → só 5 conferidas, senha de 100 mil caracteres); limite do formulário de
+propostas (6º envio na hora → 429); métricas de outro site (403); arquivos internos (`.env`, `.dev.vars`,
+`wrangler.json`, `.git`, `package.json`, migrations, código-fonte, source maps) — todos 404; `npm audit`: 0
+vulnerabilidades; histórico do Git sem segredos.
+
+Observações (sem risco): a resposta 403 da proteção CSRF nativa do Astro (`checkOrigin`, antes do middleware) é texto
+fixo sem os cabeçalhos de segurança — mantida como camada extra; no `wrangler dev`, um upload acima de 2,5 MB aparece
+como "conexão perdida" porque o Worker responde 413 antes de ler o corpo (comportamento do proxy local).
+
 Verificado sem achados nesta fase: SQL injection, XSS, CSRF, open redirect, autorização do painel, uploads
 (assinatura real + `nosniff`), fotos de propostas só com login, JWT do Cloudflare Access (issuer + audience),
 chaves de teste do Turnstile nunca usadas em produção, dependências (`npm audit`: 0 vulnerabilidades) e varredura

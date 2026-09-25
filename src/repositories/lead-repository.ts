@@ -1,7 +1,7 @@
 import type { LeadStatus } from '@/config/catalog';
 import type { Database, SqlStatement, SqlValue } from '@/lib/db/types';
 import type { LeadImage, LeadListItem, VehicleLead } from '@/types/domain';
-import { escapeLike, searchTerms } from '@/utils/text';
+import { likeContains, searchTerms } from '@/utils/text';
 import { mapCover, mapLead, mapLeadImage, type CoverColumns, type ImageRow, type LeadRow } from './mappers';
 
 export interface NewLeadRecord extends VehicleLead {
@@ -110,7 +110,7 @@ export class LeadRepository {
         clauses.push(
           `(lower(l.name) LIKE ? ESCAPE '\\' OR lower(l.brand || ' ' || l.model) LIKE ? ESCAPE '\\' OR l.whatsapp LIKE ? ESCAPE '\\')`,
         );
-        const like = `%${escapeLike(term)}%`;
+        const like = likeContains(term);
         args.push(like, like, like);
       }
     }

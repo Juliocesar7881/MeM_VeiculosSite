@@ -45,6 +45,17 @@ describe('sessão do painel encerrada no servidor', () => {
     expect(await authenticateAdmin(request(), fresh, config, validAfter)).not.toBeNull();
   });
 
+  it('"Sair" derruba também a sessão criada no mesmo segundo (precisão de milissegundos)', async () => {
+    const config = await passwordConfig();
+    const binding = config.auth.passwordHash as string;
+    const validAfter = () => env.settings.sessionsValidAfter();
+    const justBefore = cookieJar(await createSessionToken(secret, binding, 'admin', Date.now() / 1000 - 0.05));
+    await env.settings.revokeAdminSessions(actor);
+    expect(await authenticateAdmin(request(), justBefore, config, validAfter)).toBeNull();
+    const justAfter = cookieJar(await createSessionToken(secret, binding, 'admin', Date.now() / 1000 + 0.05));
+    expect(await authenticateAdmin(request(), justAfter, config, validAfter)).not.toBeNull();
+  });
+
   it('se o corte de sessões não puder ser lido, o acesso é negado', async () => {
     const config = await passwordConfig();
     const token = await createSessionToken(secret, config.auth.passwordHash as string);

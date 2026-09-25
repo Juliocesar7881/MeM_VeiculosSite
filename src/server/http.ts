@@ -28,6 +28,23 @@ export function errorToResponse(error: unknown): Response {
   return jsonError(500, 'Não foi possível concluir a operação. Tente novamente.');
 }
 
+/**
+ * Lê o corpo como formulário. Corpo malformado (sem boundary, cortado, lixo) vira erro de
+ * validação com mensagem amigável — nunca um 500.
+ */
+export async function readFormData(request: Request): Promise<FormData> {
+  try {
+    return await request.formData();
+  } catch {
+    throw new ValidationError('Envio inválido. Recarregue a página e tente novamente.');
+  }
+}
+
+/** Páginas do painel: corpo malformado equivale a um formulário vazio (mostra os erros de validação). */
+export function formDataOrEmpty(request: Request): Promise<FormData> {
+  return request.formData().catch(() => new FormData());
+}
+
 /** Lê o corpo como Uint8Array a partir de um File do FormData. */
 export async function fileBytes(value: FormDataEntryValue | null): Promise<Uint8Array | null> {
   if (!value || typeof value === 'string') return null;

@@ -52,7 +52,8 @@ export class SettingsService {
   /** "Sair": invalida no servidor todas as sessões emitidas até agora (inclusive cookies copiados). */
   async revokeAdminSessions(actor: AdminActor): Promise<void> {
     const now = new Date();
-    await this.repo.setSessionsValidAfter(Math.floor(now.getTime() / 1000), now.toISOString());
+    // Em segundos com milissegundos: vale também para sessões criadas no mesmo segundo.
+    await this.repo.setSessionsValidAfter(now.getTime() / 1000, now.toISOString());
     await this.audit.log(actor, 'auth.revoke_sessions', 'session', null);
   }
 }
