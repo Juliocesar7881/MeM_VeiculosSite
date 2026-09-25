@@ -16,7 +16,7 @@ test.describe('Experiência no celular', () => {
   });
 
   test('filtros abrem em gaveta', async ({ page }) => {
-    await page.goto('/estoque');
+    await page.goto('/veiculos');
     await page.getByRole('button', { name: /Filtros/ }).click();
     const panel = page.locator('[data-filter-panel]');
     await expect(panel).toHaveClass(/is-open/);
@@ -27,7 +27,7 @@ test.describe('Experiência no celular', () => {
   });
 
   test('página do veículo tem barra fixa com WhatsApp', async ({ page }) => {
-    await page.goto('/estoque?marca=Toyota');
+    await page.goto('/veiculos?marca=Toyota');
     await page.getByRole('link', { name: 'Corolla', exact: true }).click();
     const bar = page.locator('.mobile-cta');
     await expect(bar).toBeVisible();

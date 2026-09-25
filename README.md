@@ -47,9 +47,9 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 | Rota                                               | Conteúdo                                                                                                                                         |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `/`                                                | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa         |
-| `/estoque`                                         | Estoque único com abas **Todos · Ofertas · Repasses** (`?oferta=true`, `?repasse=true`), busca, filtros, ordenação e paginação — tudo na URL  |
+| `/veiculos`                                        | Página única de veículos com abas **Todos · Ofertas · Repasses** (`?oferta=true`, `?repasse=true`), busca, filtros, ordenação e paginação     |
 | `/veiculo/[slug]`                                  | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?”   |
-| `/ofertas`, `/repasses`                            | Endereços antigos: redirecionam (301) para as abas Ofertas e Repasses do estoque                                                                |
+| `/estoque`, `/ofertas`, `/repasses`                | Endereços antigos: redirecionam (301) para `/veiculos` e as abas Ofertas e Repasses                                                             |
 | `/anuncie-seu-veiculo`                             | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD                                                |
 | `/favoritos`                                       | Favoritos salvos no navegador (sem login)                                                                                                        |
 | `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                    |

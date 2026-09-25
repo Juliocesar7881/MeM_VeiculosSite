@@ -10,8 +10,8 @@ import { inventoryHref } from '@/schemas/filters';
 import { loadInventoryPage } from '@/server/inventory-page';
 
 /**
- * Estoque: página única com as abas Todos, Ofertas e Repasses
- * (/estoque, /estoque?oferta=true, /estoque?repasse=true). /ofertas e /repasses redirecionam para cá.
+ * Veículos: página única com as abas Todos, Ofertas e Repasses
+ * (/veiculos, /veiculos?oferta=true, /veiculos?repasse=true). /estoque, /ofertas e /repasses redirecionam para cá.
  */
 const data = await loadInventoryPage(Astro);
 if (data.redirectTo) return Astro.redirect(inventoryHref(data.redirectTo), 302);
@@ -23,9 +23,9 @@ const sectionOnly = { offersOnly: filters.offersOnly, repasseOnly: filters.repas
 
 const copy = {
   todos: {
-    heading: categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Estoque'),
+    heading: categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Veículos'),
     subtitle: 'Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal.',
-    title: `${categoryLabel ? `${categoryLabel} à venda` : 'Estoque de veículos'}${filters.brand ? ` ${filters.brand}` : ''} | ${businessName}`,
+    title: `${categoryLabel ? `${categoryLabel} à venda` : 'Veículos à venda'}${filters.brand ? ` ${filters.brand}` : ''} | ${businessName}`,
     description: `Veja ${categoryLabel?.toLowerCase() ?? 'carros, motos, scooters, pesados e máquinas agrícolas'} à venda na ${businessName}, em ${city} - ${state}. Filtre por marca, ano, preço e fale pelo WhatsApp.`,
     tone: 'default' as const,
   },
@@ -48,7 +48,7 @@ const copy = {
 
 const breadcrumbs = [
   { name: 'Início', path: '/' },
-  { name: 'Estoque', path: '/estoque' },
+  { name: 'Veículos', path: '/veiculos' },
   ...(section === 'todos' ? [] : [{ name: copy.heading, path: inventoryHref(sectionOnly) }]),
 ];
 const canonicalPath = inventoryHref(sectionOnly, { page: isFiltered ? 1 : filters.page });
@@ -71,6 +71,6 @@ const canonicalPath = inventoryHref(sectionOnly, { page: isFiltered ? 1 : filter
     <InventoryTabs slot="tabs" filters={filters} section={section} counts={counts} />
   </PageHeader>
   <div class="container-site pt-8">
-    <InventoryView filters={filters} result={result} facets={facets} settings={settings} basePath="/estoque" />
+    <InventoryView filters={filters} result={result} facets={facets} settings={settings} basePath="/veiculos" />
   </div>
 </BaseLayout>

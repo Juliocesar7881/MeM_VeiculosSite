@@ -63,7 +63,7 @@ Os destaques aparecem na seção “Destaques” da página inicial (o primeiro 
 2. Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual
    de desconto calculado.
 3. Opcional: defina **Início** e **Fim da oferta**. Depois da data final, o selo “Oferta” sai sozinho.
-4. **Salvar alterações**. O veículo aparece na aba **Ofertas** do Estoque e na seção “Ofertas da M&M” da Home.
+4. **Salvar alterações**. O veículo aparece na aba **Ofertas** da página Veículos e na seção “Ofertas da M&M” da Home.
 
 Atalho: **Ações → Marcar como oferta**.
 
@@ -74,7 +74,7 @@ Atalho: **Ações → Marcar como oferta**.
 ## Marcar como repasse
 
 - No cadastro, em **Tipo comercial**, escolha **Repasse**, ou use **Ações → Marcar como repasse**.
-- O veículo ganha o selo “Repasse”, aparece na aba **Repasses** do Estoque e na seção “Repasses” da Home.
+- O veículo ganha o selo “Repasse”, aparece na aba **Repasses** da página Veículos e na seção “Repasses” da Home.
 - O texto explicativo sobre repasses é editado em **Configurações → Texto informativo sobre repasses**.
 
 ## Remover repasse

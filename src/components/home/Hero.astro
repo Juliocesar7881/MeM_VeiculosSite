@@ -24,7 +24,7 @@ const spotlightHref = spotlight ? `/veiculo/${spotlight.slug}` : '';
 // Cada palavra sobe de dentro de uma máscara, em sequência (a última leva o ponto dourado).
 const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
 const stockLabel =
-  availableCount > 1 ? `Ver os ${availableCount} veículos` : availableCount === 1 ? 'Ver o veículo' : 'Ver estoque';
+  availableCount > 1 ? `Ver os ${availableCount} veículos` : availableCount === 1 ? 'Ver o veículo' : 'Ver veículos';
 ---
 
 <section class="hero relative isolate" aria-labelledby="hero-title">
@@ -52,7 +52,13 @@ const stockLabel =
         </span>
       </p>
 
-      <form action="/estoque" method="get" role="search" class="search-box hero-rise mt-9" aria-label="Buscar veículos">
+      <form
+        action="/veiculos"
+        method="get"
+        role="search"
+        class="search-box hero-rise mt-9"
+        aria-label="Buscar veículos"
+      >
         <label for="hero-q" class="sr-only">
           Qual veículo você procura?
         </label>
@@ -91,7 +97,7 @@ const stockLabel =
       </form>
 
       <div class="hero-rise mt-7 flex flex-col gap-3 xs:flex-row xs:items-center xs:gap-6" style="--d:1">
-        <a href="/estoque" class="btn btn-outline-gold btn-lg">
+        <a href="/veiculos" class="btn btn-outline-gold btn-lg">
           {stockLabel}
           <Icon name="arrow-right" size={18} class="btn-arrow" />
         </a>

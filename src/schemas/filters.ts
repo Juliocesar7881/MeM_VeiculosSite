@@ -17,7 +17,7 @@ import {
 
 /**
  * Filtros do estoque público. Os parâmetros ficam na query string em português:
- * /estoque?marca=Toyota&categoria=carros&oferta=true&ordem=menor-preco&pagina=2
+ * /veiculos?marca=Toyota&categoria=carros&oferta=true&ordem=menor-preco&pagina=2
  */
 export interface InventoryFilters {
   q?: string;
@@ -155,7 +155,7 @@ export function filtersToSearchParams(
 export function inventoryHref(
   filters: Partial<InventoryFilters>,
   overrides: Partial<InventoryFilters> = {},
-  basePath = '/estoque',
+  basePath = '/veiculos',
 ): string {
   const qs = filtersToSearchParams(filters, overrides).toString();
   return qs ? `${basePath}?${qs}` : basePath;

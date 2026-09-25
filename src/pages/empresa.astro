@@ -29,8 +29,8 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
     icon: 'car',
     title: 'Venda',
     text: 'Carros, motos, scooters, pesados e máquinas agrícolas no nosso estoque.',
-    href: '/estoque',
-    cta: 'Ver estoque',
+    href: '/veiculos',
+    cta: 'Ver veículos',
   },
   {
     icon: 'handshake',
@@ -50,7 +50,7 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
     icon: 'repasse',
     title: 'Repasses',
     text: 'Oportunidades de repasse divulgadas quando disponíveis.',
-    href: '/estoque?repasse=true',
+    href: '/veiculos?repasse=true',
     cta: 'Ver repasses',
   },
 ];
@@ -142,8 +142,8 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
           <Icon name="whatsapp" size={20} />
           Falar no WhatsApp
         </a>
-        <a href="/estoque" class="btn btn-ghost btn-lg">
-          Ver estoque
+        <a href="/veiculos" class="btn btn-ghost btn-lg">
+          Ver veículos
         </a>
       </div>
       {(settings.instagram || settings.facebook) && (

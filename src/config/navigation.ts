@@ -7,7 +7,7 @@ export interface NavItem {
 
 export const MAIN_NAV: NavItem[] = [
   { label: 'Início', href: '/', match: ['/'] },
-  { label: 'Estoque', href: '/estoque', match: ['/estoque', '/veiculo'] },
+  { label: 'Veículos', href: '/veiculos', match: ['/veiculos', '/veiculo'] },
   { label: 'Sobre nós', href: '/empresa', match: ['/empresa'] },
   { label: 'Contato', href: '/contato', match: ['/contato'] },
 ];

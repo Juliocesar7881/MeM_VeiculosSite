@@ -14,12 +14,12 @@ type Item = { label: string; href: string; count: number; tone?: 'gold' | 'silve
 // Índice tipográfico: categorias primeiro; repasses e ofertas (condições comerciais) depois do divisor.
 const categories: Item[] = VEHICLE_CATEGORIES.map((category) => ({
   label: CATEGORY_INFO[category].plural,
-  href: `/estoque?categoria=${CATEGORY_INFO[category].slug}`,
+  href: `/veiculos?categoria=${CATEGORY_INFO[category].slug}`,
   count: counts[category],
 }));
 const deals: Item[] = [
-  { label: 'Repasses', href: '/estoque?repasse=true', count: repassesTotal, tone: 'silver' },
-  { label: 'Ofertas', href: '/estoque?oferta=true', count: offersTotal, tone: 'gold' },
+  { label: 'Repasses', href: '/veiculos?repasse=true', count: repassesTotal, tone: 'silver' },
+  { label: 'Ofertas', href: '/veiculos?oferta=true', count: offersTotal, tone: 'gold' },
 ];
 const countLabel = (count: number) =>
   count > 0 ? `${count} ${count === 1 ? 'veículo' : 'veículos'}` : 'consulte disponibilidade';

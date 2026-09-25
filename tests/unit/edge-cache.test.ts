@@ -32,7 +32,7 @@ describe('cache de borda (Cloudflare Cache API)', () => {
   });
 
   it('sem Cache API (Node/Vercel) não faz nada', async () => {
-    const url = new URL('https://mm.test/estoque');
+    const url = new URL('https://mm.test/veiculos');
     const request = new Request(url);
     writeEdgeCache(request, url, page(), () => undefined);
     expect(await readEdgeCache(request, url)).toBeNull();
@@ -40,7 +40,7 @@ describe('cache de borda (Cloudflare Cache API)', () => {
 
   it('guarda página pública e devolve sem cache no navegador', async () => {
     const store = installFakeCache();
-    const url = new URL('https://mm.test/estoque?marca=Toyota');
+    const url = new URL('https://mm.test/veiculos?marca=Toyota');
     const request = new Request(url, { headers: { Cookie: 'mm_admin=x' } });
     const pending: Promise<unknown>[] = [];
     writeEdgeCache(request, url, page(), (p) => pending.push(p));

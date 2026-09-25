@@ -57,9 +57,9 @@ describe('serialização', () => {
 
   it('omite valores padrão e aplica overrides', () => {
     const f = parse('marca=Fiat&pagina=3');
-    expect(inventoryHref(f, { page: 1 })).toBe('/estoque?marca=Fiat');
+    expect(inventoryHref(f, { page: 1 })).toBe('/veiculos?marca=Fiat');
     expect(inventoryHref(f, {}, '/ofertas')).toBe('/ofertas?marca=Fiat&pagina=3');
-    expect(inventoryHref({})).toBe('/estoque');
+    expect(inventoryHref({})).toBe('/veiculos');
   });
 
   it('conta filtros ativos', () => {

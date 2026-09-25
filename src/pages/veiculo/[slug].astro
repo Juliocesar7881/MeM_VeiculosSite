@@ -91,8 +91,8 @@ const specs: [string, string][] = (
 
 const breadcrumbs = [
   { name: 'Início', path: '/' },
-  { name: 'Estoque', path: '/estoque' },
-  { name: CATEGORY_INFO[vehicle.category].plural, path: `/estoque?categoria=${CATEGORY_INFO[vehicle.category].slug}` },
+  { name: 'Veículos', path: '/veiculos' },
+  { name: CATEGORY_INFO[vehicle.category].plural, path: `/veiculos?categoria=${CATEGORY_INFO[vehicle.category].slug}` },
   { name: vehicleName(vehicle), path: pagePath },
 ];
 
@@ -186,8 +186,8 @@ const preload = cover
                 <Icon name="whatsapp" size={20} />
                 Procurar algo parecido
               </a>
-              <a href="/estoque" class="btn btn-ghost mt-3 w-full">
-                Ver estoque disponível
+              <a href="/veiculos" class="btn btn-ghost mt-3 w-full">
+                Ver veículos disponíveis
               </a>
             </div>
           ) : (
@@ -307,7 +307,7 @@ const preload = cover
         <SectionHeader
           id="semelhantes"
           title="Veículos semelhantes"
-          href={`/estoque?categoria=${CATEGORY_INFO[vehicle.category].slug}`}
+          href={`/veiculos?categoria=${CATEGORY_INFO[vehicle.category].slug}`}
           linkLabel="Ver mais"
         />
         <VehicleGrid vehicles={similar.slice(0, 3)} />

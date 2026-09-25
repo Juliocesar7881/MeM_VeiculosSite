@@ -10,7 +10,7 @@ test.describe('Cliente que quer comprar', () => {
     // Busca principal
     await page.getByPlaceholder('Qual veículo você procura?').fill('Corolla');
     await page.getByRole('button', { name: 'Buscar' }).click();
-    await expect(page).toHaveURL(/\/estoque\?q=Corolla/);
+    await expect(page).toHaveURL(/\/veiculos\?q=Corolla/);
     await expect(page.getByText('1 veículo encontrado')).toBeVisible();
 
     // Métrica anônima de visualização enviada pela página do veículo
@@ -45,17 +45,17 @@ test.describe('Cliente que quer comprar', () => {
   });
 
   test('filtros por query string e ordenação', async ({ page }) => {
-    await page.goto('/estoque?marca=Toyota');
+    await page.goto('/veiculos?marca=Toyota');
     await expect(page.getByText('1 veículo encontrado')).toBeVisible();
-    await page.goto('/estoque?categoria=motos');
+    await page.goto('/veiculos?categoria=motos');
     await expect(page.getByRole('link', { name: 'CG 160' })).toBeVisible();
-    await page.goto('/estoque?ordem=menor-preco');
+    await page.goto('/veiculos?ordem=menor-preco');
     const first = page.locator('[data-vehicle-card] h3').first();
     await expect(first).toHaveText('CG 160');
   });
 
   test('favoritos sem login', async ({ page }) => {
-    await page.goto('/estoque?marca=Toyota');
+    await page.goto('/veiculos?marca=Toyota');
     await page.getByRole('button', { name: /Salvar Toyota Corolla nos favoritos/ }).click();
     await expect(page.locator('header [data-fav-count]')).toHaveText('1');
     await page.goto('/favoritos');
@@ -66,7 +66,7 @@ test.describe('Cliente que quer comprar', () => {
   });
 
   test('veículo vendido mostra "Procurando algo parecido?"', async ({ page }) => {
-    await page.goto('/estoque?status=vendido');
+    await page.goto('/veiculos?status=vendido');
     await page.getByRole('link', { name: 'Civic', exact: true }).click();
     await expect(page.getByText('Procurando algo parecido?')).toBeVisible();
     const href = (await page.getByRole('link', { name: 'Procurar algo parecido' }).getAttribute('href')) ?? '';
@@ -84,7 +84,7 @@ test.describe('Ofertas e repasses', () => {
   test('Home → Ofertas (aba do estoque)', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Ver todas as ofertas' }).click();
-    await expect(page).toHaveURL(/\/estoque\?oferta=true$/);
+    await expect(page).toHaveURL(/\/veiculos\?oferta=true$/);
     await expect(page).toHaveTitle('Ofertas de veículos | M&M Veículos');
     const cards = page.locator('[data-vehicle-card]');
     await expect(cards).not.toHaveCount(0);
@@ -96,7 +96,7 @@ test.describe('Ofertas e repasses', () => {
   test('Home → Repasses (aba do estoque)', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Ver todos os repasses' }).click();
-    await expect(page).toHaveURL(/\/estoque\?repasse=true$/);
+    await expect(page).toHaveURL(/\/veiculos\?repasse=true$/);
     await expect(page).toHaveTitle(/Veículos de repasse em Massaranduba/);
     const cards = page.locator('[data-vehicle-card]');
     await expect(cards).not.toHaveCount(0);
@@ -113,8 +113,8 @@ test.describe('Ofertas e repasses', () => {
 
 test.describe('Estoque com abas', () => {
   test('Todos, Ofertas e Repasses na mesma página, mantendo os filtros', async ({ page }) => {
-    await page.goto('/estoque?categoria=carros');
-    const tabs = page.getByRole('navigation', { name: 'Seções do estoque' });
+    await page.goto('/veiculos?categoria=carros');
+    const tabs = page.getByRole('navigation', { name: 'Seções de veículos' });
     await expect(tabs.getByRole('link')).toHaveCount(3);
     await expect(tabs.locator('[aria-current="page"]')).toContainText('Todos');
     await tabs.getByRole('link', { name: /Repasses/ }).click();
@@ -124,13 +124,16 @@ test.describe('Estoque com abas', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Repasses');
   });
 
-  test('endereços antigos /ofertas e /repasses redirecionam (301) para as abas', async ({ request }) => {
+  test('endereços antigos /estoque, /ofertas e /repasses redirecionam (301)', async ({ request }) => {
     const offers = await request.get('/ofertas?categoria=carros', { maxRedirects: 0 });
     expect(offers.status()).toBe(301);
-    expect(offers.headers()['location']).toBe('/estoque?oferta=true&categoria=carros');
+    expect(offers.headers()['location']).toBe('/veiculos?oferta=true&categoria=carros');
     const repasses = await request.get('/repasses', { maxRedirects: 0 });
     expect(repasses.status()).toBe(301);
-    expect(repasses.headers()['location']).toBe('/estoque?repasse=true');
+    expect(repasses.headers()['location']).toBe('/veiculos?repasse=true');
+    const estoque = await request.get('/estoque?marca=Toyota', { maxRedirects: 0 });
+    expect(estoque.status()).toBe(301);
+    expect(estoque.headers()['location']).toBe('/veiculos?marca=Toyota');
   });
 });
 
@@ -175,10 +178,10 @@ test.describe('Segurança e SEO básicos', () => {
     page.on('console', (msg) => {
       if (/Content Security Policy/i.test(msg.text())) violations.push(msg.text());
     });
-    for (const path of ['/', '/estoque', '/estoque?oferta=true', '/anuncie-seu-veiculo', '/favoritos', '/contato']) {
+    for (const path of ['/', '/veiculos', '/veiculos?oferta=true', '/anuncie-seu-veiculo', '/favoritos', '/contato']) {
       await page.goto(path);
     }
-    await page.goto('/estoque?marca=Toyota');
+    await page.goto('/veiculos?marca=Toyota');
     await page.locator('[data-vehicle-card] h3 a').first().click();
     await expect(page.locator('[data-gallery]')).toBeVisible();
     expect(violations).toEqual([]);

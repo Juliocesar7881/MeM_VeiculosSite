@@ -15,10 +15,10 @@ const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(se
 const tabs: { label: string; href: string; icon: IconName; active: boolean }[] = [
   { label: 'Início', href: '/', icon: 'home', active: path === '/' },
   {
-    label: 'Estoque',
-    href: '/estoque',
+    label: 'Veículos',
+    href: '/veiculos',
     icon: 'search',
-    active: path.startsWith('/estoque'),
+    active: path.startsWith('/veiculos'),
   },
   { label: 'Anunciar', href: '/anuncie-seu-veiculo', icon: 'plus', active: path.startsWith('/anuncie') },
   { label: 'Favoritos', href: '/favoritos', icon: 'heart', active: path.startsWith('/favoritos') },
