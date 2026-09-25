@@ -104,6 +104,8 @@ export interface MediaServiceDeps {
 
 export const IMMUTABLE_CACHE_SECONDS = 60 * 60 * 24 * 365;
 
+const publicVehicleCache = new Map<string, { value: boolean; expiresAt: number }>();
+
 /** Todas as chaves de storage de uma foto (grande, média, miniatura e compartilhamento). */
 export function storedKeys(image: {
   largeKey: string;
@@ -220,6 +222,24 @@ export class MediaService {
   async getPublicVehicleObject(key: string): Promise<StoredObject | null> {
     if (!isVehicleImageKey(key)) return null;
     return this.deps.storage.get(key);
+  }
+
+  /**
+   * As fotos deste veículo podem ir para qualquer visitante? Só se ele estiver publicado.
+   * Rascunhos (inclusive os criados a partir de propostas, com fotos do cliente) exigem login.
+   * Cache por instância: publicado 60 s, não publicado 10 s.
+   */
+  async isVehiclePublic(vehicleId: string): Promise<boolean> {
+    const now = Date.now();
+    const cached = publicVehicleCache.get(vehicleId);
+    if (cached && cached.expiresAt > now) return cached.value;
+    const value = await this.deps.vehicles.isPublished(vehicleId);
+    if (!cached && publicVehicleCache.size >= 2000) {
+      const oldest = publicVehicleCache.keys().next().value;
+      if (oldest !== undefined) publicVehicleCache.delete(oldest);
+    }
+    publicVehicleCache.set(vehicleId, { value, expiresAt: now + (value ? 60_000 : 10_000) });
+    return value;
   }
 
   /** Foto de proposta — chamada somente por rota protegida do admin. */

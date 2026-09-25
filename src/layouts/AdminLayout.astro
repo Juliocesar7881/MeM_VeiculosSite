@@ -4,6 +4,7 @@ import fontLatin from '@fontsource-variable/instrument-sans/files/instrument-san
 import Logo from '@/components/brand/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
+import { flashSecret, readFlash } from '@/server/flash';
 
 interface Props {
   title: string;
@@ -15,8 +16,10 @@ const { title, section } = Astro.props;
 const { container, admin } = Astro.locals;
 const leadCounts = await container.leads.countByStatus();
 const newLeads = leadCounts.new;
-const ok = Astro.url.searchParams.get('ok');
-const erro = Astro.url.searchParams.get('erro');
+// Só exibe avisos assinados pelo servidor (ver server/flash.ts).
+const flash = await readFlash(Astro.url, flashSecret(container.config));
+const ok = flash?.kind === 'ok' ? flash.message : null;
+const erro = flash?.kind === 'erro' ? flash.message : null;
 
 const nav: { key: Props['section']; label: string; href: string; icon: IconName; badge?: number }[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin', icon: 'dashboard' },

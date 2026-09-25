@@ -6,7 +6,7 @@ import type { RateLimitRepository } from '@/repositories/rate-limit-repository';
 import { authenticateAdmin } from '@/server/admin-auth';
 import type { ServerConfig } from '@/server/config';
 import { RateLimiter } from '@/services/rate-limiter';
-import { actor, createTestEnv, type TestEnv } from '../helpers/env';
+import { actor, createTestEnv, vehicleInput, type TestEnv } from '../helpers/env';
 
 let env: TestEnv;
 beforeEach(async () => {
@@ -103,5 +103,16 @@ describe('limite de tentativas', () => {
     const rule = { bucket: 'teste-falha', limit: 5, windowSeconds: 60 };
     expect((await limiter.check(rule, '1.1.1.1', { failClosed: true })).allowed).toBe(false);
     expect((await limiter.check(rule, '1.1.1.1')).allowed).toBe(true);
+  });
+});
+
+describe('fotos de rascunhos', () => {
+  it('só veículos publicados têm fotos públicas', async () => {
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft', published: undefined }), actor);
+    expect(await env.media.isVehiclePublic(draft.id)).toBe(false);
+
+    const published = await env.vehicles.create(vehicleInput({ status: 'available' }), actor);
+    expect(await env.media.isVehiclePublic(published.id)).toBe(true);
+    expect(await env.media.isVehiclePublic('00000000-0000-4000-8000-000000000000')).toBe(false);
   });
 });

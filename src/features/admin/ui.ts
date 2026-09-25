@@ -28,6 +28,7 @@ export function initAdminUi() {
   if (url.searchParams.has('ok') || url.searchParams.has('erro')) {
     url.searchParams.delete('ok');
     url.searchParams.delete('erro');
+    url.searchParams.delete('fs');
     window.history.replaceState(null, '', url.pathname + (url.search || '') + url.hash);
   }
 

@@ -1,4 +1,5 @@
 ---
+import { flasher } from '@/server/flash';
 import Icon from '@/components/ui/Icon.astro';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import { BRAZIL_STATES } from '@/config/catalog';
@@ -15,8 +16,9 @@ if (Astro.request.method === 'POST' && admin) {
   const parsed = settingsInputSchema.safeParse(raw);
   if (parsed.success) {
     await container.settings.update(parsed.data, admin);
+    const flash = flasher(container.config);
     return Astro.redirect(
-      `/admin/configuracoes?ok=${encodeURIComponent('Configurações salvas. O site é atualizado em até 1 minuto.')}`,
+      await flash.url('/admin/configuracoes', 'Configurações salvas. O site é atualizado em até 1 minuto.'),
       303,
     );
   }

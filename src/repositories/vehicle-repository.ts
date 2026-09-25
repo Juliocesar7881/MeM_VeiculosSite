@@ -237,6 +237,15 @@ export class VehicleRepository {
     return row ? mapVehicle(row) : null;
   }
 
+  /** Veículo publicado e não excluído (qualquer status): suas fotos podem ser servidas a todos. */
+  async isPublished(id: string): Promise<boolean> {
+    const row = await this.db.first<{ ok: number }>(
+      'SELECT 1 AS ok FROM vehicles WHERE id = ? AND deleted_at IS NULL AND published = 1',
+      [id],
+    );
+    return Boolean(row);
+  }
+
   async findBySlug(slug: string): Promise<Vehicle | null> {
     const row = await this.db.first<VehicleRow>('SELECT * FROM vehicles WHERE slug = ? AND deleted_at IS NULL', [slug]);
     return row ? mapVehicle(row) : null;

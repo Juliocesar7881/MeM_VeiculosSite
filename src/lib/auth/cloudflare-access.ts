@@ -17,6 +17,12 @@ function jwks(teamDomain: string) {
   return set;
 }
 
+function accessCookie(request: Request): string | null {
+  const cookie = request.headers.get('cookie') ?? '';
+  const match = /(?:^|;\s*)CF_Authorization=([^;]+)/.exec(cookie);
+  return match?.[1] ?? null;
+}
+
 export interface AccessIdentity {
   email: string;
 }
@@ -25,7 +31,9 @@ export async function verifyCloudflareAccess(
   request: Request,
   options: { teamDomain: string; audience: string; allowedEmails: string[] },
 ): Promise<AccessIdentity | null> {
-  const token = request.headers.get('cf-access-jwt-assertion');
+  // O Access injeta o header nas rotas protegidas (/admin). Fora delas (ex.: fotos de rascunho em
+  // /media, carregadas pelo painel) vale o cookie CF_Authorization — o mesmo JWT, validado igual.
+  const token = request.headers.get('cf-access-jwt-assertion') ?? accessCookie(request);
   if (!token) return null;
   try {
     const base = options.teamDomain.replace(/\/+$/, '');

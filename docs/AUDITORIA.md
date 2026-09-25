@@ -116,6 +116,15 @@ Fase 4 (auditoria de segurança completa, 25/09/2026):
 22. **Turnstile:** o servidor confere que o desafio foi resolvido no próprio domínio (`hostname`).
 23. **Arquivos estáticos** (JS, CSS, fontes, imagens), servidos direto pela Cloudflare, ganham `nosniff`,
     `Referrer-Policy` e `X-Frame-Options` via `public/_headers`.
+24. **Avisos falsos no painel:** `?ok=`/`?erro=` eram exibidos como vinham na URL; um link malicioso podia mostrar a
+    um administrador logado um texto falso ("Veículo excluído", "Ligue para..."). Agora o aviso é assinado pelo
+    servidor (HMAC, `&fs=`) e o painel ignora o que não tiver assinatura válida (`src/server/flash.ts`, testes).
+25. **Fotos de rascunhos** (inclusive as de clientes, vindas de propostas) abriam para quem tivesse o link. Agora
+    `/media` só serve a qualquer visitante as fotos de veículos publicados; as demais exigem login no painel e saem
+    com `no-store` (teste de integração + verificação no servidor: 404 sem login, 200 com login).
+26. **Cloudflare Access:** fora de `/admin` (ex.: fotos de rascunho carregadas pelo painel) o JWT é lido também do
+    cookie `CF_Authorization`, validado da mesma forma (issuer + audience).
+27. **`/.well-known/security.txt`** (RFC 9116) com o contato para avisos de falhas de segurança.
 
 Verificado sem achados nesta fase: SQL injection, XSS, CSRF, open redirect, autorização do painel, uploads
 (assinatura real + `nosniff`), fotos de propostas só com login, JWT do Cloudflare Access (issuer + audience),
@@ -135,13 +144,11 @@ do histórico do Git por segredos (nenhum encontrado).
 **Riscos aceitos / limitações conhecidas**
 
 - "Sair" encerra no servidor todas as sessões abertas do painel (em todos os aparelhos), não só a do navegador atual.
-- Fotos de rascunhos (veículos não publicados) só abrem para quem tiver a URL com dois UUIDs aleatórios; não aparecem
-  em nenhuma página.
 - No Workers o PBKDF2 fica em 50 mil iterações (limite da plataforma): a proteção depende de senha longa e aleatória
   e do limite de tentativas. Para o painel, o modo mais forte é o Cloudflare Access (ver recomendações abaixo).
-- Mensagens de aviso do painel (`?ok=`/`?erro=`) vêm da URL (texto escapado); um link malicioso poderia exibir um
-  texto falso para um administrador logado — sem execução de código. Risco baixo.
 - Senha única compartilhada no modo `password`; para usuários individuais, usar o modo Cloudflare Access.
+- CSP com `style-src 'unsafe-inline'` (estilos embutidos do Astro). Scripts continuam só de arquivos próprios; o
+  site não tem nenhum ponto que insira HTML de terceiros, então não há por onde injetar CSS.
 - Com o cache de borda (domínio próprio), uma alteração no painel pode levar até ~1 minuto para aparecer no site.
 - Excluir veículo é _soft delete_ no banco (registro invisível, histórico preservado); as fotos são apagadas do storage.
 

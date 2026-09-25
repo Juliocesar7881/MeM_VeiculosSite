@@ -4,6 +4,7 @@ import { createSessionToken, SESSION_TTL_SECONDS, verifySessionToken } from '@/l
 import { splitSqlStatements } from '@/lib/db/migrator';
 import { buildCsp } from '@/server/security-headers';
 import { safeAdminRedirect } from '@/server/admin-auth';
+import { flashUrl, readFlash } from '@/server/flash';
 import { clientIp } from '@/server/http';
 
 describe('senha (PBKDF2)', () => {
@@ -114,5 +115,34 @@ describe('IP do cliente (limite de tentativas)', () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+});
+
+describe('avisos do painel assinados', () => {
+  const secret = 'segredo-de-teste-com-mais-de-32-caracteres';
+
+  it('aviso gerado pelo servidor é exibido (mantendo a âncora)', async () => {
+    const location = await flashUrl('/admin/veiculos/abc#fotos', 'Alterações salvas.', 'ok', secret);
+    expect(location.endsWith('#fotos')).toBe(true);
+    expect(await readFlash(new URL(location, 'http://x'), secret)).toEqual({
+      kind: 'ok',
+      message: 'Alterações salvas.',
+    });
+  });
+
+  it('texto falso vindo de um link de terceiros é ignorado', async () => {
+    expect(await readFlash(new URL('http://x/admin?ok=Veículo%20excluído'), secret)).toBeNull();
+    const signed = new URL(await flashUrl('/admin', 'Anotações salvas.', 'ok', secret), 'http://x');
+    signed.searchParams.set('ok', 'Ligue para 0800 000 0000');
+    expect(await readFlash(signed, secret)).toBeNull();
+  });
+
+  it('assinatura de um aviso não vale para o outro tipo nem com outra chave', async () => {
+    const signed = new URL(await flashUrl('/admin', 'Ação inválida.', 'erro', secret), 'http://x');
+    const swapped = new URL(signed);
+    swapped.searchParams.set('ok', 'Ação inválida.');
+    swapped.searchParams.delete('erro');
+    expect(await readFlash(swapped, secret)).toBeNull();
+    expect(await readFlash(signed, 'outra-chave-com-mais-de-32-caracteres!!')).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { isAppError } from '@/lib/errors';
 import { vehicleQuickActionSchema, type VehicleQuickAction } from '@/schemas/vehicle';
-import { redirectWithFlash } from '@/server/http';
+import { flasher } from '@/server/flash';
 
 const MESSAGES: Record<VehicleQuickAction, string> = {
   publish: 'Veículo publicado no site.',
@@ -29,15 +29,16 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const form = await request.formData();
   const parsed = vehicleQuickActionSchema.safeParse(form.get('action'));
   const back = safeReturn(form.get('returnTo'), `/admin/veiculos/${id}`);
-  if (!parsed.success || !locals.admin) return redirectWithFlash(back, 'Ação inválida.', 'erro');
+  const flash = flasher(locals.container.config);
+  if (!parsed.success || !locals.admin) return flash.redirect(back, 'Ação inválida.', 'erro');
 
   try {
     await locals.container.vehicles.quickAction(id, parsed.data, locals.admin);
     const target = parsed.data === 'delete' && back.startsWith(`/admin/veiculos/${id}`) ? '/admin/veiculos' : back;
-    return redirectWithFlash(target, MESSAGES[parsed.data]);
+    return flash.redirect(target, MESSAGES[parsed.data]);
   } catch (error) {
     const message = isAppError(error) ? error.message : 'Não foi possível concluir a ação.';
     if (!isAppError(error)) console.error('[admin] ação de veículo', error);
-    return redirectWithFlash(back, message, 'erro');
+    return flash.redirect(back, message, 'erro');
   }
 };

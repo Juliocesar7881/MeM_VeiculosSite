@@ -1,4 +1,5 @@
 ---
+import { flasher } from '@/server/flash';
 import PhotoManager from '@/components/admin/PhotoManager.astro';
 import StatusPill from '@/components/admin/StatusPill.astro';
 import VehicleActions from '@/components/admin/VehicleActions.astro';
@@ -16,7 +17,8 @@ import { vehicleFullName, yearLabel } from '@/utils/vehicle-format';
 const { container, admin } = Astro.locals;
 const id = Astro.params.id ?? '';
 let vehicle = await container.vehicles.getDetail(id);
-if (!vehicle) return Astro.redirect('/admin/veiculos?erro=' + encodeURIComponent('Veículo não encontrado.'), 303);
+const flash = flasher(container.config);
+if (!vehicle) return Astro.redirect(await flash.url('/admin/veiculos', 'Veículo não encontrado.', 'erro'), 303);
 
 let values: FormValues = vehicleToFormValues(vehicle);
 let errors: FieldErrors = {};
@@ -26,7 +28,7 @@ if (Astro.request.method === 'POST' && admin) {
   if (parsed.ok) {
     try {
       await container.vehicles.update(id, parsed.data, admin);
-      return Astro.redirect(`/admin/veiculos/${id}?ok=${encodeURIComponent('Alterações salvas.')}`, 303);
+      return Astro.redirect(await flash.url(`/admin/veiculos/${id}`, 'Alterações salvas.'), 303);
     } catch (error) {
       values = parsed.values;
       errors = { _form: isAppError(error) ? error.message : 'Não foi possível salvar. Tente novamente.' };

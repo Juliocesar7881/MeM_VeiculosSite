@@ -1,4 +1,5 @@
 ---
+import { flasher } from '@/server/flash';
 import VehicleForm from '@/components/admin/VehicleForm.astro';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import { isAppError } from '@/lib/errors';
@@ -16,8 +17,9 @@ if (Astro.request.method === 'POST' && admin) {
   if (parsed.ok) {
     try {
       const vehicle = await container.vehicles.create(parsed.data, admin);
+      const flash = flasher(container.config);
       return Astro.redirect(
-        `/admin/veiculos/${vehicle.id}?ok=${encodeURIComponent('Veículo cadastrado! Agora adicione as fotos.')}#fotos`,
+        await flash.url(`/admin/veiculos/${vehicle.id}#fotos`, 'Veículo cadastrado! Agora adicione as fotos.'),
         303,
       );
     } catch (error) {

@@ -28,16 +28,6 @@ export function errorToResponse(error: unknown): Response {
   return jsonError(500, 'Não foi possível concluir a operação. Tente novamente.');
 }
 
-/** Redirect 303 (Post/Redirect/Get) com mensagem opcional na query string. */
-export function redirectWithFlash(location: string, flash?: string, kind: 'ok' | 'erro' = 'ok'): Response {
-  let target = location;
-  if (flash) {
-    const sep = location.includes('?') ? '&' : '?';
-    target = `${location}${sep}${kind}=${encodeURIComponent(flash)}`;
-  }
-  return new Response(null, { status: 303, headers: { Location: target, 'Cache-Control': CACHE.noStore } });
-}
-
 /** Lê o corpo como Uint8Array a partir de um File do FormData. */
 export async function fileBytes(value: FormDataEntryValue | null): Promise<Uint8Array | null> {
   if (!value || typeof value === 'string') return null;
