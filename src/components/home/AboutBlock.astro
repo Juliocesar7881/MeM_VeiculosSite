@@ -1,6 +1,7 @@
 ---
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
+import { ABOUT } from '@/config/about';
 import { instagramUrl } from '@/lib/seo';
 import type { SiteSettings } from '@/types/settings';
 
@@ -18,25 +19,25 @@ const services: { icon: IconName; title: string; text: string }[] = [
 ---
 
 <section class="container-site" aria-labelledby="sobre-title">
-  <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
     <div>
       <p class="eyebrow">
         <Icon name="map-pin" size={16} />
         {settings.city} - {settings.state}
       </p>
       <h2 id="sobre-title" class="display mt-4 text-5xl text-white sm:text-6xl">
-        {settings.businessName}
+        {ABOUT.headline}
       </h2>
-      <blockquote class="slogan mt-6">
-        <p>“{settings.slogan}”</p>
-      </blockquote>
-      <p class="mt-6 max-w-lg text-mist-300">
-        Atuamos com compra, venda, financiamento e repasse de veículos. Fale com a nossa equipe pelo WhatsApp ou
-        acompanhe as novidades nas nossas redes sociais.
+      <p class="mt-6 max-w-[34rem] text-lg text-mist-200">{ABOUT.paragraphs[0]}</p>
+      <p class="tagline mt-6">
+        {ABOUT.closing.lines.map((line) => (
+          <span class="block">{line}</span>
+        ))}
       </p>
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row xs:items-center xs:gap-6">
+      <div class="mt-8 flex flex-col gap-3 xs:flex-row xs:flex-wrap xs:items-center xs:gap-x-6">
         <a href="/empresa" class="btn btn-ghost">
-          Conheça a empresa
+          Conheça nossa história
+          <Icon name="arrow-right" size={18} class="btn-arrow" />
         </a>
         {settings.instagram && (
           <a
@@ -65,13 +66,12 @@ const services: { icon: IconName; title: string; text: string }[] = [
 </section>
 
 <style>
-  .slogan p {
-    max-width: 22ch;
-    font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.1rem);
+  .tagline {
+    font-size: clamp(1.4rem, 1.1rem + 0.9vw, 1.8rem);
     font-stretch: 84%;
     font-weight: 500;
     letter-spacing: -0.015em;
-    line-height: 1.15;
+    line-height: 1.2;
     color: var(--color-gold-200);
   }
   /* Serviços como lista tipográfica: nome grande à esquerda, descrição à direita, fios entre as linhas. */

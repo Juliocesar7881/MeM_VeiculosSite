@@ -1,8 +1,8 @@
 ---
-import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
 import PageHeader from '@/components/common/PageHeader.astro';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/components/ui/icons';
+import { ABOUT } from '@/config/about';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { breadcrumbJsonLd, dealerJsonLd, instagramUrl } from '@/lib/seo';
 import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
@@ -11,9 +11,18 @@ const { container, siteUrl } = Astro.locals;
 const settings = await container.settings.get();
 const breadcrumbs = [
   { name: 'Início', path: '/' },
-  { name: 'Empresa', path: '/empresa' },
+  { name: 'Sobre nós', path: '/empresa' },
 ];
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
+const [lead, ...story] = ABOUT.paragraphs;
+const [melo, matos] = ABOUT.partners;
+
+// Dados da empresa + fundação e sócios (schema.org) para buscadores.
+const organization = {
+  ...dealerJsonLd(settings, siteUrl),
+  foundingDate: ABOUT.foundingDate,
+  founder: ABOUT.partners.map((name) => ({ '@type': 'Person', name })),
+};
 
 const services: { icon: IconName; title: string; text: string; href?: string; cta?: string }[] = [
   {
@@ -48,48 +57,51 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
 ---
 
 <BaseLayout
-  title={`A empresa | ${settings.businessName} — ${settings.city} - ${settings.state}`}
-  description={`Conheça a ${settings.businessName}: compra, venda, financiamento e repasse de veículos em ${settings.city} - ${settings.state}. ${settings.slogan}`}
+  title={`${ABOUT.title} | ${settings.city} - ${settings.state}`}
+  description={`${lead} Compra, venda, financiamento e repasse de veículos em ${settings.city} - ${settings.state}.`}
   canonicalPath="/empresa"
-  jsonLd={[dealerJsonLd(settings, siteUrl), breadcrumbJsonLd(breadcrumbs, siteUrl)]}
+  jsonLd={[organization, breadcrumbJsonLd(breadcrumbs, siteUrl)]}
 >
-  <PageHeader
-    eyebrow={`${settings.city} - ${settings.state}`}
-    title={settings.businessName}
-    breadcrumbs={breadcrumbs}
-  />
+  <PageHeader eyebrow={`${settings.city} - ${settings.state}`} title={ABOUT.title} breadcrumbs={breadcrumbs} />
 
-  <section class="container-site grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16">
-    <div>
-      <p class="display text-4xl text-gold-200 sm:text-5xl">“{settings.slogan}”</p>
-      <p class="mt-6 text-lg text-mist-200">
-        A {settings.businessName} atua em {settings.city}, Santa Catarina, com compra, venda, financiamento e repasse de
-        veículos.
-      </p>
-      <p class="mt-4 text-mist-300">
-        No nosso estoque você encontra carros, motos, scooters, veículos pesados e máquinas agrícolas. O atendimento é
-        feito diretamente pela nossa equipe, pelo WhatsApp e pelas redes sociais.
-      </p>
-      <div class="mt-8 flex flex-col gap-3 xs:flex-row">
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
-          <Icon name="whatsapp" size={20} />
-          Falar no WhatsApp
-        </a>
-        <a href="/contato" class="btn btn-ghost btn-lg">
-          Contato
-        </a>
+  <section class="container-site py-16 sm:py-24" aria-labelledby="historia">
+    <div class="grid gap-14 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-20">
+      <div class="lg:sticky lg:top-[calc(var(--header-h)+2.5rem)] lg:self-start">
+        <h2 id="historia" class="display text-[3.1rem] text-white sm:text-7xl">
+          {ABOUT.headline.split('. ').map((sentence, index, all) => (
+            <span class="block">{index < all.length - 1 ? `${sentence}.` : sentence}</span>
+          ))}
+        </h2>
+
+        <!-- O nome explicado: cada M é um sobrenome. -->
+        <div class="name-mark mt-12" role="img" aria-label={`M&M: ${ABOUT.nameMeaning}, de ${melo} e ${matos}`}>
+          <div class="nm-col">
+            <span class="nm-letter">M</span>
+            <span class="nm-surname">Melo</span>
+            <span class="nm-person">{melo}</span>
+          </div>
+          <span class="nm-amp">&amp;</span>
+          <div class="nm-col">
+            <span class="nm-letter">M</span>
+            <span class="nm-surname">Matos</span>
+            <span class="nm-person">{matos}</span>
+          </div>
+        </div>
+
+        <p class="milestone mt-10">
+          <span class="text-mist-400">No ramo automotivo desde</span>
+          <time datetime={ABOUT.foundingDate} class="title text-2xl text-white">
+            {ABOUT.foundingLabel}
+          </time>
+        </p>
       </div>
-    </div>
-    <div
-      class="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-[var(--radius-panel)] border hairline bg-[radial-gradient(90%_70%_at_50%_30%,#1c1f23,#0a0b0d_75%)] p-10"
-      aria-hidden="true"
-    >
-      <svg viewBox={LOGO_VIEWBOX} class="w-full max-w-lg">
-        {LOGO_GOLD_PATHS.map((d) => (
-          <path d={d} fill="var(--color-gold-500)" />
+
+      <div class="story">
+        <p class="story-lead">{lead}</p>
+        {story.map((paragraph) => (
+          <p>{paragraph}</p>
         ))}
-        <path d={LOGO_SILVER_PATH} fill="var(--color-silver-300)" />
-      </svg>
+      </div>
     </div>
   </section>
 
@@ -118,32 +130,139 @@ const services: { icon: IconName; title: string; text: string; href?: string; ct
     </ul>
   </section>
 
-  <section class="container-site mt-16" aria-labelledby="redes">
-    <div class="surface flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between sm:p-10">
-      <div>
-        <h2 id="redes" class="heading text-2xl text-white">
-          Acompanhe a M&M
-        </h2>
-        <p class="mt-2 text-mist-300">Novidades do estoque e veículos vendidos nas nossas redes sociais.</p>
+  <section class="container-site mt-20 sm:mt-28" aria-labelledby="lema">
+    <div class="closing">
+      <p class="closing-sign">{ABOUT.closing.signature}</p>
+      <h2 id="lema" class="display closing-line">
+        <span class="block text-white">{ABOUT.closing.lines[0]}</span>
+        <span class="block text-gold-200">{ABOUT.closing.lines[1]}</span>
+      </h2>
+      <div class="mt-10 flex flex-col items-center justify-center gap-3 xs:flex-row">
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
+          <Icon name="whatsapp" size={20} />
+          Falar no WhatsApp
+        </a>
+        <a href="/estoque" class="btn btn-ghost btn-lg">
+          Ver estoque
+        </a>
       </div>
-      <div class="flex flex-col gap-3 xs:flex-row">
-        {settings.instagram && (
-          <a href={instagramUrl(settings.instagram)} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
-            <Icon name="instagram" size={18} class="text-gold-400" />@{settings.instagram}
-          </a>
-        )}
-        {settings.facebook && (
-          <a href={settings.facebook} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
-            <Icon name="facebook" size={18} class="text-gold-400" />
-            Facebook
-          </a>
-        )}
-      </div>
+      {(settings.instagram || settings.facebook) && (
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-mist-300">
+          {settings.instagram && (
+            <a
+              href={instagramUrl(settings.instagram)}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex min-h-11 items-center gap-2 hover:text-white"
+            >
+              <Icon name="instagram" size={18} class="text-gold-400" />
+              <span class="link-underline">@{settings.instagram}</span>
+            </a>
+          )}
+          {settings.facebook && (
+            <a
+              href={settings.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex min-h-11 items-center gap-2 hover:text-white"
+            >
+              <Icon name="facebook" size={18} class="text-gold-400" />
+              <span class="link-underline">Facebook</span>
+            </a>
+          )}
+        </div>
+      )}
     </div>
   </section>
 </BaseLayout>
 
 <style>
+  /* Nome explicado: "M & M" grandes em dourado, com o sobrenome e o sócio sob cada letra. */
+  .name-mark {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    justify-content: start;
+    align-items: start;
+    column-gap: clamp(0.75rem, 2.5vw, 1.5rem);
+  }
+  .nm-col {
+    display: grid;
+    justify-items: start;
+  }
+  .nm-letter,
+  .nm-amp {
+    font-size: clamp(5.5rem, 3rem + 9vw, 9.5rem);
+    font-stretch: 78%;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 0.82;
+    color: var(--color-gold-400);
+  }
+  .nm-amp {
+    color: color-mix(in oklab, var(--color-gold-400) 45%, transparent);
+    font-weight: 400;
+  }
+  .nm-surname {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+    font-size: 1.35rem;
+    font-stretch: 86%;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #fff;
+  }
+  .nm-person {
+    font-size: 0.9rem;
+    color: var(--color-mist-400);
+  }
+  /* As legendas não alargam a coluna: a largura é a da letra, e o "&" fica colado entre os dois M. */
+  .nm-surname,
+  .nm-person {
+    width: 0;
+    min-width: 100%;
+    white-space: nowrap;
+  }
+  .milestone {
+    display: grid;
+    gap: 0.2rem;
+  }
+  /* Texto da história: medida confortável de leitura e primeiro parágrafo em destaque. */
+  .story {
+    max-width: 62ch;
+    color: var(--color-mist-200);
+    font-size: 1.075rem;
+    line-height: 1.75;
+  }
+  .story p + p {
+    margin-top: 1.4em;
+  }
+  .story-lead {
+    font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.55rem);
+    line-height: 1.5;
+    color: var(--color-paper);
+  }
+  /* Fechamento com o lema da empresa, sob uma luz dourada como a do hero. */
+  .closing {
+    padding: clamp(3.5rem, 2rem + 6vw, 7rem) 1.5rem;
+    border-radius: var(--radius-panel);
+    text-align: center;
+    background:
+      radial-gradient(60% 90% at 50% 0%, color-mix(in oklab, var(--color-gold-500) 13%, transparent), transparent 70%),
+      linear-gradient(to bottom, var(--color-ink-850), var(--color-ink-900));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-gold-500) 18%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
+  }
+  .closing-sign {
+    font-size: 0.95rem;
+    font-weight: 550;
+    color: var(--color-gold-300);
+  }
+  .closing-line {
+    margin-top: 1rem;
+    font-size: clamp(2.6rem, 1.4rem + 5vw, 5.5rem);
+  }
   .service {
     display: grid;
     grid-template-columns: 1.6rem minmax(0, 1fr);

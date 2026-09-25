@@ -10,7 +10,7 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'Estoque', href: '/estoque', match: ['/estoque', '/veiculo'] },
   { label: 'Ofertas', href: '/ofertas', match: ['/ofertas'] },
   { label: 'Repasses', href: '/repasses', match: ['/repasses'] },
-  { label: 'Empresa', href: '/empresa', match: ['/empresa'] },
+  { label: 'Sobre nós', href: '/empresa', match: ['/empresa'] },
   { label: 'Contato', href: '/contato', match: ['/contato'] },
 ];
 
