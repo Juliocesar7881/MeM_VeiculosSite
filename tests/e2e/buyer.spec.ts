@@ -6,6 +6,10 @@ test.describe('Cliente que quer comprar', () => {
     await page.goto('/');
     await expect(page).toHaveTitle(/M&M Veículos/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Seu próximo veículo');
+    await expect(page.locator('.hero').getByRole('link', { name: 'Ver todos os veículos' })).toHaveAttribute(
+      'href',
+      '/veiculos',
+    );
 
     // Busca principal
     await page.getByPlaceholder('Qual veículo você procura?').fill('Corolla');

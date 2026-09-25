@@ -6,11 +6,10 @@ import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
 
 interface Props {
   settings: SiteSettings;
-  availableCount: number;
   suggestions: string[];
 }
 
-const { settings, availableCount, suggestions } = Astro.props;
+const { settings, suggestions } = Astro.props;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
 
 // Foto da loja ao entardecer (public/brand), em AVIF com WebP de reserva. Retrato 4:5.
@@ -25,8 +24,6 @@ const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComp
 
 // Cada palavra sobe de dentro de uma máscara, em sequência (a última leva o ponto dourado).
 const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
-const stockLabel =
-  availableCount > 1 ? `Ver os ${availableCount} veículos` : availableCount === 1 ? 'Ver o veículo' : 'Ver veículos';
 ---
 
 <section class="hero relative isolate" aria-labelledby="hero-title">
@@ -100,7 +97,7 @@ const stockLabel =
 
       <div class="hero-rise mt-7 flex flex-col gap-3 xs:flex-row xs:items-center xs:gap-6" style="--d:1">
         <a href="/veiculos" class="btn btn-outline-gold btn-lg">
-          {stockLabel}
+          Ver todos os veículos
           <Icon name="arrow-right" size={18} class="btn-arrow" />
         </a>
         <a

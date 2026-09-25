@@ -62,12 +62,11 @@ const quickFilters = [
   { key: 'destaques', label: 'Destaques', icon: 'star' as const },
   { key: 'nao-publicados', label: 'Fora do site', icon: 'eye-off' as const },
 ];
-const section = filtro === 'ofertas' ? 'ofertas' : filtro === 'repasses' ? 'repasses' : 'veiculos';
 const heading = filtro === 'ofertas' ? 'Ofertas' : filtro === 'repasses' ? 'Repasses' : 'Veículos';
 const returnTo = `${Astro.url.pathname}${Astro.url.search}`;
 ---
 
-<AdminLayout title={heading} section={section}>
+<AdminLayout title={heading} section="veiculos">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="heading text-3xl text-white">{heading}</h1>

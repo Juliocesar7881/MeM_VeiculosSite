@@ -77,6 +77,9 @@ Todo veículo novo **já vem com as duas marcadas** — desmarque a que não qui
 
 Publicado, o veículo sempre aparece na aba **Todos** da página Veículos.
 
+No painel, para ver só as ofertas ou só os repasses, use os filtros **Ofertas** e **Repasses** no topo da tela
+**Veículos**.
+
 ### Detalhes da oferta
 
 1. Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual

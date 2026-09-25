@@ -44,21 +44,21 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 
 **Site público**
 
-| Rota                                               | Conteúdo                                                                                                                                         |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/`                                                | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa         |
-| `/veiculos`                                        | Página única de veículos com abas **Todos · Ofertas · Repasses** (`?oferta=true`, `?repasse=true`), busca, filtros, ordenação e paginação     |
-| `/veiculo/[slug]`                                  | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?”   |
-| `/estoque`, `/ofertas`, `/repasses`                | Endereços antigos: redirecionam (301) para `/veiculos` e as abas Ofertas e Repasses                                                             |
-| `/anuncie-seu-veiculo`                             | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD                                                |
-| `/favoritos`                                       | Favoritos salvos no navegador (sem login)                                                                                                        |
-| `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                    |
-| `/sitemap.xml`, `/robots.txt`                      | Gerados dinamicamente                                                                                                                            |
+| Rota                                               | Conteúdo                                                                                                                                       |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                                | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa       |
+| `/veiculos`                                        | Página única de veículos com abas **Todos · Ofertas · Repasses** (`?oferta=true`, `?repasse=true`), busca, filtros, ordenação e paginação      |
+| `/veiculo/[slug]`                                  | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?” |
+| `/estoque`, `/ofertas`, `/repasses`                | Endereços antigos: redirecionam (301) para `/veiculos` e as abas Ofertas e Repasses                                                            |
+| `/anuncie-seu-veiculo`                             | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD                                              |
+| `/favoritos`                                       | Favoritos salvos no navegador (sem login)                                                                                                      |
+| `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                  |
+| `/sitemap.xml`, `/robots.txt`                      | Gerados dinamicamente                                                                                                                          |
 
 **Painel (`/admin`)** — Dashboard (com **interesse por veículo**: visualizações e cliques no WhatsApp dos últimos 30
 dias, contados de forma anônima), Veículos (lista com filtros e ações rápidas), Novo veículo, fotos (upload múltiplo,
 arrastar, reordenar, capa, excluir), Propostas (status, WhatsApp do cliente, anotações, **transformar em veículo**,
-exclusão LGPD), Ofertas e Repasses (filtros da lista). Confirmações e avisos são desenhados na própria página (nunca
+exclusão LGPD). Ofertas e Repasses são filtros dentro de Veículos (sem telas separadas no menu). Confirmações e avisos são desenhados na própria página (nunca
 as caixas do navegador), com animação ao salvar, cadastrar e publicar. Contatos, redes e textos institucionais ficam em
 `src/config/site.ts` (o painel não tem tela de configurações).
 

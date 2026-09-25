@@ -10,7 +10,7 @@ import { flashSecret, readFlash, type FlashEffect } from '@/server/flash';
 interface Props {
   title: string;
   /** Item ativo do menu. */
-  section: 'dashboard' | 'veiculos' | 'novo' | 'propostas' | 'ofertas' | 'repasses';
+  section: 'dashboard' | 'veiculos' | 'novo' | 'propostas';
 }
 
 const { title, section } = Astro.props;
@@ -30,8 +30,6 @@ const nav: { key: Props['section']; label: string; href: string; icon: IconName;
   { key: 'veiculos', label: 'Veículos', href: '/admin/veiculos', icon: 'car' },
   { key: 'novo', label: 'Novo veículo', href: '/admin/veiculos/novo', icon: 'plus' },
   { key: 'propostas', label: 'Propostas', href: '/admin/propostas', icon: 'inbox', badge: newLeads },
-  { key: 'ofertas', label: 'Ofertas', href: '/admin/veiculos?filtro=ofertas', icon: 'tag' },
-  { key: 'repasses', label: 'Repasses', href: '/admin/veiculos?filtro=repasses', icon: 'repasse' },
 ];
 const mobileNav = nav.filter((n) => ['dashboard', 'veiculos', 'novo', 'propostas'].includes(n.key));
 ---

@@ -151,8 +151,10 @@ test('Admin: ações rápidas, confirmações e logout', async ({ page }) => {
   await answerConfirm(page, 'Marcar como vendido?', 'Marcar como vendido');
   await expect(page.getByText('Veículo marcado como vendido.')).toBeVisible();
 
-  // A tela de configurações foi removida do painel
-  await expect(page.getByRole('link', { name: 'Configurações' })).toHaveCount(0);
+  // Configurações, Ofertas e Repasses saíram do menu (ofertas e repasses são filtros da tela Veículos)
+  const menu = page.locator('.admin-sidebar nav');
+  const labels = (await menu.getByRole('link').allInnerTexts()).map((text) => text.trim().split('\n')[0]?.trim());
+  expect(labels).toEqual(['Dashboard', 'Veículos', 'Novo veículo', 'Propostas']);
   const settings = await page.goto('/admin/configuracoes');
   expect(settings?.status()).toBe(404);
 
