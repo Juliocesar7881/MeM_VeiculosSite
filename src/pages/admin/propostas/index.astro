@@ -89,7 +89,7 @@ const href = (p: number) => {
   </form>
 
   {result.items.length > 0 ? (
-    <ul class="mt-6 grid gap-2.5">
+    <ul class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-2.5">
       {result.items.map((lead) => (
         <li>
           <a href={`/admin/propostas/${lead.id}`} class:list={['lead-row', { 'is-new': lead.status === 'new' }]}>

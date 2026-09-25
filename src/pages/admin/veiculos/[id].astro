@@ -152,14 +152,14 @@ const ACTION_LABELS: Record<string, string> = {
     </div>
   )}
 
-  <div class="grid gap-6">
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-6">
     <PhotoManager vehicleId={vehicle.id} images={vehicle.images} />
     <VehicleForm values={values} errors={errors} brands={brands} mode="edit" />
 
     <details class="surface p-5">
       <summary class="cursor-pointer font-semibold text-white">Histórico de alterações</summary>
       {history.length ? (
-        <ul class="mt-4 grid gap-2 text-sm">
+        <ul class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-2 text-sm">
           {history.map((entry) => (
             <li class="flex flex-wrap justify-between gap-2 border-b hairline pb-2">
               <span class="text-mist-200">{ACTION_LABELS[entry.action] ?? entry.action}</span>

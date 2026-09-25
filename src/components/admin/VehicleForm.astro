@@ -38,7 +38,7 @@ const errorCount = Object.keys(errors).length;
 <!-- data-unsaved: voltou do servidor com erros, ou seja, os dados digitados ainda não foram salvos. -->
 <form
   method="post"
-  class="vehicle-form grid gap-6"
+  class="vehicle-form grid grid-cols-[minmax(0,1fr)] gap-6"
   novalidate
   data-vehicle-form
   data-unsaved={errorCount > 0 ? '' : undefined}
@@ -502,6 +502,19 @@ const errorCount = Object.keys(errors).length;
   @media (min-width: 1024px) {
     .save-bar {
       bottom: 1rem;
+    }
+  }
+  /* Celulares estreitos: os dois botões dividem a largura (o texto pode quebrar em duas linhas). */
+  @media (max-width: 479px) {
+    .save-bar > :global(.btn) {
+      flex: 1 1 0;
+      min-width: 0;
+      padding-inline: 0.75rem;
+      white-space: normal;
+      text-align: center;
+    }
+    .save-bar > :global(.btn-gold) {
+      flex-grow: 1.6;
     }
   }
 </style>

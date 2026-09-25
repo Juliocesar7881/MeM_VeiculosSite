@@ -376,6 +376,7 @@ const preload = cover
   /* Ficha técnica: uma coluna no celular, duas no computador, separadas por fios. */
   .specs {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     padding-inline: 1.25rem;
   }
   .spec {
@@ -385,6 +386,14 @@ const preload = cover
     gap: 1rem;
     padding-block: 0.95rem;
     font-size: 0.93rem;
+  }
+  /* Valor comprido (ex.: versão longa) quebra linha em vez de alargar a ficha. */
+  .spec dt {
+    flex-shrink: 0;
+  }
+  .spec dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .spec + .spec {
     border-top: 1px solid color-mix(in oklab, white 7%, transparent);

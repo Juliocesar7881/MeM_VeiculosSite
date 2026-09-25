@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 /**
  * Verifica, nas larguras pedidas no projeto, que nenhuma página pública tem rolagem
@@ -40,3 +41,28 @@ for (const width of WIDTHS) {
     }
   });
 }
+
+test('painel sem rolagem horizontal no celular e no tablet', async ({ page }) => {
+  test.setTimeout(120_000);
+  await loginAdmin(page, '/admin');
+  const vehicle = await page
+    .locator('a[href^="/admin/veiculos/"]')
+    .filter({ hasNotText: 'Novo' })
+    .first()
+    .getAttribute('href');
+  await page.goto('/admin/propostas');
+  const lead = await page.locator('a[href^="/admin/propostas/"]').first().getAttribute('href');
+  const pages = ['/admin', '/admin/veiculos', '/admin/veiculos/novo', '/admin/propostas', vehicle, lead].filter(
+    (path): path is string => Boolean(path),
+  );
+  for (const width of [320, 360, 375, 390, 412, 768, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const path of pages) {
+      await page.goto(path, { waitUntil: 'load' });
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `${path} em ${width}px`).toBeLessThanOrEqual(0);
+    }
+  }
+});

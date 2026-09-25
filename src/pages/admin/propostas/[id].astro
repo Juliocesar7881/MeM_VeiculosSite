@@ -108,7 +108,7 @@ const action = `/admin/propostas/${lead.id}/acao`;
   </div>
 
   <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-    <div class="grid content-start gap-6">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
       <section class="surface p-5 sm:p-6" aria-labelledby="fotos-lead">
         <h2 id="fotos-lead" class="text-lg font-bold text-white">
           Fotos ({lead.images.length})
@@ -168,7 +168,7 @@ const action = `/admin/propostas/${lead.id}/acao`;
       </section>
     </div>
 
-    <div class="grid content-start gap-6">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
       <section class="surface p-5 sm:p-6" aria-labelledby="cliente">
         <h2 id="cliente" class="text-lg font-bold text-white">
           Cliente

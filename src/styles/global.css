@@ -88,6 +88,8 @@
     min-height: 100dvh;
     background: var(--color-ink-950);
     overflow-x: clip;
+    /* Palavra longa sem espaço (ex.: modelo digitado junto) quebra em vez de alargar a página no celular. */
+    overflow-wrap: break-word;
     /* Texto claro em fundo escuro: um pouco mais de entrelinha e espaçamento. */
     line-height: 1.55;
     letter-spacing: 0.003em;

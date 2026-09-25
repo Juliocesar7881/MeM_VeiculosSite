@@ -134,7 +134,7 @@ const returnTo = `${Astro.url.pathname}${Astro.url.search}`;
   </p>
 
   {result.items.length > 0 ? (
-    <ul class="mt-3 grid gap-2.5">
+    <ul class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2.5">
       {result.items.map((vehicle) => (
         <AdminVehicleRow vehicle={vehicle} returnTo={returnTo} />
       ))}

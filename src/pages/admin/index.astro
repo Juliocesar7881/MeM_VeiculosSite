@@ -64,7 +64,7 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
     ))}
   </ul>
 
-  <div class="mt-10 grid gap-6 xl:grid-cols-2">
+  <div class="mt-10 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2">
     <section class="surface p-5 sm:p-6" aria-labelledby="ultimos-veiculos">
       <div class="flex items-center justify-between">
         <h2 id="ultimos-veiculos" class="text-lg font-bold text-white">
@@ -75,7 +75,7 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
         </a>
       </div>
       {latestVehicles.items.length ? (
-        <ul class="mt-4 grid gap-1">
+        <ul class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-1">
           {latestVehicles.items.map((v) => (
             <li>
               <a href={`/admin/veiculos/${v.id}`} class="mini-row">
@@ -121,7 +121,7 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
         </a>
       </div>
       {latestLeads.length ? (
-        <ul class="mt-4 grid gap-1">
+        <ul class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-1">
           {latestLeads.map((lead) => (
             <li>
               <a href={`/admin/propostas/${lead.id}`} class="mini-row">
@@ -178,7 +178,7 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
       </p>
     </div>
     {interest.top.length ? (
-      <ol class="mt-4 grid gap-1">
+      <ol class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-1">
         {interest.top.map((row, index) => (
           <li>
             <a href={`/admin/veiculos/${row.vehicleId}`} class="mini-row">
