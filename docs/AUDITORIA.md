@@ -9,7 +9,7 @@ build local em Node (testes E2E) e runtime local da Cloudflare (`wrangler dev`/w
 | Typecheck (`astro check`, TypeScript strictest)                               | ✅ 0 erros, 0 avisos                                                                                                                                                          |
 | Prettier (`format:check`)                                                     | ✅                                                                                                                                                                            |
 | Testes unitários + integração (Vitest)                                        | ✅ 176 passando (inclui adaptadores D1, KV e R2, métricas e redirecionamento)                                                                                                 |
-| Testes E2E (Playwright, desktop + celular)                                    | ✅ 33 passando                                                                                                                                                                |
+| Testes E2E (Playwright, desktop + celular)                                    | ✅ 35 passando                                                                                                                                                                |
 | Builds (`cloudflare`, `vercel`, `node`)                                       | ✅ os três compilam                                                                                                                                                           |
 | `npm audit`                                                                   | ✅ 0 vulnerabilidades                                                                                                                                                         |
 | Responsividade (320, 360, 375, 390, 412, 430, 768, 1024, 1280, 1440, 1920 px) | ✅ sem rolagem horizontal (teste E2E)                                                                                                                                         |
@@ -193,6 +193,21 @@ e SVG disfarçados, sem tamanho declarado), IDs de fotos de outro veículo, camp
 bloqueio após 5 senhas erradas. A tela de configurações foi removida (404 mesmo com login). Observação: no
 `wrangler dev` o proxy local às vezes derruba a conexão quando o Worker recusa (403/413) um envio antes de lê-lo — é
 do ambiente local; o próprio Worker registra a resposta correta.
+
+Fase 7 (bateria completa antes de mandar ao cliente, 25/09/2026):
+
+Código (formatação, lint, tipos, 176 testes, 3 builds, `npm audit` 0), 35 testes de navegador, 56 cenários extras
+(cliente e administrador, computador, tablet e celular, com monitoramento de erros de console/CSP e rolagem lateral),
+103 ataques no Node e no runtime da Cloudflare e 38 verificações na produção (somente leitura: páginas, headers,
+redirecionamentos, imagem do WhatsApp e navegador real em 360, 768 e 1440 px). Correções:
+
+35. **Dashboard do painel mais largo que o celular:** as listas (últimos veículos, propostas e ranking de interesse)
+    alargavam a página para ~500 px num celular de 375 px (colunas de grid sem limite + nomes que não quebram); a
+    barra de baixo ficava difícil de tocar. Corrigido, e o teste E2E agora cobre o painel em 320–1024 px.
+36. **Novo/editar veículo em 320 px:** o formulário passava da tela em 16–39 px; a barra "Cancelar / Salvar" agora
+    divide a largura.
+37. **Palavra longa sem espaço** (modelo ou versão digitados juntos) alargava a página do veículo, a Home e a ficha
+    técnica no celular; agora quebra a linha.
 
 **Recomendações para os responsáveis (fora do código)**
 
