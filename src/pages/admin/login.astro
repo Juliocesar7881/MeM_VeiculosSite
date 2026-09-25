@@ -5,32 +5,34 @@ import Icon from '@/components/ui/Icon.astro';
 import { verifyPassword } from '@/lib/auth/password';
 import { RATE_LIMITS } from '@/services/rate-limiter';
 import { authConfigProblem, authenticateAdmin, safeAdminRedirect, startAdminSession } from '@/server/admin-auth';
-import { clientIp } from '@/server/http';
+import { clientIp, socketAddressOf } from '@/server/http';
 
 const { container } = Astro.locals;
 const { config } = container;
 const next = safeAdminRedirect(Astro.url.searchParams.get('next'));
 const problem = authConfigProblem(config);
+const sessionsValidAfter = () => container.settings.sessionsValidAfter();
 let error: string | null = null;
 
 if (config.auth.mode === 'cloudflare-access') {
   // Com Cloudflare Access o login é feito na borda (Zero Trust). Aqui só confirmamos.
-  const actor = await authenticateAdmin(Astro.request, Astro.cookies, config);
+  const actor = await authenticateAdmin(Astro.request, Astro.cookies, config, sessionsValidAfter);
   if (actor) return Astro.redirect(next, 303);
 } else if (!problem) {
   if (Astro.request.method === 'GET') {
-    const actor = await authenticateAdmin(Astro.request, Astro.cookies, config);
+    const actor = await authenticateAdmin(Astro.request, Astro.cookies, config, sessionsValidAfter);
     if (actor) return Astro.redirect(next, 303);
   }
 
   if (Astro.request.method === 'POST') {
-    let ip: string;
-    try {
-      ip = clientIp(Astro.request, Astro.clientAddress);
-    } catch {
-      ip = clientIp(Astro.request, undefined);
+    const ip = clientIp(Astro.request, socketAddressOf(Astro), container.platform.name);
+    // Janela curta (6 em 15 min) + teto diário (30/dia) por IP. Se o banco falhar, o login
+    // fica bloqueado em vez de aceitar tentativas sem contar.
+    let limit = { allowed: true, retryAfterSeconds: 0 };
+    for (const rule of [RATE_LIMITS.loginFailures, RATE_LIMITS.loginDaily]) {
+      limit = await container.rateLimiter.check(rule, ip, { failClosed: true });
+      if (!limit.allowed) break;
     }
-    const limit = await container.rateLimiter.check(RATE_LIMITS.loginFailures, ip);
     if (!limit.allowed) {
       error = `Muitas tentativas. Aguarde ${Math.ceil(limit.retryAfterSeconds / 60)} minuto(s) e tente novamente.`;
     } else {
@@ -42,6 +44,7 @@ if (config.auth.mode === 'cloudflare-access') {
         (await verifyPassword(password, config.auth.passwordHash as string));
       if (ok) {
         await container.rateLimiter.reset(RATE_LIMITS.loginFailures, ip);
+        await container.rateLimiter.reset(RATE_LIMITS.loginDaily, ip);
         await startAdminSession(Astro.cookies, config, Astro.url.protocol === 'https:');
         await container.audit.log('Administrador', 'auth.login', 'session', null);
         return Astro.redirect(next, 303);

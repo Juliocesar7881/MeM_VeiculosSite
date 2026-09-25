@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { hashPassword, isValidPasswordHash, verifyPassword } from '@/lib/auth/password';
 import { createSessionToken, SESSION_TTL_SECONDS, verifySessionToken } from '@/lib/auth/session';
 import { splitSqlStatements } from '@/lib/db/migrator';
 import { buildCsp } from '@/server/security-headers';
 import { safeAdminRedirect } from '@/server/admin-auth';
+import { clientIp } from '@/server/http';
 
 describe('senha (PBKDF2)', () => {
   it('gera hash verificável e rejeita senha errada', async () => {
@@ -88,5 +89,30 @@ describe('splitSqlStatements', () => {
       "INSERT INTO a VALUES ('um;dois')",
       "INSERT INTO a VALUES ('it''s')",
     ]);
+  });
+});
+
+describe('IP do cliente (limite de tentativas)', () => {
+  const forged = () =>
+    new Request('http://localhost/', {
+      headers: { 'cf-connecting-ip': '6.6.6.6', 'x-real-ip': '7.7.7.7', 'x-forwarded-for': '8.8.8.8, 10.0.0.2' },
+    });
+
+  it('Cloudflare: usa o CF-Connecting-IP escrito pela borda', () => {
+    expect(clientIp(forged(), '10.0.0.1', 'cloudflare')).toBe('6.6.6.6');
+  });
+
+  it('Node direto: ignora cabeçalhos que o visitante pode forjar e usa o endereço da conexão', () => {
+    expect(clientIp(forged(), '10.0.0.1', 'node')).toBe('10.0.0.1');
+    expect(clientIp(forged(), undefined, 'node')).toBe('unknown');
+  });
+
+  it('Vercel: usa o X-Real-IP reescrito pela plataforma', () => {
+    vi.stubEnv('VERCEL', '1');
+    try {
+      expect(clientIp(forged(), '10.0.0.1', 'node')).toBe('7.7.7.7');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

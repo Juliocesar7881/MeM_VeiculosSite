@@ -6,30 +6,27 @@ import { formDataToObject, toFieldErrors } from '@/schemas/common';
 import { leadInputSchema } from '@/schemas/lead';
 import type { ImagePair } from '@/services/media-service';
 import { RATE_LIMITS } from '@/services/rate-limiter';
-import { clientIp, contentLength, errorToResponse, fileBytes, json, jsonError } from '@/server/http';
+import { clientIp, contentLength, errorToResponse, fileBytes, json, jsonError, socketAddressOf } from '@/server/http';
 
 /**
  * Recebe propostas do formulário "Anuncie seu veículo".
  * Camadas anti-spam: tamanho da requisição, rate limit por IP (hash), honeypot,
  * Cloudflare Turnstile e validação completa no servidor.
  */
-export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
+export const POST: APIRoute = async (context) => {
+  const { request, locals } = context;
   const { container } = locals;
   try {
+    // O tamanho declarado é obrigatório (o navegador sempre envia): sem ele, ler o corpo não teria limite.
     const length = contentLength(request);
-    if (length !== null && length > IMAGE_LIMITS.leadRequestMaxBytes) {
+    if (length === null) return jsonError(411, 'Envio inválido. Atualize a página e tente novamente.');
+    if (length > IMAGE_LIMITS.leadRequestMaxBytes) {
       return jsonError(413, 'As fotos ficaram grandes demais. Remova algumas e tente novamente.');
     }
     const type = request.headers.get('content-type') ?? '';
     if (!type.startsWith('multipart/form-data')) return jsonError(415, 'Formato de envio inválido.');
 
-    let fallbackIp: string | undefined;
-    try {
-      fallbackIp = clientAddress;
-    } catch {
-      fallbackIp = undefined;
-    }
-    const ip = clientIp(request, fallbackIp);
+    const ip = clientIp(request, socketAddressOf(context), container.platform.name);
     for (const rule of [RATE_LIMITS.leadHourly, RATE_LIMITS.leadDaily]) {
       const limit = await container.rateLimiter.check(rule, ip);
       if (!limit.allowed) {
@@ -54,7 +51,10 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       token: String(form.get('cf-turnstile-response') ?? ''),
       remoteIp: ip === 'unknown' ? undefined : ip,
     });
-    if (!captcha.success) {
+    // O desafio precisa ter sido resolvido neste site (e não num token reaproveitado de outro lugar).
+    const solvedHere =
+      turnstile.usingTestKeys || !captcha.hostname || captcha.hostname === new URL(request.url).hostname;
+    if (!captcha.success || !solvedHere) {
       return jsonError(400, 'Não foi possível confirmar que você não é um robô. Tente novamente.');
     }
 

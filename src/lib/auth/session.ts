@@ -56,6 +56,7 @@ export async function verifySessionToken(
     if (!timingSafeEqual(expected, fromBase64Url(signature))) return null;
     const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(encoded))) as SessionPayload;
     if (typeof payload.exp !== 'number' || payload.exp <= nowSeconds) return null;
+    if (typeof payload.iat !== 'number') return null;
     if (typeof payload.sub !== 'string') return null;
     return payload;
   } catch {

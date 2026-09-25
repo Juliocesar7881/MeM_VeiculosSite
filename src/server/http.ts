@@ -52,13 +52,33 @@ export function contentLength(request: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** IP do cliente (Vercel/Cloudflare/local). Usado apenas de forma anonimizada (hash). */
-export function clientIp(request: Request, fallback: string | undefined): string {
-  const cf = request.headers.get('cf-connecting-ip');
-  if (cf) return cf;
-  const real = request.headers.get('x-real-ip');
-  if (real) return real;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown';
-  return fallback ?? 'unknown';
+/**
+ * IP do cliente, usado apenas de forma anonimizada (hash) no limite de tentativas.
+ *
+ * Só confia no cabeçalho que a PRÓPRIA plataforma escreve (o visitante não consegue forjá-lo):
+ *  - Cloudflare Workers: `CF-Connecting-IP` (a borda sobrescreve qualquer valor enviado);
+ *  - Vercel: `X-Real-IP` / `X-Forwarded-For` (reescritos pela Vercel);
+ *  - Node direto: o endereço da conexão (`clientAddress`). Cabeçalhos são ignorados, senão
+ *    bastaria enviar um IP falso a cada tentativa para escapar do limite.
+ */
+export function clientIp(request: Request, socketAddress: string | undefined, platform: 'node' | 'cloudflare'): string {
+  if (platform === 'cloudflare') {
+    return request.headers.get('cf-connecting-ip') || socketAddress || 'unknown';
+  }
+  if (globalThis.process?.env?.VERCEL) {
+    const real = request.headers.get('x-real-ip');
+    if (real) return real.trim();
+    const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+    if (forwarded) return forwarded;
+  }
+  return socketAddress || 'unknown';
+}
+
+/** `Astro.clientAddress` lança erro quando o adaptador não conhece o IP; aqui vira `undefined`. */
+export function socketAddressOf(context: { clientAddress: string }): string | undefined {
+  try {
+    return context.clientAddress;
+  } catch {
+    return undefined;
+  }
 }

@@ -61,7 +61,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     if ((adminPage && !isLogin) || adminApi) {
-      const actor = await authenticateAdmin(request, cookies, config);
+      const actor = await authenticateAdmin(request, cookies, config, () => container.settings.sessionsValidAfter());
       if (!actor) {
         if (adminApi) {
           return new Response(JSON.stringify({ ok: false, error: 'Sessão expirada. Entre novamente.' }), {

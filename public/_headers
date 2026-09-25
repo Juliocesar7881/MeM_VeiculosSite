@@ -1,0 +1,6 @@
+# Cabeçalhos dos arquivos estáticos (JS, CSS, fontes e imagens) servidos direto pela Cloudflare.
+# As páginas e APIs passam pelo middleware (src/server/security-headers.ts), com a política completa.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY

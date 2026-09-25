@@ -39,24 +39,24 @@ CLS = 0 e TBT = 0 ms em todas. Observações:
 
 ## Segurança
 
-| Item              | Situação                                                                                                                                                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| SQL injection     | Todas as consultas parametrizadas; ORDER BY vem de lista fechada; `LIKE` com escape                                                                                                                                                              |
-| XSS               | Astro escapa toda saída; `set:html` só em ícones estáticos e JSON-LD (com escape de `<`, `>` e `&`); scripts de navegador usam `textContent` para dados                                                                                          |
-| CSP               | `script-src 'self' https://challenges.cloudflare.com` (sem scripts inline — verificado por teste E2E de violações), `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `upgrade-insecure-requests` em HTTPS |
-| Headers           | HSTS (produção HTTPS), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`, `COOP`, `X-Robots-Tag` — conferidos na produção, inclusive em respostas vindas do cache de borda                                    |
-| CSRF              | Verificação de origem no middleware para qualquer POST/PUT/DELETE em `/admin` e `/api`, `security.checkOrigin` do Astro e cookie `SameSite=Strict` (teste E2E cobre)                                                                             |
-| Autenticação      | PBKDF2-SHA256 (50 mil iterações no Workers, 600 mil em Node), comparação em tempo constante, sessão HMAC com expiração, rate limit de login, nenhuma senha no código ou no Git; Cloudflare Access com validação de JWT disponível                |
-| Autorização       | Middleware exige sessão em `/admin/*` e `/api/admin/*`; endpoints sensíveis verificam de novo (`locals.admin`)                                                                                                                                   |
-| Redirecionamentos | `next`/`returnTo` aceitam apenas caminhos internos do painel (sem open redirect)                                                                                                                                                                 |
-| Uploads           | Assinatura real do arquivo, limite de bytes, dimensões e proporção entre as versões; chaves geradas no servidor; PNG/SVG/HTML recusados; storage privado                                                                                         |
-| Cache de borda    | Só páginas públicas GET 200 sem `Set-Cookie`; nunca `/admin`, `/api`, `/media`, `/og`; chave sem cookies (páginas iguais para todos) — teste unitário + verificação no workerd                                                                   |
-| Métricas          | `/api/metrics` só aceita a própria origem (403 para outros sites, verificado na produção), resposta sempre 204, grava apenas contadores de veículos publicados; nenhum dado do visitante                                                         |
-| Endereço oficial  | 301 para o domínio de `PUBLIC_SITE_URL` (sem open redirect: destino fixo na configuração) — teste unitário                                                                                                                                       |
-| Dados pessoais    | IP só em hash salgado; fotos de propostas só por rota autenticada `no-store`; exclusão definitiva (LGPD) no painel; política de privacidade publicada                                                                                            |
-| Anti-spam         | Turnstile validado no servidor (chave real na produção), honeypot, rate limit 5/h e 15/dia por IP, limite de 4,3 MB por envio; sem chaves o formulário é bloqueado (falha segura)                                                                |
-| Segredos          | Secrets do Worker (`wrangler secret`) e `.env` local ignorado pelo Git; nada exposto ao navegador; o arquivo `.dev.vars` gerado pelo build é apagado antes do deploy                                                                             |
-| Dependências      | `path-to-regexp` (via adapter Vercel) forçado para 6.3.0 com `overrides` — corrige GHSA-9wv6-86v2-598j                                                                                                                                           |
+| Item              | Situação                                                                                                                                                                                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SQL injection     | Todas as consultas parametrizadas; ORDER BY vem de lista fechada; `LIKE` com escape                                                                                                                                                                                                                                                  |
+| XSS               | Astro escapa toda saída; `set:html` só em ícones estáticos e JSON-LD (com escape de `<`, `>` e `&`); scripts de navegador usam `textContent` para dados                                                                                                                                                                              |
+| CSP               | `script-src 'self' https://challenges.cloudflare.com` (sem scripts inline — verificado por teste E2E de violações), `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `upgrade-insecure-requests` em HTTPS                                                                                     |
+| Headers           | HSTS (produção HTTPS), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`, `COOP`, `X-Robots-Tag` — conferidos na produção, inclusive em respostas vindas do cache de borda                                                                                                                        |
+| CSRF              | Verificação de origem no middleware para qualquer POST/PUT/DELETE em `/admin` e `/api`, `security.checkOrigin` do Astro e cookie `SameSite=Strict` (teste E2E cobre)                                                                                                                                                                 |
+| Autenticação      | PBKDF2-SHA256 (50 mil iterações no Workers, 600 mil em Node), comparação em tempo constante, sessão HMAC com expiração, rate limit de login (6/15 min e 30/dia por IP, bloqueio seguro se o banco falhar), "Sair" encerra a sessão no servidor, nenhuma senha no código ou no Git; Cloudflare Access com validação de JWT disponível |
+| Autorização       | Middleware exige sessão em `/admin/*` e `/api/admin/*`; endpoints sensíveis verificam de novo (`locals.admin`)                                                                                                                                                                                                                       |
+| Redirecionamentos | `next`/`returnTo` aceitam apenas caminhos internos do painel (sem open redirect)                                                                                                                                                                                                                                                     |
+| Uploads           | Assinatura real do arquivo, limite de bytes, dimensões e proporção entre as versões; chaves geradas no servidor; PNG/SVG/HTML recusados; storage privado                                                                                                                                                                             |
+| Cache de borda    | Só páginas públicas GET 200 sem `Set-Cookie`; nunca `/admin`, `/api`, `/media`, `/og`; chave sem cookies (páginas iguais para todos) — teste unitário + verificação no workerd                                                                                                                                                       |
+| Métricas          | `/api/metrics` só aceita a própria origem (403 para outros sites), corpo ≤ 512 bytes, resposta sempre 204, 1 contagem por visitante/veículo/evento a cada 30 min e no máximo 300 gravações/min por instância; só veículos publicados; nenhum dado do visitante gravado                                                               |
+| Endereço oficial  | 301 para o domínio de `PUBLIC_SITE_URL` (sem open redirect: destino fixo na configuração) — teste unitário                                                                                                                                                                                                                           |
+| Dados pessoais    | IP só em hash salgado; fotos de propostas só por rota autenticada `no-store`; exclusão definitiva (LGPD) no painel; política de privacidade publicada                                                                                                                                                                                |
+| Anti-spam         | Turnstile validado no servidor (chave real na produção, conferindo o domínio), honeypot, rate limit 5/h e 15/dia por IP (IP só do cabeçalho da própria plataforma), tamanho do envio obrigatório e até 4,3 MB; sem chaves o formulário é bloqueado (falha segura)                                                                    |
+| Segredos          | Secrets do Worker (`wrangler secret`) e `.env` local ignorado pelo Git; nada exposto ao navegador; o arquivo `.dev.vars` gerado pelo build é apagado antes do deploy                                                                                                                                                                 |
+| Dependências      | `path-to-regexp` (via adapter Vercel) forçado para 6.3.0 com `overrides` — corrige GHSA-9wv6-86v2-598j                                                                                                                                                                                                                               |
 
 **Problemas encontrados e corrigidos**
 
@@ -97,9 +97,48 @@ Fase 3 (conta dedicada, senha, domínio, métricas):
     domínio já está na Cloudflare antes de alterar qualquer coisa e, se a publicação falhar, republica a versão
     anterior e restaura o Turnstile; o redirecionamento de domínio fica em cache por só 5 min.
 
+Fase 4 (auditoria de segurança completa, 25/09/2026):
+
+17. **IP forjável fora da Cloudflare:** em Vercel/Node o `CF-Connecting-IP`/`X-Forwarded-For` enviado pelo próprio
+    visitante era aceito; trocando o IP a cada tentativa dava para burlar o limite do login e do formulário. Agora
+    só vale o que a plataforma escreve (Cloudflare: `CF-Connecting-IP`; Vercel: `X-Real-IP`; Node: endereço da
+    conexão). Testes unitários + ataque simulado (bloqueio na 7ª tentativa mesmo trocando o IP).
+18. **Esgotamento da cota do D1 (100 mil gravações/dia):** cada tentativa já bloqueada ainda gravava no banco e
+    `/api/metrics` gravava a cada requisição, sem limite. Agora o bloqueio fica em memória (recusa sem gravar) e as
+    métricas contam 1 vez por visitante/veículo/evento a cada 30 min, com teto de 300 gravações/min por instância.
+19. **Corpo sem tamanho declarado** era lido sem limite no formulário de propostas, nas métricas e no upload do
+    painel → tamanho obrigatório (411) ou ignorado (métricas). Navegadores sempre enviam o tamanho.
+20. **Login:** teto diário de 30 tentativas por IP (além de 6 a cada 15 min) e bloqueio seguro se o banco falhar
+    (antes liberava a tentativa sem contar).
+21. **"Sair" apagava só o cookie:** uma cópia do cookie continuava valendo até 12 h. Agora o servidor grava um corte
+    (`auth_sessions_valid_after` em `site_settings`) e recusa toda sessão emitida antes do último "Sair" — teste de
+    integração + verificação no servidor com cookie copiado.
+22. **Turnstile:** o servidor confere que o desafio foi resolvido no próprio domínio (`hostname`).
+23. **Arquivos estáticos** (JS, CSS, fontes, imagens), servidos direto pela Cloudflare, ganham `nosniff`,
+    `Referrer-Policy` e `X-Frame-Options` via `public/_headers`.
+
+Verificado sem achados nesta fase: SQL injection, XSS, CSRF, open redirect, autorização do painel, uploads
+(assinatura real + `nosniff`), fotos de propostas só com login, JWT do Cloudflare Access (issuer + audience),
+chaves de teste do Turnstile nunca usadas em produção, dependências (`npm audit`: 0 vulnerabilidades) e varredura
+do histórico do Git por segredos (nenhum encontrado).
+
+**Recomendações para os responsáveis (fora do código)**
+
+- Revogar qualquer token da Cloudflare que tenha sido compartilhado por chat/e-mail e criar outro só quando
+  necessário, guardado apenas no lugar de uso.
+- Ativar verificação em duas etapas (2FA) nas contas da Cloudflare e do GitHub.
+- Proteger o painel com Cloudflare Access (Zero Trust, grátis até 50 usuários): `AUTH_MODE=cloudflare-access`, cada
+  sócio entra com o próprio e-mail e código, e `/admin` nem responde para quem não está autorizado.
+- Senha do painel com 16+ caracteres aleatórios; trocar quando alguém com acesso deixar a empresa.
+- Com domínio próprio: manter o HSTS e, depois de estável, avaliar o _preload_.
+
 **Riscos aceitos / limitações conhecidas**
 
-- Sessões do painel são _stateless_: para derrubar todas antes de 12 h, troque `SESSION_SECRET` ou a senha.
+- "Sair" encerra no servidor todas as sessões abertas do painel (em todos os aparelhos), não só a do navegador atual.
+- Fotos de rascunhos (veículos não publicados) só abrem para quem tiver a URL com dois UUIDs aleatórios; não aparecem
+  em nenhuma página.
+- No Workers o PBKDF2 fica em 50 mil iterações (limite da plataforma): a proteção depende de senha longa e aleatória
+  e do limite de tentativas. Para o painel, o modo mais forte é o Cloudflare Access (ver recomendações abaixo).
 - Mensagens de aviso do painel (`?ok=`/`?erro=`) vêm da URL (texto escapado); um link malicioso poderia exibir um
   texto falso para um administrador logado — sem execução de código. Risco baixo.
 - Senha única compartilhada no modo `password`; para usuários individuais, usar o modo Cloudflare Access.

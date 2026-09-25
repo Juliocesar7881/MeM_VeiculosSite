@@ -9,7 +9,8 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   if (!locals.admin) return jsonError(401, 'Não autorizado.');
   try {
     const length = contentLength(request);
-    if (length !== null && length > IMAGE_LIMITS.vehicleRequestMaxBytes) {
+    if (length === null) return jsonError(411, 'Envio inválido. Tente novamente.');
+    if (length > IMAGE_LIMITS.vehicleRequestMaxBytes) {
       return jsonError(413, 'Foto muito grande após a compressão.');
     }
     const form = await request.formData();
