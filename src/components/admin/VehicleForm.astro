@@ -44,13 +44,20 @@ const errorCount = Object.keys(errors).length;
   data-unsaved={errorCount > 0 ? '' : undefined}
 >
   {errorCount > 0 && (
-    <div class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-red-200" role="alert">
+    <div
+      class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-red-200"
+      role="alert"
+      data-form-errors
+    >
       <p class="font-semibold">
         Revise {errorCount === 1 ? 'o campo destacado' : `os ${errorCount} campos destacados`}.
       </p>
       {err('_form') && <p class="mt-1">{err('_form')}</p>}
     </div>
   )}
+
+  <!-- Cadastro novo: as fotos ficam dentro do formulário e são salvas junto (features/admin/photo-manager.ts). -->
+  <slot name="photos" />
 
   <section class="panel">
     <h2 class="panel-title">Identificação</h2>
@@ -420,7 +427,7 @@ const errorCount = Object.keys(errors).length;
     </a>
     {mode === 'create' ? (
       <button type="submit" class="btn btn-gold" data-busy-label="Salvando…">
-        <Icon name="image" size={18} /> Salvar e adicionar fotos
+        <Icon name="check" size={18} /> Salvar veículo
       </button>
     ) : (
       <button type="submit" class="btn btn-gold" data-busy-label="Salvando…">
@@ -516,11 +523,12 @@ const errorCount = Object.keys(errors).length;
     vehicleForm.addEventListener('change', markUnsaved, { once: true });
   }
 
-  // Formatação leve dos campos numéricos (o servidor aceita os dois formatos).
-  document.querySelectorAll<HTMLInputElement>('[data-int-input]').forEach((input) => {
-    input.addEventListener('input', () => {
-      const digits = input.value.replace(/\D/g, '').slice(0, 9);
-      input.value = digits ? Number(digits).toLocaleString('pt-BR') : '';
-    });
+  // Formatação leve dos campos numéricos (o servidor aceita os dois formatos). Delegada no formulário:
+  // continua valendo quando as seções voltam do servidor com erros (cadastro com fotos).
+  vehicleForm?.addEventListener('input', (event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.matches('[data-int-input]')) return;
+    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+    input.value = digits ? Number(digits).toLocaleString('pt-BR') : '';
   });
 </script>

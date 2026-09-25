@@ -1,5 +1,6 @@
 ---
 import { flasher } from '@/server/flash';
+import PhotoManager from '@/components/admin/PhotoManager.astro';
 import VehicleForm from '@/components/admin/VehicleForm.astro';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import { isAppError } from '@/lib/errors';
@@ -13,19 +14,24 @@ let values: FormValues = emptyVehicleValues(settings);
 let errors: FieldErrors = {};
 
 if (Astro.request.method === 'POST' && admin) {
-  const parsed = parseVehicleForm(await formDataOrEmpty(Astro.request));
+  const form = await formDataOrEmpty(Astro.request);
+  const parsed = parseVehicleForm(form);
+  // Fotos escolhidas nesta tela: o navegador as envia logo depois (photo-manager.ts) e segue para o veículo.
+  const withPhotos = Number(form.get('_fotos') ?? 0) > 0;
   values = parsed.values;
   if (parsed.ok) {
     try {
       const vehicle = await container.vehicles.create(parsed.data, admin);
       const flash = flasher(container.config);
       return Astro.redirect(
-        await flash.url(
-          `/admin/veiculos/${vehicle.id}#fotos`,
-          'Veículo cadastrado! Agora adicione as fotos.',
-          'ok',
-          'novo',
-        ),
+        withPhotos
+          ? await flash.url(`/admin/veiculos/${vehicle.id}`, 'Veículo cadastrado com as fotos!', 'ok', 'novo-com-fotos')
+          : await flash.url(
+              `/admin/veiculos/${vehicle.id}#fotos`,
+              'Veículo cadastrado! Agora adicione as fotos.',
+              'ok',
+              'novo',
+            ),
         303,
       );
     } catch (error) {
@@ -46,59 +52,9 @@ const brands = await container.vehicles.distinctBrands();
       ← Veículos
     </a>
     <h1 class="heading mt-2 text-3xl text-white">Novo veículo</h1>
-    <ol class="steps mt-4" aria-label="Etapas do cadastro">
-      <li class="step is-current" aria-current="step">
-        <span class="step-dot">1</span>
-        <span>Dados do veículo</span>
-      </li>
-      <li class="step">
-        <span class="step-dot">2</span>
-        <span>
-          Fotos <span class="text-mist-500">(abre ao salvar)</span>
-        </span>
-      </li>
-    </ol>
+    <p class="mt-1 text-sm text-mist-400">Preencha os dados e adicione as fotos: tudo é salvo junto.</p>
   </div>
-  <VehicleForm values={values} errors={errors} brands={brands} mode="create" />
+  <VehicleForm values={values} errors={errors} brands={brands} mode="create">
+    <PhotoManager slot="photos" vehicleId="" images={[]} />
+  </VehicleForm>
 </AdminLayout>
-
-<style>
-  .steps {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    font-size: 0.9rem;
-    color: var(--color-mist-400);
-  }
-  .step {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .step + .step::before {
-    content: '';
-    width: 1.5rem;
-    height: 1px;
-    margin-right: 0.75rem;
-    background: color-mix(in oklab, white 18%, transparent);
-  }
-  .step-dot {
-    display: grid;
-    width: 1.6rem;
-    height: 1.6rem;
-    place-items: center;
-    border-radius: 999px;
-    border: 1px solid color-mix(in oklab, white 20%, transparent);
-    font-size: 0.8rem;
-    font-weight: 700;
-  }
-  .step.is-current {
-    color: #fff;
-    font-weight: 600;
-  }
-  .step.is-current .step-dot {
-    border-color: var(--color-gold-500);
-    background: var(--color-gold-500);
-    color: #14110a;
-  }
-</style>

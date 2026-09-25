@@ -1,31 +1,6 @@
+import { clearBusy, markBusy } from './busy-button';
 import { confirmDialog, confirmOptionsFrom, leaveWarning } from './confirm-dialog';
 import { initFeedback } from './feedback';
-
-/** Estado "salvando" no botão que enviou o formulário (e evita envio duplo). */
-function markBusy(button: HTMLButtonElement) {
-  button.disabled = true;
-  button.setAttribute('aria-busy', 'true');
-  button.classList.add('is-busy');
-  const label = button.dataset.busyLabel;
-  const text = Array.from(button.childNodes).findLast(
-    (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
-  );
-  if (label && text) {
-    button.dataset.idleLabel = text.textContent ?? '';
-    text.textContent = ` ${label}`;
-  }
-}
-
-function clearBusy(button: HTMLButtonElement) {
-  button.disabled = false;
-  button.removeAttribute('aria-busy');
-  button.classList.remove('is-busy');
-  const idle = button.dataset.idleLabel;
-  if (idle === undefined) return;
-  const text = Array.from(button.childNodes).findLast((node) => node.nodeType === Node.TEXT_NODE);
-  if (text) text.textContent = idle;
-  delete button.dataset.idleLabel;
-}
 
 /** Comportamentos gerais do painel (sem dependências). */
 export function initAdminUi() {

@@ -24,7 +24,9 @@ const sectionOnly = { offersOnly: filters.offersOnly, repasseOnly: filters.repas
 const copy = {
   todos: {
     heading: categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Veículos'),
-    subtitle: 'Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal.',
+    subtitle: categoryLabel
+      ? `${categoryLabel} à venda na ${businessName}. Use os filtros para encontrar o veículo ideal.`
+      : 'Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal.',
     title: `${categoryLabel ? `${categoryLabel} à venda` : 'Veículos à venda'}${filters.brand ? ` ${filters.brand}` : ''} | ${businessName}`,
     description: `Veja ${categoryLabel?.toLowerCase() ?? 'carros, motos, scooters, pesados e máquinas agrícolas'} à venda na ${businessName}, em ${city} - ${state}. Filtre por marca, ano, preço e fale pelo WhatsApp.`,
     tone: 'default' as const,

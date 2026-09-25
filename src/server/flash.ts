@@ -9,7 +9,7 @@ import { CACHE } from './security-headers';
  */
 export type FlashKind = 'ok' | 'erro';
 /** Comemoração exibida junto do aviso (veículo cadastrado/publicado). Só vale com aviso assinado. */
-export type FlashEffect = 'novo' | 'publicado';
+export type FlashEffect = 'novo' | 'novo-com-fotos' | 'publicado';
 
 const SIGNATURE_PARAM = 'fs';
 /** Parâmetros do aviso na URL (texto, assinatura e comemoração). */

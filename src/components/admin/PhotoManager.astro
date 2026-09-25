@@ -37,7 +37,10 @@ const config = {
           ({images.length}/{config.maxPhotos})
         </span>
       </h2>
-      <p class="mt-0.5 text-sm text-mist-400">A primeira foto é a capa. Arraste para reordenar ou use as setas.</p>
+      <p class="mt-0.5 text-sm text-mist-400">
+        A primeira foto é a capa. Arraste para reordenar ou use as setas.
+        {!vehicleId && ' As fotos são salvas junto com o veículo.'}
+      </p>
     </div>
     <label for="fotos-input" class="btn btn-gold cursor-pointer">
       <Icon name="upload" size={18} />
@@ -218,7 +221,7 @@ const config = {
     opacity: 0.4;
   }
   /* Foto nova entra "saltando"; ao terminar o envio, um selo verde confirma. */
-  .photo-item.is-pending {
+  .photo-item.is-new {
     animation: photo-in 420ms var(--ease-expo) both;
   }
   .photo-item.is-done::after {

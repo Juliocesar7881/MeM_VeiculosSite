@@ -25,18 +25,21 @@ não salvos ou fotos ainda enviando, o painel pergunta antes.
 ## Cadastrar um carro (ou moto, pesado, máquina)
 
 1. Toque em **Novo veículo**.
-2. Preencha **Categoria**, **Marca** e **Modelo** (obrigatórios). Complete o que souber: versão, anos, preço,
+2. No topo, em **Fotos**, toque em **Adicionar fotos** e escolha as fotos (pode escolher várias de uma vez). Elas
+   aparecem na hora; escolha a capa e a ordem (veja abaixo).
+3. Preencha **Categoria**, **Marca** e **Modelo** (obrigatórios). Complete o que souber: versão, anos, preço,
    quilometragem (ou horas, para máquinas), combustível, câmbio, cor, carroceria, cidade.
-3. **Preço**: digite como no dia a dia (ex.: `89.900`). Em branco, o site mostra “Preço sob consulta”.
-4. Marque os **opcionais** da lista; opcionais diferentes vão em “Outros opcionais” (um por linha).
-5. Em **Status**, deixe **Disponível** (já vem assim): o veículo entra no site ao salvar.
+4. **Preço**: digite como no dia a dia (ex.: `89.900`). Em branco, o site mostra “Preço sob consulta”.
+5. Marque os **opcionais** da lista; opcionais diferentes vão em “Outros opcionais” (um por linha).
+6. Em **Status**, deixe **Disponível** (já vem assim): o veículo entra no site ao salvar.
    Se ainda for revisar, escolha **Rascunho** — o veículo fica só no painel.
-6. Toque em **Salvar e adicionar fotos**.
+7. Toque em **Salvar veículo**. Os dados e as fotos são salvos juntos (o botão mostra “Enviando fotos 2/5…”); não
+   feche a página até abrir a tela do veículo. Se faltar algum campo, o painel avisa e as fotos escolhidas continuam lá.
 
 ## Subir fotos
 
-1. Na página do veículo, na área **Fotos**, toque em **Adicionar fotos** (pode escolher várias de uma vez) ou arraste
-   as fotos para a área tracejada no computador.
+1. No cadastro (acima) ou, depois, na página do veículo: na área **Fotos**, toque em **Adicionar fotos** (pode
+   escolher várias de uma vez) ou arraste as fotos para a área tracejada no computador.
 2. As fotos são **otimizadas automaticamente** antes do envio (ficam leves e nítidas). Aguarde até sumir o aviso
    “Enviando…”.
 3. **A primeira foto é a capa** (aparece nos cards e no WhatsApp). Para trocar:

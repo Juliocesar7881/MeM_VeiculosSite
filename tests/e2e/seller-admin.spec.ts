@@ -180,7 +180,7 @@ test('Admin: novo veículo com fotos (upload, capa, exclusão)', async ({ page }
   await page.getByLabel('Ano de fabricação').fill('2021');
   await page.getByLabel('Ano modelo').fill('2021');
   await page.getByLabel('Preço (R$)').fill('21.500');
-  await page.getByRole('button', { name: /Salvar e adicionar fotos/ }).click();
+  await page.getByRole('button', { name: 'Salvar veículo' }).click();
   await expect(page.getByText('Veículo cadastrado! Agora adicione as fotos.')).toBeVisible();
   // Comemoração ao cadastrar (some sozinha ou com um clique)
   const celebration = page.locator('[data-celebrate]');
@@ -213,5 +213,66 @@ test('Admin: novo veículo com fotos (upload, capa, exclusão)', async ({ page }
   await photos.nth(1).getByRole('button', { name: 'Excluir foto' }).click();
   await answerConfirm(page, 'Excluir esta foto?', 'Excluir foto');
   await expect(photos).toHaveCount(1);
+  expect(nativeDialogs).toEqual([]);
+});
+
+test('Admin: cadastro com fotos na mesma tela (sem precisar salvar antes)', async ({ page }) => {
+  const nativeDialogs = trackNativeDialogs(page);
+  await loginAdmin(page, '/admin/veiculos/novo');
+
+  // As fotos são escolhidas e otimizadas já na tela de cadastro
+  await page.locator('[data-photo-input]').setInputFiles([
+    { name: 'frente.jpg', mimeType: 'image/jpeg', buffer: await fakePhoto('#2563eb') },
+    { name: 'lateral.jpg', mimeType: 'image/jpeg', buffer: await fakePhoto('#f59e0b') },
+    { name: 'interior.jpg', mimeType: 'image/jpeg', buffer: await fakePhoto('#10b981') },
+  ]);
+  const photos = page.locator('[data-photo-list] li');
+  await expect(page.locator('[data-photo-list] li[data-photo-id]:not(.is-pending)')).toHaveCount(3, {
+    timeout: 30_000,
+  });
+  await expect(page.locator('[data-photo-count]')).toHaveText('(3/30)');
+
+  // Escolher a capa e tirar uma foto da seleção (ainda não salva: sai sem perguntar)
+  const lateral = await photos.nth(1).getAttribute('data-photo-id');
+  await photos.nth(1).getByRole('button', { name: 'Definir como capa' }).click();
+  await expect(photos.first()).toHaveAttribute('data-photo-id', lateral ?? '');
+  await photos.nth(2).getByRole('button', { name: 'Excluir foto' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(photos).toHaveCount(2);
+
+  // Erro de validação: os erros aparecem e as fotos escolhidas continuam na tela
+  await page.getByLabel('Modelo *').fill('Saveiro');
+  await page.getByRole('button', { name: 'Salvar veículo' }).click();
+  await expect(page.locator('[data-form-errors]')).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/veiculos\/novo$/);
+  await expect(photos).toHaveCount(2);
+
+  // Corrige e salva: o veículo é criado e as fotos sobem na ordem da tela (a capa primeiro)
+  await page.getByLabel('Marca *').fill('Volkswagen');
+  await page.getByLabel('Ano de fabricação').fill('2018');
+  await page.getByLabel('Ano modelo').fill('2019');
+  await page.getByLabel('Preço (R$)').fill('58.900');
+  await page.getByRole('button', { name: 'Salvar veículo' }).click();
+  await expect(page).toHaveURL(/\/admin\/veiculos\/[0-9a-f-]{36}/, { timeout: 30_000 });
+  await expect(page.getByText('Veículo cadastrado com as fotos!')).toBeVisible();
+  await expect(page.locator('[data-celebrate]')).toContainText('Dados e fotos salvos.');
+  await expect(page.locator('[data-photo-list] li')).toHaveCount(2);
+
+  // No site: a primeira foto (capa) é a que foi escolhida como capa (laranja)
+  const href = (await page.getByRole('link', { name: 'Ver no site' }).first().getAttribute('href')) ?? '';
+  await page.goto(href);
+  const cover = page.locator('[data-gallery] img').first();
+  await expect(cover).toBeVisible();
+  const color = await cover.evaluate(async (img: HTMLImageElement) => {
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 4;
+    canvas.height = 4;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(img, 0, 0, 4, 4);
+    return Array.from(ctx?.getImageData(1, 1, 1, 1).data ?? []);
+  });
+  expect(color[0]).toBeGreaterThan(200); // laranja #f59e0b: muito vermelho, pouco azul
+  expect(color[2]).toBeLessThan(80);
   expect(nativeDialogs).toEqual([]);
 });

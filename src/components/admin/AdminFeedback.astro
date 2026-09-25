@@ -11,6 +11,7 @@ interface Props {
 const { ok, erro, effect } = Astro.props;
 const CELEBRATIONS: Record<FlashEffect, { title: string; subtitle: string }> = {
   novo: { title: 'Veículo cadastrado!', subtitle: 'Agora é só adicionar as fotos.' },
+  'novo-com-fotos': { title: 'Veículo cadastrado!', subtitle: 'Dados e fotos salvos.' },
   publicado: { title: 'Publicado no site!', subtitle: 'O veículo já aparece para os clientes.' },
 };
 const celebration = ok && effect ? CELEBRATIONS[effect] : null;
@@ -298,6 +299,9 @@ const celebration = ok && effect ? CELEBRATIONS[effect] : null;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
     margin-top: 0.9rem;
+  }
+  .confirm-actions.is-single {
+    grid-template-columns: 1fr;
   }
   .confirm-actions .btn {
     white-space: normal;

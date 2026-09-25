@@ -23,7 +23,8 @@ const ok = flash?.kind === 'ok' ? flash.message : null;
 const erro = flash?.kind === 'erro' ? flash.message : null;
 // Comemoração (veículo cadastrado/publicado): só acompanha um aviso de sucesso assinado.
 const fx = Astro.url.searchParams.get('fx');
-const effect: FlashEffect | null = ok && (fx === 'novo' || fx === 'publicado') ? fx : null;
+const EFFECTS: FlashEffect[] = ['novo', 'novo-com-fotos', 'publicado'];
+const effect = ok ? (EFFECTS.find((name) => name === fx) ?? null) : null;
 
 const nav: { key: Props['section']; label: string; href: string; icon: IconName; badge?: number }[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin', icon: 'dashboard' },

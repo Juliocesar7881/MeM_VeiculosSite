@@ -13,6 +13,8 @@ export interface ConfirmOptions {
   icon?: 'trash' | 'alert' | 'question';
   /** Miniatura exibida no diálogo (ex.: a foto que será excluída). */
   imageSrc?: string;
+  /** Só o botão de confirmar (aviso com "Continuar"). */
+  hideCancel?: boolean;
 }
 
 const SVG_OPEN =
@@ -70,14 +72,15 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
     options.confirmLabel ?? 'Confirmar',
   );
   confirm.type = 'button';
-  actions.append(cancel, confirm);
+  if (options.hideCancel) actions.classList.add('is-single');
+  actions.append(...(options.hideCancel ? [confirm] : [cancel, confirm]));
   card.append(actions);
   dialog.append(card);
 
   const previousFocus = document.activeElement as HTMLElement | null;
   document.body.append(dialog);
   dialog.showModal();
-  (danger ? cancel : confirm).focus();
+  (danger && !options.hideCancel ? cancel : confirm).focus();
 
   active = new Promise<boolean>((resolve) => {
     let done = false;
