@@ -22,7 +22,6 @@ const [settings, sections, counts, suggestions] = await Promise.all([
 
 const availableCount = Object.values(counts).reduce((a, b) => a + b, 0);
 const showcase = sections.featured.length ? sections.featured : sections.latest;
-const spotlight = showcase.find((v) => v.cover) ?? sections.offers.find((v) => v.cover) ?? null;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
 const repasseSubtitle =
   settings.repasseDescription.split('\n')[0] ||
@@ -33,7 +32,7 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/" jsonLd={[dealerJsonLd(settings, siteUrl)]}>
-  <Hero settings={settings} spotlight={spotlight} availableCount={availableCount} suggestions={suggestions} />
+  <Hero settings={settings} availableCount={availableCount} suggestions={suggestions} />
 
   <CategoryShortcuts counts={counts} offersTotal={sections.offersTotal} repassesTotal={sections.repassesTotal} />
 

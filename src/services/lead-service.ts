@@ -237,8 +237,9 @@ export class LeadService {
       description: null,
       status: 'draft',
       featured: false,
-      isOffer: false,
-      commercialType: 'normal',
+      // Como no cadastro manual: já vem marcado para Ofertas e Repasses; o admin desmarca o que não quiser.
+      isOffer: true,
+      commercialType: 'repasse',
       offerStartAt: null,
       offerEndAt: null,
       published: false,

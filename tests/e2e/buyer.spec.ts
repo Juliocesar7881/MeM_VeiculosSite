@@ -44,6 +44,19 @@ test.describe('Cliente que quer comprar', () => {
     expect(jsonLd.join('')).toContain('"Car"');
   });
 
+  test('foto da loja no topo da Home leva a "Sobre nós" e tem "Como chegar"', async ({ page }) => {
+    await page.goto('/');
+    const store = page.locator('figure.store');
+    await expect(store.getByRole('img', { name: /Loja da M&M Veículos/ })).toBeVisible();
+    const maps = store.getByRole('link', { name: 'Como chegar' });
+    await expect(maps).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);
+    // O link do título cobre o quadro todo: clicar no meio da foto abre "Sobre nós".
+    const box = await store.locator('img').boundingBox();
+    if (!box) throw new Error('foto da loja sem tamanho');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page).toHaveURL(/\/empresa$/);
+  });
+
   test('filtros por query string e ordenação', async ({ page }) => {
     await page.goto('/veiculos?marca=Toyota');
     await expect(page.getByText('1 veículo encontrado')).toBeVisible();

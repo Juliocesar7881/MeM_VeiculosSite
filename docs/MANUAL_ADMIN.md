@@ -9,8 +9,9 @@ Guia rápido para quem vai cuidar do site no dia a dia. Funciona no computador e
 2. Digite a **senha do painel** e toque em **Entrar**.
 3. Para sair, use **Sair** (no menu lateral ou no ícone de saída no celular).
 
-> Por segurança, a sessão expira em 12 horas. Depois de algumas senhas erradas seguidas, o login fica bloqueado por
-> alguns minutos.
+> Por segurança, a sessão expira em 12 horas. Depois de **5 senhas erradas seguidas**, o login fica bloqueado por
+> **30 minutos** naquela internet (a tela avisa quantas tentativas restam). Bloqueado, nem a senha certa entra:
+> espere os 30 minutos ou entre por outra rede (ex.: 4G do celular).
 
 No celular, o menu fica na barra de baixo: **Dashboard · Veículos · Novo · Propostas · Ajustes**.
 
@@ -55,31 +56,34 @@ O site é atualizado em até **1 minuto**.
 - **Ações → Destacar na Home**, ou marque **Destaque** no cadastro.
 - Para tirar: **Ações → Remover destaque**.
 
-Os destaques aparecem na seção “Destaques” da página inicial (o primeiro com foto também aparece grande no topo).
+Os destaques aparecem na seção “Destaques da M&M” da página inicial. O topo da Home mostra a foto da loja.
 
-## Criar uma oferta
+## Onde o veículo aparece: Ofertas e Repasses
 
-1. Abra o veículo e marque **Oferta**.
-2. Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual
+No cadastro, em **Onde aparece no site**, há duas caixas: **Ofertas** e **Repasses**.
+Todo veículo novo **já vem com as duas marcadas** — desmarque a que não quiser antes de salvar:
+
+| Marcado            | Onde aparece                                                         |
+| ------------------ | -------------------------------------------------------------------- |
+| Ofertas + Repasses | Abas **Ofertas** e **Repasses**, seções das duas na Home, dois selos |
+| Só Repasses        | Aba **Repasses** e seção “Repasses” da Home, selo “Repasse”          |
+| Só Ofertas         | Aba **Ofertas** e seção “Ofertas da M&M” da Home, selo “Oferta”      |
+| Nenhum             | Só na aba **Todos**                                                  |
+
+Publicado, o veículo sempre aparece na aba **Todos** da página Veículos.
+
+### Detalhes da oferta
+
+1. Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual
    de desconto calculado.
-3. Opcional: defina **Início** e **Fim da oferta**. Depois da data final, o selo “Oferta” sai sozinho.
-4. **Salvar alterações**. O veículo aparece na aba **Ofertas** da página Veículos e na seção “Ofertas da M&M” da Home.
+2. Opcional: defina **Início** e **Fim da oferta**. Depois da data final, o selo “Oferta” sai sozinho.
 
-Atalho: **Ações → Marcar como oferta**.
+### Atalhos sem abrir o cadastro
 
-## Remover uma oferta
+Em **Veículos → Ações**: **Marcar como oferta / Remover oferta** e **Marcar como repasse / Remover repasse**.
+Ao remover a oferta, o preço anterior fica guardado, mas não aparece.
 
-**Ações → Remover oferta** (ou desmarque **Oferta** no cadastro). O preço anterior fica guardado, mas não aparece.
-
-## Marcar como repasse
-
-- No cadastro, em **Tipo comercial**, escolha **Repasse**, ou use **Ações → Marcar como repasse**.
-- O veículo ganha o selo “Repasse”, aparece na aba **Repasses** da página Veículos e na seção “Repasses” da Home.
-- O texto explicativo sobre repasses é editado em **Configurações → Texto informativo sobre repasses**.
-
-## Remover repasse
-
-**Ações → Remover repasse** (ou escolha **Normal** em Tipo comercial).
+O texto explicativo sobre repasses é editado em **Configurações → Texto informativo sobre repasses**.
 
 > Destaque, Oferta e Repasse são independentes: um mesmo veículo pode ter os três, só um ou nenhum.
 
@@ -142,7 +146,7 @@ Quando a M&M comprar o veículo:
 
 1. Abra a proposta e toque em **Transformar em veículo**.
 2. O sistema cria um **rascunho** com os dados e **copia as fotos** — nada é publicado ainda.
-3. Revise tudo, **defina o preço**, marque Oferta/Repasse/Destaque se quiser, troque ou adicione fotos.
+3. Revise tudo, **defina o preço**, confira Ofertas/Repasses (já vêm marcados), marque Destaque se quiser, troque ou adicione fotos.
 4. Marque **Publicado no site** e **Salvar alterações**.
 
 A proposta fica com o status “Convertida em veículo” e um link para o veículo criado.

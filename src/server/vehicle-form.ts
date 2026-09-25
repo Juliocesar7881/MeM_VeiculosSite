@@ -15,7 +15,9 @@ export function emptyVehicleValues(settings: SiteSettings): FormValues {
   return {
     category: 'carro',
     status: 'available',
-    commercialType: 'normal',
+    // Veículo novo já vem marcado para Ofertas e Repasses; o admin desmarca o que não quiser.
+    isOffer: 'on',
+    commercialType: 'repasse',
     city: settings.city,
     state: settings.state,
     features: [],
@@ -61,6 +63,9 @@ export type ParsedVehicleForm =
 
 export function parseVehicleForm(formData: FormData): ParsedVehicleForm {
   const values = formDataToObject(formData, ['features']);
+  // "Repasses" é uma caixa de marcar no formulário; no banco continua o tipo comercial.
+  if (!('commercialType' in values)) values.commercialType = values.isRepasse === 'on' ? 'repasse' : 'normal';
+  delete values.isRepasse;
   const extra = typeof values.featuresExtra === 'string' ? values.featuresExtra : '';
   const checked = Array.isArray(values.features) ? values.features : [];
   const parsed = vehicleInputSchema.safeParse({ ...values, features: [...checked, ...extra.split(/\r?\n/)] });

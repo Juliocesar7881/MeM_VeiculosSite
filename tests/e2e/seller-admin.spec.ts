@@ -94,11 +94,11 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await expect(page.locator('[data-photo-list] li')).toHaveCount(1);
   await expect(page.getByLabel('Marca *')).toHaveValue('Volkswagen');
 
-  // Revisar, definir preço, marcar oferta/repasse e publicar
+  // Ofertas e Repasses já vêm marcados; revisar, definir preço e publicar
+  await expect(page.getByRole('checkbox', { name: /^Ofertas/ })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /^Repasses/ })).toBeChecked();
   await page.getByLabel('Preço (R$)').fill('47.900');
-  await page.getByText('Oferta', { exact: true }).click();
   await page.getByLabel('Preço anterior (R$)').fill('49.900');
-  await page.locator('label.choice', { hasText: 'Repasse' }).click();
   await page.getByText('Publicado no site', { exact: true }).click();
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(page.getByText('Alterações salvas.')).toBeVisible();
@@ -113,10 +113,10 @@ test('Admin → Proposta → Converter → Publicar', async ({ page, context }) 
   await expect(page.locator('.badge-repasse').first()).toBeVisible();
   await expect(page.getByText(/R\$\s*47\.900/).first()).toBeVisible();
 
-  // Aparece em /ofertas e /repasses
-  await page.goto('/ofertas');
+  // Aparece nas abas Ofertas e Repasses
+  await page.goto('/veiculos?oferta=true');
   await expect(page.getByRole('link', { name: 'Gol', exact: true })).toBeVisible();
-  await page.goto('/repasses');
+  await page.goto('/veiculos?repasse=true');
   await expect(page.getByRole('link', { name: 'Gol', exact: true })).toBeVisible();
 });
 

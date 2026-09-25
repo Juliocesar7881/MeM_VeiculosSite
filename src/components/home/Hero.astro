@@ -1,25 +1,27 @@
 ---
-import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
 import Icon from '@/components/ui/Icon.astro';
-import PriceTag from '@/components/vehicle/PriceTag.astro';
 import { CATEGORY_INFO, VEHICLE_CATEGORIES } from '@/config/catalog';
-import { mediaUrl, vehicleSrcset } from '@/lib/storage/keys';
-import type { VehicleCard } from '@/types/domain';
 import type { SiteSettings } from '@/types/settings';
-import { usageLabel, vehicleName, yearLabel } from '@/utils/vehicle-format';
 import { buildWhatsAppUrl, generalContactMessage } from '@/utils/whatsapp';
 
 interface Props {
   settings: SiteSettings;
-  spotlight: VehicleCard | null;
   availableCount: number;
   suggestions: string[];
 }
 
-const { settings, spotlight, availableCount, suggestions } = Astro.props;
+const { settings, availableCount, suggestions } = Astro.props;
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
-const cover = spotlight?.cover ?? null;
-const spotlightHref = spotlight ? `/veiculo/${spotlight.slug}` : '';
+
+// Foto da loja (public/brand), em AVIF com WebP de reserva, nas larguras geradas.
+const STORE_WIDTHS = [640, 960, 1360];
+const STORE_SIZES = '(min-width: 1408px) 660px, (min-width: 1024px) 47vw, calc(100vw - 2rem)';
+const storeSrcset = (format: 'avif' | 'webp') =>
+  STORE_WIDTHS.map((w) => `/brand/loja-mm-veiculos-${w}.${format} ${w}w`).join(', ');
+const cityState = `${settings.city} - ${settings.state}`;
+const storePlace = settings.address ? `${settings.address}, ${cityState}` : cityState;
+const mapsQuery = settings.address ? `${settings.address}, ${cityState}` : `${settings.businessName}, ${cityState}`;
+const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
 
 // Cada palavra sobe de dentro de uma máscara, em sequência (a última leva o ponto dourado).
 const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
@@ -113,52 +115,41 @@ const stockLabel =
       </div>
     </div>
 
-    <div class="relative">
-      {spotlight && cover ? (
-        <a href={spotlightHref} class="stage group" data-vt-card aria-label={`Ver ${vehicleName(spotlight)}`}>
-          <div class="stage-media" data-showroom>
-            <img
-              src={mediaUrl(cover.largeKey)}
-              srcset={vehicleSrcset(cover)}
-              sizes="(min-width: 1024px) 48vw, 94vw"
-              width={cover.width}
-              height={cover.height}
-              alt={`${vehicleName(spotlight)} ${spotlight.version ?? ''}`.trim()}
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-              class="stage-img"
-              data-vt-photo={spotlightHref}
-            />
-            <span class="stage-sheen" aria-hidden="true"></span>
-            <span class="stage-torch" aria-hidden="true" data-showroom-light></span>
-          </div>
-          <div class="stage-caption">
-            <div class="min-w-0">
-              <p class="title truncate text-2xl text-white sm:text-[1.75rem]">{vehicleName(spotlight)}</p>
-              <p class="mt-1 truncate text-sm text-mist-300">
-                {[spotlight.version, yearLabel(spotlight), usageLabel(spotlight)].filter(Boolean).join(', ')}
-              </p>
-            </div>
-            <div class="flex shrink-0 items-center gap-4">
-              <PriceTag vehicle={spotlight} />
-              <span class="stage-go" aria-hidden="true">
-                <Icon name="arrow-up-right" size={20} />
-              </span>
-            </div>
-          </div>
-        </a>
-      ) : (
-        <div class="hero-art" aria-hidden="true">
-          <svg viewBox={LOGO_VIEWBOX} class="w-full">
-            {LOGO_GOLD_PATHS.map((d) => (
-              <path d={d} fill="var(--color-gold-500)" />
-            ))}
-            <path d={LOGO_SILVER_PATH} fill="var(--color-silver-300)" />
-          </svg>
+    <figure class="stage store">
+      <div class="stage-media" data-showroom>
+        <picture>
+          <source type="image/avif" srcset={storeSrcset('avif')} sizes={STORE_SIZES} />
+          <img
+            src="/brand/loja-mm-veiculos-1360.webp"
+            srcset={storeSrcset('webp')}
+            sizes={STORE_SIZES}
+            width="1360"
+            height="765"
+            alt={`Loja da ${settings.businessName} em ${settings.city}: placa “Compra, vende, troca, financia” sob a cobertura, com carros no pátio`}
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+            class="stage-img store-img"
+          />
+        </picture>
+        <span class="stage-sheen" aria-hidden="true"></span>
+        <span class="stage-torch" aria-hidden="true" data-showroom-light></span>
+      </div>
+      <figcaption class="stage-caption store-caption">
+        <div class="min-w-0 flex-[1_1_13rem]">
+          <p class="title text-2xl text-white sm:text-[1.75rem]">
+            <a href="/empresa" class="stage-link">
+              Venha conhecer a loja
+            </a>
+          </p>
+          <p class="mt-1 text-sm text-mist-300">{storePlace}</p>
         </div>
-      )}
-    </div>
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" class="stage-map">
+          <Icon name="map-pin" size={18} />
+          <span>Como chegar</span>
+        </a>
+      </figcaption>
+    </figure>
   </div>
 </section>
 
@@ -260,7 +251,7 @@ const stockLabel =
     background: var(--color-ink-850);
   }
 
-  /* Vitrine: foto do destaque + legenda embaixo (fora da imagem). */
+  /* Vitrine: foto da loja + legenda embaixo (fora da imagem). O quadro inteiro leva a "Sobre nós". */
   .stage {
     position: relative;
     display: block;
@@ -283,6 +274,13 @@ const stockLabel =
     object-fit: cover;
     animation: stage-settle 1600ms var(--ease-expo) backwards;
     transition: transform 700ms var(--ease-out-soft);
+  }
+  .stage-media picture {
+    display: contents;
+  }
+  /* A placa inteira no quadro 4:3 (o corte tira só as bordas da foto 16:9). */
+  .store-img {
+    object-position: 36% 50%;
   }
   @keyframes stage-settle {
     from {
@@ -351,11 +349,6 @@ const stockLabel =
       transform: translateX(70%);
       transition: transform 1100ms var(--ease-in-out-strong);
     }
-    .stage:hover .stage-go {
-      background: var(--color-gold-500);
-      border-color: var(--color-gold-500);
-      color: #14110a;
-    }
   }
   /* Lanterna que segue o cursor (features/showroom-light.ts). */
   .stage-torch {
@@ -387,35 +380,68 @@ const stockLabel =
       padding: 1.25rem 1.6rem 1.5rem;
     }
   }
-  .stage-go {
-    display: none;
-    width: 2.75rem;
-    height: 2.75rem;
+  /* No celular, "Como chegar" desce para a linha de baixo quando não cabe ao lado do título. */
+  .store-caption {
+    flex-wrap: wrap;
+    row-gap: 0.9rem;
+  }
+  /* Link "esticado": o título leva a /empresa e cobre o quadro todo (foto + legenda). */
+  .stage-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: var(--radius-panel);
+  }
+  .stage-link:focus-visible {
+    outline: none;
+  }
+  .stage-link:focus-visible::after {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 3px;
+  }
+  /* "Como chegar" fica acima do link esticado. */
+  .stage-map {
+    position: relative;
+    z-index: 4;
+    display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
-    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0 1rem 0 0.85rem;
     border-radius: 999px;
     border: 1px solid color-mix(in oklab, white 16%, transparent);
     color: var(--color-mist-100);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
     transition:
       background-color 200ms ease,
       border-color 200ms ease,
-      color 200ms ease;
+      color 200ms ease,
+      transform 160ms var(--ease-out-soft);
   }
-  @media (min-width: 400px) {
-    .stage-go {
-      display: inline-flex;
+  .stage-map :global(svg) {
+    color: var(--color-gold-400);
+    transition: color 200ms ease;
+  }
+  .stage-map:active {
+    transform: scale(0.97);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .stage-map:hover {
+      background: var(--color-gold-500);
+      border-color: var(--color-gold-500);
+      color: #14110a;
+    }
+    .stage-map:hover :global(svg) {
+      color: currentColor;
     }
   }
-
-  .hero-art {
-    position: relative;
-    display: grid;
-    aspect-ratio: 4 / 3;
-    place-items: center;
-    padding: 2rem;
-    border-radius: var(--radius-panel);
-    border: 1px solid color-mix(in oklab, white 8%, transparent);
-    background: radial-gradient(90% 70% at 50% 35%, #1b1e22, #0b0c0e 75%);
+  .stage-map:focus-visible {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
   }
 </style>
 

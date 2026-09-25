@@ -171,15 +171,30 @@ const errorCount = Object.keys(errors).length;
             <span class="block text-sm text-mist-400">Aparece na seção “Destaques” da Home.</span>
           </span>
         </label>
-        <label class="check toggle-row">
+      </div>
+    </div>
+
+    <!-- Seções do site: marcações independentes (um veículo pode estar nas duas). -->
+    <fieldset class="mt-5">
+      <legend class="field-label">Onde aparece no site</legend>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="choice">
           <input type="checkbox" name="isOffer" checked={checked('isOffer')} data-offer-toggle />
           <span>
-            <strong class="text-white">Oferta</strong>
-            <span class="block text-sm text-mist-400">Aparece em /ofertas com selo “Oferta”.</span>
+            <strong class="text-white">Ofertas</strong>
+            <span class="block text-sm text-mist-400">Aba “Ofertas” e seção da Home, com selo “Oferta”.</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="checkbox" name="isRepasse" checked={val('commercialType') === 'repasse'} />
+          <span>
+            <strong class="text-white">Repasses</strong>
+            <span class="block text-sm text-mist-400">Aba “Repasses” e seção da Home, com selo “Repasse”.</span>
           </span>
         </label>
       </div>
-    </div>
+      <p class="field-hint">Publicado, o veículo sempre aparece em “Todos”. Desmarque para deixar só em uma seção.</p>
+    </fieldset>
 
     <div class="offer-fields mt-5 grid gap-4 rounded-xl border border-gold-500/25 bg-gold-500/[0.05] p-4 sm:grid-cols-3">
       <div>
@@ -222,26 +237,6 @@ const errorCount = Object.keys(errors).length;
         {err('offerEndDate') && <p class="field-error">{err('offerEndDate')}</p>}
       </div>
     </div>
-
-    <fieldset class="mt-5">
-      <legend class="field-label">Tipo comercial</legend>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="choice">
-          <input type="radio" name="commercialType" value="normal" checked={val('commercialType') !== 'repasse'} />
-          <span>
-            <strong class="text-white">Normal</strong>
-            <span class="block text-sm text-mist-400">Veículo do estoque da loja.</span>
-          </span>
-        </label>
-        <label class="choice">
-          <input type="radio" name="commercialType" value="repasse" checked={val('commercialType') === 'repasse'} />
-          <span>
-            <strong class="text-white">Repasse</strong>
-            <span class="block text-sm text-mist-400">Aparece em /repasses com selo “Repasse”.</span>
-          </span>
-        </label>
-      </div>
-    </fieldset>
   </section>
 
   <section class="panel">
