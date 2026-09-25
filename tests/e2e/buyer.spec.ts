@@ -81,10 +81,10 @@ test.describe('Cliente que quer comprar', () => {
 });
 
 test.describe('Ofertas e repasses', () => {
-  test('Home → Ofertas', async ({ page }) => {
+  test('Home → Ofertas (aba do estoque)', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Ver todas as ofertas' }).click();
-    await expect(page).toHaveURL(/\/ofertas$/);
+    await expect(page).toHaveURL(/\/estoque\?oferta=true$/);
     await expect(page).toHaveTitle('Ofertas de veículos | M&M Veículos');
     const cards = page.locator('[data-vehicle-card]');
     await expect(cards).not.toHaveCount(0);
@@ -93,10 +93,10 @@ test.describe('Ofertas e repasses', () => {
     }
   });
 
-  test('Home → Repasses', async ({ page }) => {
+  test('Home → Repasses (aba do estoque)', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Ver todos os repasses' }).click();
-    await expect(page).toHaveURL(/\/repasses$/);
+    await expect(page).toHaveURL(/\/estoque\?repasse=true$/);
     await expect(page).toHaveTitle(/Veículos de repasse em Massaranduba/);
     const cards = page.locator('[data-vehicle-card]');
     await expect(cards).not.toHaveCount(0);
@@ -108,6 +108,29 @@ test.describe('Ofertas e repasses', () => {
     await expect(page.getByText('Veículo de repasse')).toBeVisible();
     const href = (await page.getByRole('link', { name: 'Tenho interesse' }).first().getAttribute('href')) ?? '';
     expect(decodeURIComponent(href)).toContain('veículo de repasse');
+  });
+});
+
+test.describe('Estoque com abas', () => {
+  test('Todos, Ofertas e Repasses na mesma página, mantendo os filtros', async ({ page }) => {
+    await page.goto('/estoque?categoria=carros');
+    const tabs = page.getByRole('navigation', { name: 'Seções do estoque' });
+    await expect(tabs.getByRole('link')).toHaveCount(3);
+    await expect(tabs.locator('[aria-current="page"]')).toContainText('Todos');
+    await tabs.getByRole('link', { name: /Repasses/ }).click();
+    await expect(page).toHaveURL(/categoria=carros/);
+    await expect(page).toHaveURL(/repasse=true/);
+    await expect(tabs.locator('[aria-current="page"]')).toContainText('Repasses');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Repasses');
+  });
+
+  test('endereços antigos /ofertas e /repasses redirecionam (301) para as abas', async ({ request }) => {
+    const offers = await request.get('/ofertas?categoria=carros', { maxRedirects: 0 });
+    expect(offers.status()).toBe(301);
+    expect(offers.headers()['location']).toBe('/estoque?oferta=true&categoria=carros');
+    const repasses = await request.get('/repasses', { maxRedirects: 0 });
+    expect(repasses.status()).toBe(301);
+    expect(repasses.headers()['location']).toBe('/estoque?repasse=true');
   });
 });
 
@@ -152,7 +175,7 @@ test.describe('Segurança e SEO básicos', () => {
     page.on('console', (msg) => {
       if (/Content Security Policy/i.test(msg.text())) violations.push(msg.text());
     });
-    for (const path of ['/', '/estoque', '/ofertas', '/anuncie-seu-veiculo', '/favoritos', '/contato']) {
+    for (const path of ['/', '/estoque', '/estoque?oferta=true', '/anuncie-seu-veiculo', '/favoritos', '/contato']) {
       await page.goto(path);
     }
     await page.goto('/estoque?marca=Toyota');

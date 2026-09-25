@@ -30,13 +30,13 @@ interface Props {
   facets: InventoryFacets;
   settings: SiteSettings;
   basePath: string;
-  /** Filtro fixo da página (ofertas/repasses) — não aparece como removível. */
-  locked?: 'offers' | 'repasses';
 }
 
-const { filters, result, facets, settings, basePath, locked } = Astro.props;
+const { filters, result, facets, settings, basePath } = Astro.props;
 const href = (overrides: Partial<InventoryFilters>) => inventoryHref(filters, { page: 1, ...overrides }, basePath);
-const active = countActiveFilters(filters) - (locked ? 1 : 0);
+// Ofertas/Repasses são as abas da página (InventoryTabs), não contam como filtro.
+const section = { offersOnly: filters.offersOnly, repasseOnly: filters.repasseOnly };
+const active = countActiveFilters(filters) - (filters.offersOnly ? 1 : 0) - (filters.repasseOnly ? 1 : 0);
 const categoryCounts = new Map(facets.categories.map((c) => [c.value, c.count]));
 
 const currentYear = new Date().getFullYear() + 1;
@@ -64,14 +64,10 @@ if (filters.transmission)
 if (filters.commercialType && !filters.repasseOnly)
   chips.push({ label: COMMERCIAL_TYPE_LABELS[filters.commercialType], href: href({ commercialType: undefined }) });
 if (filters.status) chips.push({ label: VEHICLE_STATUS_LABELS[filters.status], href: href({ status: undefined }) });
-if (filters.offersOnly && locked !== 'offers')
-  chips.push({ label: 'Somente ofertas', href: href({ offersOnly: false }) });
-if (filters.repasseOnly && locked !== 'repasses')
-  chips.push({ label: 'Somente repasses', href: href({ repasseOnly: false }) });
 
-const clearHref = inventoryHref({}, {}, basePath);
+// "Limpar" remove os filtros, mas continua na aba atual.
+const clearHref = inventoryHref(section, {}, basePath);
 const whatsappUrl = buildWhatsAppUrl(settings.whatsapp, generalContactMessage(settings.businessName));
-const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialType ?? '');
 ---
 
 <div class="grid gap-8 lg:grid-cols-[17.5rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)] xl:gap-10">
@@ -93,6 +89,8 @@ const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialTyp
         data-filter-form
         role="search"
       >
+        {filters.offersOnly && <input type="hidden" name="oferta" value="true" />}
+        {filters.repasseOnly && <input type="hidden" name="repasse" value="true" />}
         <div>
           <label for="f-q" class="field-label">
             Buscar
@@ -258,23 +256,7 @@ const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialTyp
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
-          {locked !== 'repasses' && (
-            <div>
-              <label for="f-tipo" class="field-label">
-                Tipo comercial
-              </label>
-              <select id="f-tipo" name="tipo" class="input" data-autosubmit>
-                <option value="">Todos</option>
-                <option value="normal" selected={commercialValue === 'normal'}>
-                  Estoque (normal)
-                </option>
-                <option value="repasse" selected={commercialValue === 'repasse'}>
-                  Repasse
-                </option>
-              </select>
-            </div>
-          )}
+        <div>
           <div>
             <label for="f-status" class="field-label">
               Status
@@ -295,13 +277,6 @@ const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialTyp
             </select>
           </div>
         </div>
-
-        {locked !== 'offers' && (
-          <label class="check">
-            <input type="checkbox" name="oferta" value="true" checked={filters.offersOnly} data-autosubmit />
-            <span>Somente ofertas</span>
-          </label>
-        )}
 
         <div class="sticky bottom-0 -mx-5 grid grid-cols-2 gap-3 border-t hairline bg-ink-900 px-5 py-4 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
           <a href={clearHref} class="btn btn-ghost">
@@ -355,27 +330,7 @@ const commercialValue = filters.repasseOnly ? 'repasse' : (filters.commercialTyp
       </select>
     </div>
 
-    <div class="mt-4 flex flex-wrap gap-2">
-      {locked !== 'offers' && (
-        <a
-          href={href({ offersOnly: !filters.offersOnly })}
-          class:list={['chip', { 'is-active': filters.offersOnly }]}
-          aria-current={filters.offersOnly ? 'true' : undefined}
-        >
-          <Icon name="tag" size={15} />
-          Somente ofertas
-        </a>
-      )}
-      {locked !== 'repasses' && (
-        <a
-          href={href({ repasseOnly: !filters.repasseOnly, commercialType: undefined })}
-          class:list={['chip', { 'is-active': filters.repasseOnly || filters.commercialType === 'repasse' }]}
-          aria-current={filters.repasseOnly || filters.commercialType === 'repasse' ? 'true' : undefined}
-        >
-          <Icon name="repasse" size={15} />
-          Somente repasses
-        </a>
-      )}
+    <div class:list={['flex flex-wrap gap-2', { 'mt-4': chips.length > 0 }]}>
       {chips.map((chip) => (
         <a href={chip.href} class="chip is-active" aria-label={`Remover filtro ${chip.label}`}>
           {chip.label}

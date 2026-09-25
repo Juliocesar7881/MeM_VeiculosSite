@@ -18,8 +18,8 @@ const categories: Item[] = VEHICLE_CATEGORIES.map((category) => ({
   count: counts[category],
 }));
 const deals: Item[] = [
-  { label: 'Repasses', href: '/repasses', count: repassesTotal, tone: 'silver' },
-  { label: 'Ofertas', href: '/ofertas', count: offersTotal, tone: 'gold' },
+  { label: 'Repasses', href: '/estoque?repasse=true', count: repassesTotal, tone: 'silver' },
+  { label: 'Ofertas', href: '/estoque?oferta=true', count: offersTotal, tone: 'gold' },
 ];
 const countLabel = (count: number) =>
   count > 0 ? `${count} ${count === 1 ? 'veículo' : 'veículos'}` : 'consulte disponibilidade';

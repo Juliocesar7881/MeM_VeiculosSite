@@ -5,7 +5,16 @@ import { expect, test } from '@playwright/test';
  * horizontal (quebra de layout). Salva screenshots em test-results/responsive/ para revisão.
  */
 const WIDTHS = [320, 360, 375, 390, 412, 430, 768, 1024, 1280, 1440, 1920];
-const PAGES = ['/', '/estoque', '/ofertas', '/repasses', '/anuncie-seu-veiculo', '/empresa', '/contato', '/favoritos'];
+const PAGES = [
+  '/',
+  '/estoque',
+  '/estoque?oferta=true',
+  '/estoque?repasse=true',
+  '/anuncie-seu-veiculo',
+  '/empresa',
+  '/contato',
+  '/favoritos',
+];
 
 for (const width of WIDTHS) {
   test(`sem rolagem horizontal em ${width}px`, async ({ page }) => {

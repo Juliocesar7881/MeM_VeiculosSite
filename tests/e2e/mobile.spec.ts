@@ -11,8 +11,8 @@ test.describe('Experiência no celular', () => {
     const menu = page.getByRole('dialog', { name: 'Menu' });
     await expect(menu).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Anuncie seu veículo' })).toBeVisible();
-    await menu.getByRole('link', { name: 'Repasses' }).click();
-    await expect(page).toHaveURL(/\/repasses$/);
+    await menu.getByRole('link', { name: 'Sobre nós' }).click();
+    await expect(page).toHaveURL(/\/empresa$/);
   });
 
   test('filtros abrem em gaveta', async ({ page }) => {

@@ -18,7 +18,7 @@ const tabs: { label: string; href: string; icon: IconName; active: boolean }[] =
     label: 'Estoque',
     href: '/estoque',
     icon: 'search',
-    active: path.startsWith('/estoque') || path.startsWith('/ofertas') || path.startsWith('/repasses'),
+    active: path.startsWith('/estoque'),
   },
   { label: 'Anunciar', href: '/anuncie-seu-veiculo', icon: 'plus', active: path.startsWith('/anuncie') },
   { label: 'Favoritos', href: '/favoritos', icon: 'heart', active: path.startsWith('/favoritos') },

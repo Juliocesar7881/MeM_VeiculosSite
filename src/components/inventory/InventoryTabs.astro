@@ -1,0 +1,131 @@
+---
+import { inventoryHref, type InventoryFilters } from '@/schemas/filters';
+import type { InventorySection } from '@/server/inventory-page';
+
+interface Props {
+  filters: InventoryFilters;
+  section: InventorySection;
+  counts: { all: number; offers: number; repasses: number };
+}
+
+const { filters, section, counts } = Astro.props;
+// Trocar de aba mantém os outros filtros (ex.: "Ofertas" de Carros) e volta para a página 1.
+const tabs: { key: InventorySection; label: string; count: number; href: string }[] = [
+  {
+    key: 'todos',
+    label: 'Todos',
+    count: counts.all,
+    href: inventoryHref(filters, { page: 1, offersOnly: false, repasseOnly: false }),
+  },
+  {
+    key: 'ofertas',
+    label: 'Ofertas',
+    count: counts.offers,
+    href: inventoryHref(filters, { page: 1, offersOnly: true, repasseOnly: false }),
+  },
+  {
+    key: 'repasses',
+    label: 'Repasses',
+    count: counts.repasses,
+    href: inventoryHref(filters, { page: 1, offersOnly: false, repasseOnly: true }),
+  },
+];
+---
+
+<nav class="inv-tabs scrollbar-none" aria-label="Seções do estoque">
+  <ul class="inv-tabs-list" role="list">
+    {tabs.map((tab) => (
+      <li>
+        <a
+          href={tab.href}
+          class:list={['inv-tab', `inv-tab-${tab.key}`, { 'is-active': tab.key === section }]}
+          aria-current={tab.key === section ? 'page' : undefined}
+        >
+          <span class="inv-tab-label">{tab.label}</span>
+          <span class="inv-tab-count tabular" aria-label={`${tab.count} ${tab.count === 1 ? 'veículo' : 'veículos'}`}>
+            {tab.count}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .inv-tabs {
+    overflow-x: auto;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .inv-tabs {
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+  .inv-tabs-list {
+    display: flex;
+    width: max-content;
+    gap: 2rem;
+  }
+  .inv-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding-block: 0.75rem 1rem;
+    color: var(--color-mist-400);
+    white-space: nowrap;
+    transition: color 180ms ease;
+  }
+  .inv-tab-label {
+    font-size: clamp(1.45rem, 1.1rem + 1vw, 1.9rem);
+    font-stretch: 80%;
+    font-weight: 560;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  .inv-tab-count {
+    margin-top: 0.05rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-mist-500);
+  }
+  /* Traço sob a aba ativa, encostado no fio inferior do cabeçalho. */
+  .inv-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-paper);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 320ms var(--ease-out-soft);
+  }
+  .inv-tab-ofertas::after {
+    background: var(--color-gold-500);
+  }
+  .inv-tab-repasses::after {
+    background: var(--color-silver-300);
+  }
+  .inv-tab.is-active {
+    color: #fff;
+  }
+  .inv-tab.is-active::after {
+    transform: scaleX(1);
+  }
+  .inv-tab-ofertas.is-active .inv-tab-count {
+    color: var(--color-gold-400);
+  }
+  .inv-tab-repasses.is-active .inv-tab-count {
+    color: var(--color-silver-300);
+  }
+  @media (hover: hover) {
+    .inv-tab:not(.is-active):hover {
+      color: var(--color-mist-100);
+    }
+  }
+</style>

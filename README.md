@@ -47,10 +47,9 @@ fotos, e painel para gerenciar veículos, propostas e dados da empresa.
 | Rota                                               | Conteúdo                                                                                                                                         |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `/`                                                | Hero com busca, atalhos por categoria, destaques, ofertas, repasses (só aparece se houver), “Quer vender seu veículo?”, bloco da empresa         |
-| `/estoque`                                         | Estoque com busca (marca/modelo/versão), filtros, ordenação e paginação — tudo na URL (`/estoque?marca=Toyota`, `?oferta=true`, `?repasse=true`) |
+| `/estoque`                                         | Estoque único com abas **Todos · Ofertas · Repasses** (`?oferta=true`, `?repasse=true`), busca, filtros, ordenação e paginação — tudo na URL  |
 | `/veiculo/[slug]`                                  | Galeria (swipe, setas, miniaturas, tela cheia), ficha técnica, opcionais, “Tenho interesse” no WhatsApp, vendido → “Procurando algo parecido?”   |
-| `/ofertas`                                         | Veículos em oferta ativa, com “De R$ X por R$ Y” quando houver preço anterior                                                                    |
-| `/repasses`                                        | Veículos com tipo comercial “repasse” + texto configurável                                                                                       |
+| `/ofertas`, `/repasses`                            | Endereços antigos: redirecionam (301) para as abas Ofertas e Repasses do estoque                                                                |
 | `/anuncie-seu-veiculo`                             | Formulário de proposta com até 6 fotos (comprimidas no navegador), Turnstile e consentimento LGPD                                                |
 | `/favoritos`                                       | Favoritos salvos no navegador (sem login)                                                                                                        |
 | `/empresa`, `/contato`, `/politica-de-privacidade` | Institucional                                                                                                                                    |
@@ -215,7 +214,7 @@ dados só são aceitas da própria origem (proteção CSRF).
 ## Testes
 
 ```bash
-npm test          # 145 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens (4 versões),
+npm test          # 157 testes: slug, dinheiro, schemas, WhatsApp, filtros, ofertas/repasses, imagens (4 versões),
                   # auth/CSP, cache de borda, redirecionamento de domínio + integração (veículos, propostas,
                   # conversão, fotos, configurações, rate limit, métricas) + adaptadores Cloudflare (D1, KV, R2)
 npm run test:e2e  # 29 testes Playwright: compra, ofertas, repasses, anunciar+proposta, admin→converter→publicar,

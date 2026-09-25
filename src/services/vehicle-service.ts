@@ -332,6 +332,11 @@ export class VehicleService {
     };
   }
 
+  /** Quantos veículos cada aba do estoque (todos, ofertas, repasses) mostraria com os filtros atuais. */
+  sectionCounts(filters: InventoryFilters, settings: SiteSettings) {
+    return this.deps.vehicles.countSections(filters, { now: this.now(), showSold: settings.showSoldVehicles });
+  }
+
   facets(filters: InventoryFilters, settings: SiteSettings): Promise<InventoryFacets> {
     return this.deps.vehicles.facets(filters, { now: this.now(), showSold: settings.showSoldVehicles });
   }

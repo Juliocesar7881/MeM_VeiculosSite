@@ -1,39 +1,75 @@
 ---
 import PageHeader from '@/components/common/PageHeader.astro';
+import InventoryTabs from '@/components/inventory/InventoryTabs.astro';
 import InventoryView from '@/components/inventory/InventoryView.astro';
+import Icon from '@/components/ui/Icon.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { CATEGORY_INFO } from '@/config/catalog';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { inventoryHref } from '@/schemas/filters';
 import { loadInventoryPage } from '@/server/inventory-page';
 
+/**
+ * Estoque: página única com as abas Todos, Ofertas e Repasses
+ * (/estoque, /estoque?oferta=true, /estoque?repasse=true). /ofertas e /repasses redirecionam para cá.
+ */
 const data = await loadInventoryPage(Astro);
 if (data.redirectTo) return Astro.redirect(inventoryHref(data.redirectTo), 302);
 
-const { settings, filters, result, facets, isFiltered } = data;
+const { settings, filters, section, counts, result, facets, isFiltered } = data;
+const { businessName, city, state } = settings;
 const categoryLabel = filters.category ? CATEGORY_INFO[filters.category].plural : null;
-const heading = categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Estoque');
-const title = `${categoryLabel ? `${categoryLabel} à venda` : 'Estoque de veículos'}${filters.brand ? ` ${filters.brand}` : ''} | ${settings.businessName}`;
-const description = `Veja ${categoryLabel?.toLowerCase() ?? 'carros, motos, scooters, pesados e máquinas agrícolas'} à venda na ${settings.businessName}, em ${settings.city} - ${settings.state}. Filtre por marca, ano, preço e fale pelo WhatsApp.`;
+const sectionOnly = { offersOnly: filters.offersOnly, repasseOnly: filters.repasseOnly };
+
+const copy = {
+  todos: {
+    heading: categoryLabel ?? (filters.brand ? `Veículos ${filters.brand}` : 'Estoque'),
+    subtitle: 'Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal.',
+    title: `${categoryLabel ? `${categoryLabel} à venda` : 'Estoque de veículos'}${filters.brand ? ` ${filters.brand}` : ''} | ${businessName}`,
+    description: `Veja ${categoryLabel?.toLowerCase() ?? 'carros, motos, scooters, pesados e máquinas agrícolas'} à venda na ${businessName}, em ${city} - ${state}. Filtre por marca, ano, preço e fale pelo WhatsApp.`,
+    tone: 'default' as const,
+  },
+  ofertas: {
+    heading: 'Ofertas da M&M',
+    subtitle:
+      'Veículos com preço especial por decisão da nossa equipe. Os valores podem mudar sem aviso: confirme pelo WhatsApp.',
+    title: `Ofertas de veículos | ${businessName}`,
+    description: `Veículos com condição especial de preço na ${businessName}, em ${city} - ${state}. Confira as ofertas e fale pelo WhatsApp.`,
+    tone: 'gold' as const,
+  },
+  repasses: {
+    heading: 'Repasses',
+    subtitle: 'Veículos de repasse selecionados pela nossa equipe. Consulte as condições de cada um pelo WhatsApp.',
+    title: `Veículos de repasse em ${city} | ${businessName}`,
+    description: `Veículos de repasse disponíveis na ${businessName}, em ${city} - ${state}. Consulte as condições de cada veículo pelo WhatsApp.`,
+    tone: 'silver' as const,
+  },
+}[section];
+
 const breadcrumbs = [
   { name: 'Início', path: '/' },
   { name: 'Estoque', path: '/estoque' },
+  ...(section === 'todos' ? [] : [{ name: copy.heading, path: inventoryHref(sectionOnly) }]),
 ];
-const canonicalPath = filters.page > 1 && !isFiltered ? `/estoque?pagina=${filters.page}` : '/estoque';
+const canonicalPath = inventoryHref(sectionOnly, { page: isFiltered ? 1 : filters.page });
 ---
 
 <BaseLayout
-  title={title}
-  description={description}
+  title={copy.title}
+  description={copy.description}
   canonicalPath={canonicalPath}
   noindex={isFiltered}
   jsonLd={[breadcrumbJsonLd(breadcrumbs, Astro.locals.siteUrl)]}
 >
-  <PageHeader
-    title={heading}
-    subtitle="Carros, motos, scooters, pesados e máquinas agrícolas. Use os filtros para encontrar o veículo ideal."
-    breadcrumbs={breadcrumbs}
-  />
+  <PageHeader tone={copy.tone} title={copy.heading} subtitle={copy.subtitle} breadcrumbs={breadcrumbs}>
+    {section === 'repasses' && settings.repasseDescription && (
+      <div class="mt-6 flex max-w-3xl gap-3 rounded-2xl border hairline bg-white/[0.03] p-4 text-sm text-mist-200 sm:p-5">
+        <Icon name="info" size={20} class="mt-0.5 shrink-0 text-silver-300" />
+        <p class="whitespace-pre-line">{settings.repasseDescription}</p>
+      </div>
+    )}
+    <InventoryTabs slot="tabs" filters={filters} section={section} counts={counts} />
+  </PageHeader>
   <div class="container-site pt-8">
     <InventoryView filters={filters} result={result} facets={facets} settings={settings} basePath="/estoque" />
   </div>

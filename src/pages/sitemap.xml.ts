@@ -4,8 +4,8 @@ import { CACHE } from '@/server/security-headers';
 const STATIC_PATHS = [
   { path: '/', priority: '1.0', changefreq: 'daily' },
   { path: '/estoque', priority: '0.9', changefreq: 'daily' },
-  { path: '/ofertas', priority: '0.8', changefreq: 'daily' },
-  { path: '/repasses', priority: '0.7', changefreq: 'daily' },
+  { path: '/estoque?oferta=true', priority: '0.8', changefreq: 'daily' },
+  { path: '/estoque?repasse=true', priority: '0.7', changefreq: 'daily' },
   { path: '/anuncie-seu-veiculo', priority: '0.7', changefreq: 'monthly' },
   { path: '/empresa', priority: '0.5', changefreq: 'monthly' },
   { path: '/contato', priority: '0.5', changefreq: 'monthly' },

@@ -10,10 +10,12 @@ interface Props {
 }
 
 const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
+/** Abas opcionais, alinhadas ao fio inferior do cabeçalho (ex.: estoque). */
+const hasTabs = Astro.slots.has('tabs');
 ---
 
 <header class:list={['page-header relative overflow-hidden border-b hairline', `tone-${tone}`]}>
-  <div class="container-site pb-8 pt-6 sm:pb-10 sm:pt-8">
+  <div class:list={['container-site pt-6 sm:pt-8', hasTabs ? 'pb-4 sm:pb-6' : 'pb-8 sm:pb-10']}>
     <Breadcrumbs items={breadcrumbs} />
     {eyebrow && <p class="eyebrow mt-7">{eyebrow}</p>}
     <h1 class:list={['display text-[2.9rem] text-white sm:text-6xl lg:text-7xl', eyebrow ? 'mt-3' : 'mt-7']}>
@@ -22,6 +24,11 @@ const { eyebrow, title, subtitle, breadcrumbs, tone = 'default' } = Astro.props;
     {subtitle && <p class="mt-5 max-w-2xl text-base text-mist-300 sm:text-lg">{subtitle}</p>}
     <slot />
   </div>
+  {hasTabs && (
+    <div class="container-site">
+      <slot name="tabs" />
+    </div>
+  )}
 </header>
 
 <style>

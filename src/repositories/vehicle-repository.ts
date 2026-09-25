@@ -417,6 +417,30 @@ export class VehicleRepository {
     return ids.map((id) => byId.get(id)).filter((v): v is VehicleCard => v !== undefined);
   }
 
+  /**
+   * Totais das abas do estoque (todos, ofertas, repasses) considerando os demais filtros
+   * (categoria, marca, preço...), numa única consulta.
+   */
+  async countSections(
+    filters: InventoryFilters,
+    options: { now: Date; showSold: boolean },
+  ): Promise<{ all: number; offers: number; repasses: number }> {
+    const nowIso = options.now.toISOString();
+    const base: InventoryFilters = { ...filters, offersOnly: false, repasseOnly: false };
+    delete base.commercialType;
+    const where: Where = { clauses: [], args: [] };
+    publicVisibility(where, options.showSold);
+    applyInventoryFilters(where, base, nowIso);
+    const row = await this.db.first<{ total: number; offers: number | null; repasses: number | null }>(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN ${offerActiveSql()} THEN 1 ELSE 0 END) AS offers,
+              SUM(CASE WHEN v.commercial_type = 'repasse' THEN 1 ELSE 0 END) AS repasses
+       FROM vehicles v ${whereSql(where)}`,
+      [nowIso, nowIso, ...where.args],
+    );
+    return { all: Number(row?.total ?? 0), offers: Number(row?.offers ?? 0), repasses: Number(row?.repasses ?? 0) };
+  }
+
   async countSection(section: 'offers' | 'repasses', now: Date): Promise<number> {
     const nowIso = now.toISOString();
     const where: Where = { clauses: [], args: [] };

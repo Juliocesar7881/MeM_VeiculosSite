@@ -79,7 +79,7 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
           id="ofertas-title"
           title="Ofertas da M&M"
           subtitle="Veículos com preço especial. Confira os valores e fale com a nossa equipe."
-          href="/ofertas"
+          href="/estoque?oferta=true"
           linkLabel="Ver todas as ofertas"
         />
         <VehicleGrid vehicles={sections.offers.slice(0, 3)} />
@@ -96,7 +96,7 @@ const description = `${settings.slogan} Compra, venda, financiamento e repasse d
         id="repasses-title"
         title="Repasses"
         subtitle={repasseSubtitle}
-        href="/repasses"
+        href="/estoque?repasse=true"
         linkLabel="Ver todos os repasses"
       />
       <ul class="divide-y divide-white/[0.08] border-y border-white/[0.08]" role="list">
