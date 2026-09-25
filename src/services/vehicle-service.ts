@@ -13,7 +13,6 @@ import type { InventoryFilters } from '@/schemas/filters';
 import type { VehicleInput, VehicleQuickAction } from '@/schemas/vehicle';
 import type { AdminActor, Paginated, Vehicle, VehicleCard, VehicleDetail } from '@/types/domain';
 import type { SiteSettings } from '@/types/settings';
-import { localDateEndToIso, localDateStartToIso } from '@/utils/dates';
 import { buildVehicleSlug } from '@/utils/slug';
 import { normalizeSearch } from '@/utils/text';
 import type { AuditService } from './audit-service';
@@ -115,8 +114,9 @@ export class VehicleService {
       featured: input.featured,
       isOffer: input.isOffer,
       commercialType: input.commercialType,
-      offerStartAt: input.offerStartDate ? localDateStartToIso(input.offerStartDate) : null,
-      offerEndAt: input.offerEndDate ? localDateEndToIso(input.offerEndDate) : null,
+      // A oferta não tem período: vale enquanto estiver marcada (salvar limpa datas antigas).
+      offerStartAt: null,
+      offerEndAt: null,
       published,
       city: input.city,
       state: input.state,

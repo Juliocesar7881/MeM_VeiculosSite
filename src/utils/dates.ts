@@ -4,16 +4,6 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-/** "2026-10-01" (data local de Brasília) -> início do dia em UTC ISO. */
-export function localDateStartToIso(date: string): string {
-  return new Date(`${date}T00:00:00.000${SITE_CONSTANTS.utcOffset}`).toISOString();
-}
-
-/** "2026-10-15" (data local de Brasília) -> fim do dia em UTC ISO. */
-export function localDateEndToIso(date: string): string {
-  return new Date(`${date}T23:59:59.999${SITE_CONSTANTS.utcOffset}`).toISOString();
-}
-
 /** ISO UTC -> "YYYY-MM-DD" no fuso de Brasília (para inputs type=date). */
 export function isoToLocalDate(iso: string | null | undefined): string {
   if (!iso) return '';

@@ -3,7 +3,6 @@ import { formDataToObject, toFieldErrors, type FieldErrors } from '@/schemas/com
 import { vehicleInputSchema, type VehicleInput } from '@/schemas/vehicle';
 import type { VehicleDetail } from '@/types/domain';
 import type { SiteSettings } from '@/types/settings';
-import { isoToLocalDate } from '@/utils/dates';
 import { centsToInput } from '@/utils/money';
 
 export type FormValues = Record<string, string | string[]>;
@@ -47,8 +46,6 @@ export function vehicleToFormValues(v: VehicleDetail): FormValues {
     description: v.description ?? '',
     status: v.status,
     commercialType: v.commercialType,
-    offerStartDate: isoToLocalDate(v.offerStartAt),
-    offerEndDate: isoToLocalDate(v.offerEndAt),
     features: v.features.filter((f) => SUGGESTION_SET.has(f.toLowerCase())),
     featuresExtra: v.features.filter((f) => !SUGGESTION_SET.has(f.toLowerCase())).join('\n'),
   };

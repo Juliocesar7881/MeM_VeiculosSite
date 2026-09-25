@@ -86,14 +86,15 @@ describe('vehicleInputSchema', () => {
     );
   });
 
-  it('valida período da oferta', () => {
+  it('oferta não tem período: datas enviadas são ignoradas', () => {
     const r = vehicleInputSchema.safeParse({
       ...validVehicle,
       isOffer: 'on',
       offerStartDate: '2026-10-10',
       offerEndDate: '2026-10-01',
     });
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data).not.toHaveProperty('offerEndDate');
   });
 
   it('rejeita categoria/status inexistentes', () => {

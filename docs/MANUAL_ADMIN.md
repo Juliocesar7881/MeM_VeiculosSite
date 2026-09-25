@@ -66,9 +66,9 @@ O site é atualizado em até **1 minuto**.
 
 Os destaques aparecem na seção “Destaques da M&M” da página inicial. O topo da Home mostra a foto da loja.
 
-## Onde o veículo aparece: Ofertas e Repasses
+## Classificação no site: Ofertas e Repasses
 
-No cadastro, em **Onde aparece no site**, há duas caixas: **Ofertas** e **Repasses**.
+No cadastro, em **Classificação no site**, há duas caixas: **Ofertas** e **Repasses**.
 Todo veículo novo **já vem com as duas marcadas** — desmarque a que não quiser antes de salvar:
 
 | Marcado            | Onde aparece                                                         |
@@ -85,9 +85,9 @@ No painel, para ver só as ofertas ou só os repasses, use os filtros **Ofertas*
 
 ### Detalhes da oferta
 
-1. Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual
-   de desconto calculado.
-2. Opcional: defina **Início** e **Fim da oferta**. Depois da data final, o selo “Oferta” sai sozinho.
+Opcional: preencha **Preço anterior** (maior que o preço atual) — o site mostra “De R$ X por R$ Y” e o percentual de
+desconto calculado. A oferta não tem data para acabar: fica no site até você desmarcar (ou usar **Ações → Remover
+oferta**).
 
 ### Atalhos sem abrir o cadastro
 

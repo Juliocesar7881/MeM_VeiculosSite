@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { COMMERCIAL_TYPES, FUELS, TRANSMISSIONS, VEHICLE_CATEGORIES, VEHICLE_STATUSES } from '@/config/catalog';
 import {
   checkbox,
-  optionalDate,
   optionalEnum,
   optionalInt,
   optionalMoney,
@@ -57,8 +56,6 @@ export const vehicleInputSchema = z
     featured: checkbox,
     isOffer: checkbox,
     commercialType: z.enum(COMMERCIAL_TYPES, { error: 'Tipo comercial inválido.' }),
-    offerStartDate: optionalDate('Data de início da oferta'),
-    offerEndDate: optionalDate('Data de fim da oferta'),
   })
   .superRefine((data, ctx) => {
     if (data.manufactureYear !== null && data.modelYear !== null) {
@@ -84,13 +81,6 @@ export const vehicleInputSchema = z
           message: 'O preço anterior deve ser maior que o preço atual.',
         });
       }
-    }
-    if (data.offerStartDate && data.offerEndDate && data.offerEndDate < data.offerStartDate) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['offerEndDate'],
-        message: 'A data de fim deve ser igual ou posterior à data de início.',
-      });
     }
   });
 

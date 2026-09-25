@@ -190,7 +190,7 @@ const errorCount = Object.keys(errors).length;
 
     <!-- Seções do site: marcações independentes (um veículo pode estar nas duas). -->
     <fieldset class="mt-5">
-      <legend class="field-label">Onde aparece no site</legend>
+      <legend class="field-label">Classificação no site</legend>
       <div class="grid gap-3 sm:grid-cols-2">
         <label class="choice">
           <input type="checkbox" name="isOffer" checked={checked('isOffer')} data-offer-toggle />
@@ -207,11 +207,10 @@ const errorCount = Object.keys(errors).length;
           </span>
         </label>
       </div>
-      <p class="field-hint">Publicado, o veículo sempre aparece em “Todos”. Desmarque para deixar só em uma seção.</p>
     </fieldset>
 
-    <div class="offer-fields mt-5 grid gap-4 rounded-xl border border-gold-500/25 bg-gold-500/[0.05] p-4 sm:grid-cols-3">
-      <div>
+    <div class="offer-fields mt-5 grid gap-4 rounded-xl border border-gold-500/25 bg-gold-500/[0.05] p-4">
+      <div class="max-w-sm">
         <label for="v-prev" class="field-label">
           Preço anterior (R$)
         </label>
@@ -227,28 +226,6 @@ const errorCount = Object.keys(errors).length;
         />
         <p class="field-hint">Exibe “De R$ X por R$ Y” quando maior que o preço atual.</p>
         {err('previousPrice') && <p class="field-error">{err('previousPrice')}</p>}
-      </div>
-      <div>
-        <label for="v-ostart" class="field-label">
-          Início da oferta
-        </label>
-        <input id="v-ostart" name="offerStartDate" type="date" class="input" value={val('offerStartDate')} />
-        <p class="field-hint">Opcional.</p>
-      </div>
-      <div>
-        <label for="v-oend" class="field-label">
-          Fim da oferta
-        </label>
-        <input
-          id="v-oend"
-          name="offerEndDate"
-          type="date"
-          class="input"
-          value={val('offerEndDate')}
-          aria-invalid={err('offerEndDate') ? 'true' : undefined}
-        />
-        <p class="field-hint">Opcional. Após a data, o selo sai sozinho.</p>
-        {err('offerEndDate') && <p class="field-error">{err('offerEndDate')}</p>}
       </div>
     </div>
   </section>

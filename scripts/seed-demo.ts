@@ -28,11 +28,6 @@ const actor: AdminActor = { id: 'seed', label: 'Seed de demonstração', method:
 const DEMO_NOTE =
   'VEÍCULO DE DEMONSTRAÇÃO — dados e fotos fictícios, usados apenas para avaliar o layout em ambiente local.';
 
-function iso(daysFromNow: number): string {
-  const d = new Date(Date.now() + daysFromNow * 86_400_000);
-  return d.toISOString().slice(0, 10);
-}
-
 const VEHICLES: DemoVehicle[] = [
   {
     shape: 'sedan',
@@ -57,7 +52,6 @@ const VEHICLES: DemoVehicle[] = [
       status: 'available',
       featured: 'on',
       isOffer: 'on',
-      offerEndDate: iso(20),
       commercialType: 'normal',
       features: [
         'Ar-condicionado digital',

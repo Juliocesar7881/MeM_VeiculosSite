@@ -143,18 +143,6 @@ export const optionalEnum = <T extends readonly [string, ...string[]]>(values: T
 
 export const stateField = optionalEnum(BRAZIL_STATES, 'Estado');
 
-/** Data "YYYY-MM-DD" opcional */
-export const optionalDate = (label: string) =>
-  z.preprocess(
-    emptyToUndefined,
-    z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, { error: `${label} inválida.` })
-      .refine((v) => !Number.isNaN(new Date(`${v}T12:00:00Z`).getTime()), { error: `${label} inválida.` })
-      .optional()
-      .transform((v) => (v === undefined ? null : v)),
-  );
-
 export type FieldErrors = Record<string, string>;
 
 /** Converte erros do Zod em { campo: primeira mensagem }. */

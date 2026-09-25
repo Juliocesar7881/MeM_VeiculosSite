@@ -193,15 +193,18 @@ describe('filtros e ordenação', () => {
   });
 });
 
-describe('ofertas com período', () => {
-  it('oferta futura ou vencida não entra em /ofertas', async () => {
-    await env.vehicles.create(vehicleInput({ isOffer: 'on', offerStartDate: '2099-01-01' }), actor);
-    await env.vehicles.create(vehicleInput({ isOffer: 'on', offerEndDate: '2020-01-01' }), actor);
-    await env.vehicles.create(
-      vehicleInput({ isOffer: 'on', offerStartDate: '2020-01-01', offerEndDate: '2099-12-31' }),
-      actor,
-    );
+describe('ofertas sem período', () => {
+  it('oferta vale enquanto estiver marcada; salvar limpa datas antigas', async () => {
+    const v = await env.vehicles.create(vehicleInput({ isOffer: 'on', offerEndDate: '2020-01-01' }), actor);
+    expect(v.offerEndAt).toBeNull();
     expect((await env.vehicles.search(filters('oferta=true'), settings)).total).toBe(1);
+    expect((await env.vehicles.stats()).offers).toBe(1);
+
+    // Veículo antigo com prazo vencido gravado no banco: ao salvar, o prazo some e a oferta volta.
+    await env.db.run('UPDATE vehicles SET offer_end_at = ? WHERE id = ?', ['2020-01-01T02:59:59.999Z', v.id]);
+    expect((await env.vehicles.stats()).offers).toBe(0);
+    const saved = await env.vehicles.update(v.id, vehicleInput({ isOffer: 'on' }), actor);
+    expect(saved.offerEndAt).toBeNull();
     expect((await env.vehicles.stats()).offers).toBe(1);
   });
 });
