@@ -50,7 +50,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.siteUrl = config.siteUrl ?? url.origin;
 
   const handle = async (): Promise<Response> => {
-    const redirect = canonicalRedirect(request, url, config.siteUrl);
+    const redirect = canonicalRedirect(request, url, config.siteUrl, {
+      upgradeHttp: container.platform.name === 'cloudflare',
+    });
     if (redirect) return redirect;
 
     if (!SAFE_METHODS.has(request.method) && (adminPage || pathname.startsWith('/api/'))) {

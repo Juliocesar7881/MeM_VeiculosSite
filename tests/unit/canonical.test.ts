@@ -3,9 +3,9 @@ import { canonicalRedirect } from '@/server/canonical';
 
 const SITE = 'https://www.mmveiculos.com.br';
 
-function check(href: string, method = 'GET', siteUrl: string | null = SITE) {
+function check(href: string, method = 'GET', siteUrl: string | null = SITE, upgradeHttp = false) {
   const url = new URL(href);
-  return canonicalRedirect(new Request(url, { method }), url, siteUrl);
+  return canonicalRedirect(new Request(url, { method }), url, siteUrl, { upgradeHttp });
 }
 
 describe('redirecionamento para o endereço oficial', () => {
@@ -15,6 +15,18 @@ describe('redirecionamento para o endereço oficial', () => {
       expect(res?.status).toBe(301);
       expect(res?.headers.get('Location')).toBe(`${SITE}/veiculos?marca=Toyota`);
     }
+  });
+
+  it('http:// vai para https:// (no Cloudflare), sem laço no endereço oficial', () => {
+    for (const host of ['http://www.mmveiculos.com.br', 'http://mmveiculos.com.br']) {
+      const res = check(`${host}/veiculo/x?a=1`, 'GET', SITE, true);
+      expect(res?.status).toBe(301);
+      expect(res?.headers.get('Location')).toBe(`${SITE}/veiculo/x?a=1`);
+    }
+    expect(check(`${SITE}/`, 'GET', SITE, true)).toBeNull();
+    expect(check('http://localhost:4321/', 'GET', SITE, true)).toBeNull();
+    // Fora do Cloudflare (proxy pode entregar http mesmo com cadeado): não mexe no protocolo
+    expect(check('http://www.mmveiculos.com.br/')).toBeNull();
   });
 
   it('não redireciona o próprio endereço oficial, localhost, POST ou sem domínio configurado', () => {
