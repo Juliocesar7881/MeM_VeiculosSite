@@ -125,4 +125,15 @@ describe('fotos de rascunhos', () => {
     expect(await env.media.isVehiclePublic(published.id)).toBe(true);
     expect(await env.media.isVehiclePublic('00000000-0000-4000-8000-000000000000')).toBe(false);
   });
+
+  it('publicar ou tirar do site vale na hora para as fotos (sem esperar o cache)', async () => {
+    const draft = await env.vehicles.create(vehicleInput({ status: 'draft' }), actor);
+    expect(await env.media.isVehiclePublic(draft.id)).toBe(false); // fica guardado por alguns segundos
+    await env.vehicles.quickAction(draft.id, 'publish', actor);
+    env.media.forgetPublicStatus(draft.id);
+    expect(await env.media.isVehiclePublic(draft.id)).toBe(true);
+    await env.vehicles.quickAction(draft.id, 'unpublish', actor);
+    env.media.forgetPublicStatus(draft.id);
+    expect(await env.media.isVehiclePublic(draft.id)).toBe(false);
+  });
 });

@@ -18,11 +18,14 @@ export const GET: APIRoute = async ({ params, locals, request, cookies }) => {
   const { container } = locals;
   const vehicleId = key.split('/')[1] ?? '';
   const isPublic = await container.media.isVehiclePublic(vehicleId);
+  // Foto de veículo ainda não publicado: 404 sem cache (ele pode ser publicado daqui a pouco).
+  const privateNotFound = () =>
+    new Response('Não encontrado', { status: 404, headers: { 'Cache-Control': CACHE.noStore } });
   if (!isPublic) {
     const admin = await authenticateAdmin(request, cookies, container.config, () =>
       container.settings.sessionsValidAfter(),
     );
-    if (!admin) return notFound();
+    if (!admin) return privateNotFound();
   }
 
   const object = await container.media.getPublicVehicleObject(key);

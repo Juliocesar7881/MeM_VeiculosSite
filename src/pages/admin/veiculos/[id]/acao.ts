@@ -35,6 +35,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   try {
     await locals.container.vehicles.quickAction(id, parsed.data, locals.admin);
+    locals.container.media.forgetPublicStatus(id);
     const target = parsed.data === 'delete' && back.startsWith(`/admin/veiculos/${id}`) ? '/admin/veiculos' : back;
     return flash.redirect(target, MESSAGES[parsed.data], 'ok', parsed.data === 'publish' ? 'publicado' : undefined);
   } catch (error) {

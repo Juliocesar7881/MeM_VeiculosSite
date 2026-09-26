@@ -248,6 +248,11 @@ export class MediaService {
     return value;
   }
 
+  /** Status mudou no painel (publicar, tirar do site, excluir): a próxima foto consulta o banco na hora. */
+  forgetPublicStatus(vehicleId: string): void {
+    publicVehicleCache.delete(vehicleId);
+  }
+
   /** Foto de proposta — chamada somente por rota protegida do admin. */
   async getLeadObject(key: string): Promise<StoredObject | null> {
     if (!isLeadImageKey(key)) return null;

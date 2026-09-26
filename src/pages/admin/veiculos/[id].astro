@@ -29,6 +29,7 @@ if (Astro.request.method === 'POST' && admin) {
   if (parsed.ok) {
     try {
       const updated = await container.vehicles.update(id, parsed.data, admin);
+      container.media.forgetPublicStatus(id);
       // Saiu do rascunho para o site: comemora a publicação.
       const published = !vehicle.published && updated.published;
       return Astro.redirect(
