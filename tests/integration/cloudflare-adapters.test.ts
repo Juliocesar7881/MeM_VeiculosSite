@@ -3,6 +3,7 @@ import { createClient, type Client, type InValue } from '@libsql/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createD1Database } from '@/lib/db/d1';
 import { applyMigrations } from '@/lib/db/migrator';
+import { FallbackStorage } from '@/lib/storage/fallback';
 import { KvStorage } from '@/lib/storage/kv';
 import { R2Storage } from '@/lib/storage/r2';
 import { SITE_SETTINGS } from '@/config/site';
@@ -212,5 +213,99 @@ describe('storage R2 (binding)', () => {
     expect(await readAll(copy!.body)).toBe(4);
     await storage.delete(['vehicles/a/b.webp', 'vehicles/a/c.webp']);
     expect(await storage.get('vehicles/a/b.webp')).toBeNull();
+  });
+});
+
+describe('migração KV -> R2 sem perder fotos (FallbackStorage)', () => {
+  it('lê do KV o que ainda não foi copiado; grava, copia e apaga no R2', async () => {
+    const kv = fakeKv();
+    const r2 = fakeR2();
+    const old = new KvStorage(kv);
+    await old.put('vehicles/v1/antiga.webp', new Uint8Array([9, 9, 9]), { contentType: 'image/webp' });
+    await old.put('sell-leads/l1/cliente.webp', new Uint8Array([7, 7]), { contentType: 'image/webp' });
+    const storage = new FallbackStorage(new R2Storage(r2), old);
+    expect(storage.driver).toBe('r2');
+
+    // Foto antiga (só no KV) continua abrindo
+    const antiga = await storage.get('vehicles/v1/antiga.webp');
+    expect(await readAll(antiga!.body)).toBe(3);
+
+    // Foto nova vai só para o R2
+    await storage.put('vehicles/v1/nova.webp', new Uint8Array([1, 2, 3, 4]), { contentType: 'image/webp' });
+    expect(await new R2Storage(r2).get('vehicles/v1/nova.webp')).not.toBeNull();
+    expect(await old.get('vehicles/v1/nova.webp')).toBeNull();
+
+    // Converter proposta: copia do KV para o R2
+    await storage.copy('sell-leads/l1/cliente.webp', 'vehicles/v2/copiada.webp');
+    const copiada = await new R2Storage(r2).get('vehicles/v2/copiada.webp');
+    expect(await readAll(copiada!.body)).toBe(2);
+
+    // Excluir apaga dos dois; falha no KV (cota) não impede
+    kv.delete = (async () => {
+      throw new Error('KV delete() limit exceeded for the day.');
+    }) as typeof kv.delete;
+    await expect(storage.delete(['vehicles/v1/nova.webp'])).resolves.toBeUndefined();
+    expect(await storage.get('vehicles/v1/nova.webp')).toBeNull();
+  });
+});
+
+describe('teto do espaço de fotos (sem cobrança no R2)', () => {
+  it('recusa foto que passaria do teto; proposta é salva sem fotos; excluir libera espaço', async () => {
+    const client = createClient({ url: ':memory:', intMode: 'number' });
+    const db = createD1Database(fakeD1(client));
+    await applyMigrations(db, await loadMigrationFiles(path.resolve(process.cwd(), 'migrations')));
+    const pair = await makePair();
+    const medium = await makeImage(1080, 810);
+    const og = await makeImage(1200, 630, 'jpeg');
+    const photoBytes = pair.large.byteLength + pair.thumb.byteLength + medium.byteLength + og.byteLength;
+    const services = buildServices({
+      db,
+      storage: new R2Storage(fakeR2()),
+      ipHashSalt: 'cf',
+      storageCapBytes: photoBytes + 10,
+    });
+
+    const vehicle = await services.vehicles.create(vehicleInput(), actor);
+    await services.media.addVehicleImage(vehicle.id, { ...pair, medium, og }, actor);
+    // O tamanho registrado inclui todas as versões (inclusive a de compartilhamento)
+    expect(await services.storageBudget.usedBytes()).toBe(photoBytes);
+
+    await expect(services.media.addVehicleImage(vehicle.id, { ...pair, medium, og }, actor)).rejects.toMatchObject({
+      status: 507,
+      message: expect.stringMatching(/espaço de fotos do site está cheio/),
+    });
+
+    const { leadInputSchema } = await import('@/schemas/lead');
+    const lead = leadInputSchema.parse({
+      name: 'Cliente Espaço',
+      whatsapp: '47999990002',
+      category: 'carro',
+      brand: 'Fiat',
+      model: 'Uno',
+      manufactureYear: '2015',
+      consent: 'on',
+    });
+    const leadId = await services.leads.submit(lead, [await makePair()], { ipHash: null });
+    const detail = await services.leads.getDetail(leadId);
+    expect(detail?.images).toHaveLength(0);
+    expect(detail?.adminNotes).toMatch(/espaço de fotos do site está cheio/);
+
+    await services.vehicles.quickAction(vehicle.id, 'delete', actor);
+    expect(await services.storageBudget.usedBytes()).toBe(0);
+    const other = await services.vehicles.create(vehicleInput(), actor);
+    await expect(services.media.addVehicleImage(other.id, { ...pair, medium, og }, actor)).resolves.toBeDefined();
+    client.close();
+  });
+
+  it('teto padrão: 9 GB no R2 e 0,9 GB no KV (abaixo do gratuito)', () => {
+    const client = createClient({ url: ':memory:', intMode: 'number' });
+    const db = createD1Database(fakeD1(client));
+    expect(buildServices({ db, storage: new R2Storage(fakeR2()), ipHashSalt: 'x' }).storageBudget.capBytes).toBe(
+      9_000_000_000,
+    );
+    expect(buildServices({ db, storage: new KvStorage(fakeKv()), ipHashSalt: 'x' }).storageBudget.capBytes).toBe(
+      900_000_000,
+    );
+    client.close();
   });
 });

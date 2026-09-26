@@ -10,14 +10,21 @@ import { formatBRL } from '@/utils/money';
 import { yearLabel } from '@/utils/vehicle-format';
 
 const { container } = Astro.locals;
-const [stats, leadCounts, latestVehicles, latestLeads, interest] = await Promise.all([
+const [stats, leadCounts, latestVehicles, latestLeads, interest, photosUsed] = await Promise.all([
   container.vehicles.stats(),
   container.leads.countByStatus(),
   container.vehicles.listAdmin({ page: 1, pageSize: 6 }),
   container.leads.latest(6),
   container.stats.overview(5),
+  container.storageBudget.usedBytes(),
 ]);
 const number = new Intl.NumberFormat('pt-BR');
+// Espaço de fotos: só aparece quando há teto (armazenamento gratuito da Cloudflare).
+const photosCap = container.storageBudget.capBytes;
+const gb = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const bytesLabel = (bytes: number) =>
+  bytes < 1e9 ? `${number.format(Math.round(bytes / 1e6))} MB` : `${gb.format(bytes / 1e9)} GB`;
+const photosPercent = photosCap ? Math.min(100, Math.round((photosUsed / photosCap) * 100)) : 0;
 
 const cards: { label: string; value: number; href: string; icon: IconName; accent?: boolean }[] = [
   { label: 'Total', value: stats.total - stats.archived, href: '/admin/veiculos', icon: 'car' },
@@ -63,6 +70,27 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
       </li>
     ))}
   </ul>
+
+  {photosCap && (
+    <section class:list={['storage mt-6', { 'is-warning': photosPercent >= 80 }]} aria-labelledby="espaco-fotos">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="espaco-fotos" class="flex items-center gap-2 text-sm font-semibold text-white">
+          <Icon name="image" size={17} class="text-mist-400" /> Espaço de fotos
+        </h2>
+        <p class="text-sm text-mist-300 tabular">
+          {bytesLabel(photosUsed)} de {bytesLabel(photosCap)} ({photosPercent}%)
+        </p>
+      </div>
+      <span class="storage-track" aria-hidden="true">
+        <span class="storage-bar" style={`width: ${Math.max(photosPercent, 1)}%`}></span>
+      </span>
+      {photosPercent >= 80 && (
+        <p class="mt-2 text-xs text-gold-200">
+          Quase cheio: exclua veículos vendidos antigos (Ações → Excluir) para liberar espaço. Arquivar não libera.
+        </p>
+      )}
+    </section>
+  )}
 
   <div class="mt-10 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2">
     <section class="surface p-5 sm:p-6" aria-labelledby="ultimos-veiculos">
@@ -207,6 +235,29 @@ const cards: { label: string; value: number; href: string; icon: IconName; accen
 </AdminLayout>
 
 <style>
+  .storage {
+    padding: 0.9rem 1.1rem;
+    border-radius: 1rem;
+    background: var(--color-ink-850);
+    border: 1px solid color-mix(in oklab, white 7%, transparent);
+  }
+  .storage.is-warning {
+    border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+  }
+  .storage-track {
+    display: block;
+    height: 6px;
+    margin-top: 0.6rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in oklab, white 8%, transparent);
+  }
+  .storage-bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(to right, var(--color-gold-600), var(--color-gold-400));
+  }
   .stat {
     display: block;
     padding: 1.1rem 1.2rem;

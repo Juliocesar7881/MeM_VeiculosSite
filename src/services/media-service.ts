@@ -7,6 +7,7 @@ import type { VehicleRepository } from '@/repositories/vehicle-repository';
 import type { AdminActor, VehicleImage } from '@/types/domain';
 import { ImageValidationError, inspectImage, type InspectedImage } from '@/utils/image-inspect';
 import type { AuditService } from './audit-service';
+import type { StorageBudget } from './storage-budget';
 
 export interface ImagePair {
   large: Uint8Array;
@@ -97,6 +98,7 @@ export function validateImagePair(
 
 export interface MediaServiceDeps {
   storage: ObjectStorage;
+  budget: StorageBudget;
   vehicles: VehicleRepository;
   images: VehicleImageRepository;
   audit: AuditService;
@@ -140,6 +142,9 @@ export class MediaService {
 
     const medium = pair.medium ? validateMediumImage(pair.medium, validated.large) : null;
     const og = pair.og ? validateOgImage(pair.og) : null;
+    // Todas as versões gravadas: é esse total que conta no teto do espaço de fotos.
+    const totalBytes = validated.large.size + validated.thumb.size + (medium?.size ?? 0) + (og?.size ?? 0);
+    await this.deps.budget.ensureRoom(totalBytes);
 
     const imageId = this.idGen();
     const largeKey = vehicleImageKey(vehicleId, imageId, 'large', validated.large.extension);
@@ -182,7 +187,7 @@ export class MediaService {
         thumbWidth: validated.thumb.width,
         thumbHeight: validated.thumb.height,
         contentType: validated.large.contentType,
-        sizeBytes: validated.large.size + validated.thumb.size + (medium?.size ?? 0),
+        sizeBytes: totalBytes,
         position: await this.deps.images.nextPosition(vehicleId),
         createdAt: new Date().toISOString(),
       };

@@ -58,3 +58,12 @@ export const IMAGE_LIMITS = {
   vehicleRequestMaxBytes: 2_500_000,
   maxDimension: 4096,
 } as const;
+
+/**
+ * Teto do espaço total de fotos, por armazenamento (bytes). Fica abaixo do gratuito da Cloudflare:
+ * R2 = 10 GB grátis (acima disso seria cobrado no cartão); KV = 1 GB grátis. Outros: sem teto.
+ */
+export const STORAGE_CAP_BYTES: Record<string, number> = {
+  r2: 9_000_000_000,
+  kv: 900_000_000,
+};

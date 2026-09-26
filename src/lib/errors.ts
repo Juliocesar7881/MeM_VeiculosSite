@@ -43,8 +43,19 @@ export class RateLimitError extends AppError {
 export class StorageQuotaError extends AppError {
   constructor(
     message = 'Limite diário de envio de fotos do plano gratuito atingido. Tente novamente amanhã (a cota renova às 21h, horário de Brasília).',
+    code = 'storage_quota',
   ) {
-    super(message, 507, 'storage_quota');
+    super(message, 507, code);
+  }
+}
+
+/** Espaço total de fotos no teto (ver services/storage-budget.ts): é preciso excluir fotos antigas. */
+export class StorageFullError extends StorageQuotaError {
+  constructor() {
+    super(
+      'O espaço de fotos do site está cheio. Exclua veículos vendidos antigos (Ações → Excluir) para liberar espaço.',
+      'storage_full',
+    );
   }
 }
 

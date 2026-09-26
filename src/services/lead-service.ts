@@ -1,7 +1,7 @@
 import type { LeadStatus } from '@/config/catalog';
 import { IMAGE_LIMITS, SITE_CONSTANTS } from '@/config/site';
 import type { Database, SqlStatement } from '@/lib/db/types';
-import { ConflictError, NotFoundError, StorageQuotaError, ValidationError } from '@/lib/errors';
+import { ConflictError, NotFoundError, StorageFullError, StorageQuotaError, ValidationError } from '@/lib/errors';
 import { leadImageKey, vehicleImageKey } from '@/lib/storage/keys';
 import type { ObjectStorage } from '@/lib/storage/types';
 import type { LeadListFilters, LeadRepository } from '@/repositories/lead-repository';
@@ -13,6 +13,7 @@ import { buildVehicleSlug } from '@/utils/slug';
 import type { AuditService } from './audit-service';
 import { validateImagePair, type ImagePair } from './media-service';
 import { buildSearchText } from './vehicle-service';
+import type { StorageBudget } from './storage-budget';
 
 export interface LeadNotifier {
   notifyNewLead(lead: LeadDetail): Promise<void>;
@@ -25,6 +26,7 @@ export interface LeadServiceDeps {
   vehicleImages: VehicleImageRepository;
   storage: ObjectStorage;
   audit: AuditService;
+  budget: StorageBudget;
   notifier?: LeadNotifier | null;
   now?: () => Date;
   idGen?: () => string;
@@ -63,6 +65,9 @@ export class LeadService {
     let adminNotes: string | null = null;
 
     try {
+      await this.deps.budget.ensureRoom(
+        photos.reduce((total, p) => total + p.large.byteLength + p.thumb.byteLength, 0),
+      );
       for (const [index, pair] of photos.entries()) {
         const info = validated[index];
         if (!info) continue;
@@ -94,7 +99,11 @@ export class LeadService {
       if (!(error instanceof StorageQuotaError)) throw error;
       uploadedKeys.length = 0;
       images.length = 0;
-      adminNotes = `O cliente enviou ${photos.length} foto(s), mas o limite diário de armazenamento de fotos foi atingido. Peça as fotos pelo WhatsApp.`;
+      const reason =
+        error instanceof StorageFullError
+          ? 'o espaço de fotos do site está cheio'
+          : 'o limite diário de armazenamento de fotos foi atingido';
+      adminNotes = `O cliente enviou ${photos.length} foto(s), mas ${reason}. Peça as fotos pelo WhatsApp.`;
     }
 
     try {
@@ -257,6 +266,8 @@ export class LeadService {
       vehicle.slug = buildVehicleSlug(vehicle, vehicleId, 12);
     }
 
+    // As fotos da proposta são copiadas para o veículo: contam de novo no espaço de fotos.
+    await this.deps.budget.ensureRoom(lead.images.reduce((total, image) => total + image.sizeBytes, 0));
     const copiedKeys: string[] = [];
     const images: VehicleImage[] = [];
     try {

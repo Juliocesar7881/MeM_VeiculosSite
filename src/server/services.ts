@@ -12,6 +12,8 @@ import { LeadService, type LeadNotifier } from '@/services/lead-service';
 import { MediaService } from '@/services/media-service';
 import { RateLimiter } from '@/services/rate-limiter';
 import { SettingsService } from '@/services/settings-service';
+import { StorageBudget } from '@/services/storage-budget';
+import { STORAGE_CAP_BYTES } from '@/config/site';
 import { StatsService } from '@/services/stats-service';
 import { VehicleService } from '@/services/vehicle-service';
 
@@ -29,6 +31,8 @@ export interface Services {
   leads: LeadService;
   rateLimiter: RateLimiter;
   stats: StatsService;
+  /** Espaço de fotos usado e teto (painel). */
+  storageBudget: StorageBudget;
 }
 
 export function buildServices(options: {
@@ -36,12 +40,18 @@ export function buildServices(options: {
   storage: ObjectStorage;
   ipHashSalt: string;
   notifier?: LeadNotifier | null;
+  /** Teto do espaço de fotos; por padrão, o do armazenamento em uso (STORAGE_CAP_BYTES). */
+  storageCapBytes?: number | null;
 }): Services {
   const { db, storage } = options;
   const vehicleRepo = new VehicleRepository(db);
   const imageRepo = new VehicleImageRepository(db);
   const leadRepo = new LeadRepository(db);
   const audit = new AuditService(new AuditRepository(db));
+  const budget = new StorageBudget(
+    db,
+    options.storageCapBytes !== undefined ? options.storageCapBytes : (STORAGE_CAP_BYTES[storage.driver] ?? null),
+  );
 
   return {
     db,
@@ -49,7 +59,7 @@ export function buildServices(options: {
     audit,
     settings: new SettingsService(new SettingsRepository(db), audit),
     vehicles: new VehicleService({ vehicles: vehicleRepo, images: imageRepo, storage, audit }),
-    media: new MediaService({ storage, vehicles: vehicleRepo, images: imageRepo, audit }),
+    media: new MediaService({ storage, vehicles: vehicleRepo, images: imageRepo, audit, budget }),
     leads: new LeadService({
       db,
       leads: leadRepo,
@@ -57,9 +67,11 @@ export function buildServices(options: {
       vehicleImages: imageRepo,
       storage,
       audit,
+      budget,
       notifier: options.notifier ?? null,
     }),
     rateLimiter: new RateLimiter(new RateLimitRepository(db), options.ipHashSalt),
     stats: new StatsService(new StatsRepository(db)),
+    storageBudget: budget,
   };
 }

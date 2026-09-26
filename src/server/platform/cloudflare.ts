@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { createD1Database } from '@/lib/db/d1';
+import { FallbackStorage } from '@/lib/storage/fallback';
 import { KvStorage } from '@/lib/storage/kv';
 import { R2Storage } from '@/lib/storage/r2';
 import { S3Storage } from '@/lib/storage/s3';
@@ -17,7 +18,10 @@ export const createPlatform: CreatePlatform = async (config) => {
   switch (driver) {
     case 'r2':
       if (!env.MEDIA) throw new Error('Binding R2 "MEDIA" não configurado no wrangler.jsonc.');
-      storage = new R2Storage(env.MEDIA);
+      // Migração KV -> R2: enquanto o KV continuar configurado, o que não estiver no R2 é lido de lá.
+      storage = env.MEDIA_KV
+        ? new FallbackStorage(new R2Storage(env.MEDIA), new KvStorage(env.MEDIA_KV))
+        : new R2Storage(env.MEDIA);
       break;
     case 'kv':
       if (!env.MEDIA_KV) throw new Error('Binding KV "MEDIA_KV" não configurado no wrangler.jsonc.');
