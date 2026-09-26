@@ -282,9 +282,9 @@ endereço completo, horário de funcionamento. Também ficam para depois: domín
 história/tempo de mercado, avaliações e parceiros financeiros. Lista completa em
 [docs/RELATORIO_ENTREGA.md](docs/RELATORIO_ENTREGA.md).
 
-**Logo:** o arquivo original não estava na pasta do projeto; a versão vetorial (fundo transparente) foi recriada a
-partir da logo do perfil oficial do Instagram, preservando símbolo, cores e tipografia (referências em `docs/brand/`).
-Se houver o arquivo original em alta resolução, coloque-o em `docs/brand/` para conferência e ajuste fino
-(`scripts/build-logo.ts` → `npm run brand:logo`).
+**Logo:** o site usa a logo oficial enviada pela loja (`docs/brand/logo-oficial.jpg`). O fundo preto vira
+transparência e são geradas as versões do site e a imagem padrão de compartilhamento
+(`scripts/build-logo-oficial.ts`). Os ícones e os traços decorativos continuam vetoriais (`scripts/build-logo.ts`).
+Para trocar a logo: substitua o arquivo e rode `npm run brand:logo`.
 
 **Fotos reais:** o hero e os cards usam automaticamente as fotos reais dos veículos cadastrados como destaque.

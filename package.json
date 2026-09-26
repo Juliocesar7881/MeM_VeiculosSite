@@ -34,7 +34,7 @@
     "db:backup": "tsx scripts/backup-db.ts",
     "db:restore": "tsx scripts/restore-db.ts",
     "admin:hash-password": "tsx scripts/hash-password.ts",
-    "brand:logo": "tsx scripts/build-logo.ts",
+    "brand:logo": "tsx scripts/build-logo.ts && tsx scripts/build-logo-oficial.ts",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {

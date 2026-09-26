@@ -3,12 +3,14 @@
  * a partir da referência em docs/brand/. O texto é convertido em curvas (não depende de
  * fonte instalada) e os traços do veículo são redesenhados fielmente à logo original.
  *
- * Saídas:
- *  - src/components/brand/logo-data.ts  (paths usados inline no site)
- *  - public/brand/*.svg / *.png          (logo transparente, versão para fundo claro)
- *  - public/favicon.svg, ícones PWA, apple-touch-icon e og-default.jpg
+ * A logo exibida no site agora é a OFICIAL enviada pela loja (scripts/build-logo-oficial.ts). Este
+ * script gera só o que precisa ser vetorial: os traços decorativos e os ícones quadrados.
  *
- * Uso: npm run brand:logo
+ * Saídas:
+ *  - src/components/brand/logo-data.ts  (traços usados no fundo "Fotos em breve" e na chamada "Anuncie")
+ *  - public/favicon.svg, ícones PWA e apple-touch-icon
+ *
+ * Uso: npm run brand:logo (roda os dois scripts)
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -174,20 +176,8 @@ async function main() {
   const font = await loadFont('roboto-slab-latin-900-normal.woff');
   const textPath = buildTextPath(font);
 
-  const outBrand = path.join(ROOT, 'public/brand');
   const outComponents = path.join(ROOT, 'src/components/brand');
-  await mkdir(outBrand, { recursive: true });
   await mkdir(outComponents, { recursive: true });
-
-  const svg = logoSvg(textPath);
-  const svgOnLight = logoSvg(textPath, { textColor: '#121212' });
-  await writeFile(path.join(outBrand, 'mm-veiculos-logo.svg'), svg);
-  await writeFile(path.join(outBrand, 'mm-veiculos-logo-fundo-claro.svg'), svgOnLight);
-
-  await sharp(Buffer.from(svg), { density: 300 })
-    .resize({ width: 1600 })
-    .png()
-    .toFile(path.join(outBrand, 'mm-veiculos-logo.png'));
 
   const data = `// Arquivo gerado por scripts/build-logo.ts — não editar manualmente.
 export const LOGO_VIEWBOX = '${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.width} ${VIEWBOX.height}';
@@ -208,20 +198,6 @@ export const LOGO_TEXT_PATH = ${JSON.stringify(textPath)};
   await sharp(Buffer.from(icon)).resize(192, 192).png().toFile(path.join(ROOT, 'public/icon-192.png'));
   await sharp(Buffer.from(icon)).resize(512, 512).png().toFile(path.join(ROOT, 'public/icon-512.png'));
   await sharp(Buffer.from(iconSquare)).resize(512, 512).png().toFile(path.join(ROOT, 'public/icon-maskable-512.png'));
-
-  // Open Graph padrão 1200x630
-  const logoPng = await sharp(Buffer.from(svg), { density: 300 }).resize({ width: 820 }).png().toBuffer();
-  const ogBg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-<defs>
-<radialGradient id="g" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1d21"/><stop offset="1" stop-color="${BLACK}"/></radialGradient>
-</defs>
-<rect width="1200" height="630" fill="url(#g)"/>
-<rect x="0" y="622" width="1200" height="8" fill="${GOLD}"/>
-</svg>`;
-  await sharp(Buffer.from(ogBg))
-    .composite([{ input: logoPng, gravity: 'center' }])
-    .jpeg({ quality: 88, mozjpeg: true })
-    .toFile(path.join(ROOT, 'public/og-default.jpg'));
 
   // Pré-visualização para conferência com a referência
   const previewDir = path.join(ROOT, 'docs/brand');

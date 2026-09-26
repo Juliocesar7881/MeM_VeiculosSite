@@ -125,6 +125,36 @@ export async function makeImagePair(file: File, options: PairOptions) {
   }
 }
 
+/** Logo oficial no canto inferior direito; se a imagem não carregar, desenha a versão vetorial. */
+async function drawLogo(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  const logoWidth = 320;
+  try {
+    const { LOGO_OFICIAL } = await import('@/components/brand/logo-oficial');
+    const logo = new Image();
+    logo.src = LOGO_OFICIAL.src;
+    await logo.decode();
+    const logoHeight = logoWidth / LOGO_OFICIAL.aspect;
+    ctx.drawImage(logo, W - logoWidth - 40, H - logoHeight - 34, logoWidth, logoHeight);
+    return;
+  } catch {
+    // segue para a versão vetorial
+  }
+  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } =
+    await import('@/components/brand/logo-data');
+  const [vx = 0, vy = 0, vw = 1, vh = 1] = LOGO_VIEWBOX.split(' ').map(Number);
+  const s = logoWidth / vw;
+  ctx.save();
+  ctx.translate(W - logoWidth - 40, H - vh * s - 34);
+  ctx.scale(s, s);
+  ctx.translate(-vx, -vy);
+  ctx.fillStyle = '#f2c12e';
+  for (const d of LOGO_GOLD_PATHS) ctx.fill(new Path2D(d));
+  ctx.fill(new Path2D(LOGO_TEXT_PATH));
+  ctx.fillStyle = '#f4f4f4';
+  ctx.fill(new Path2D(LOGO_SILVER_PATH));
+  ctx.restore();
+}
+
 /**
  * Imagem de compartilhamento (WhatsApp/Facebook): JPEG 1200x630 com a foto recortada
  * ao centro, degradê inferior, faixa dourada e a logo M&M — gerada no navegador para
@@ -153,21 +183,7 @@ async function renderOg(source: ImageBitmap | HTMLImageElement): Promise<Blob> {
   ctx.fillStyle = '#f2c12e';
   ctx.fillRect(0, H - 8, W, 8);
 
-  const { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_TEXT_PATH, LOGO_VIEWBOX } =
-    await import('@/components/brand/logo-data');
-  const [vx = 0, vy = 0, vw = 1, vh = 1] = LOGO_VIEWBOX.split(' ').map(Number);
-  const logoWidth = 300;
-  const s = logoWidth / vw;
-  ctx.save();
-  ctx.translate(W - logoWidth - 40, H - vh * s - 34);
-  ctx.scale(s, s);
-  ctx.translate(-vx, -vy);
-  ctx.fillStyle = '#f2c12e';
-  for (const d of LOGO_GOLD_PATHS) ctx.fill(new Path2D(d));
-  ctx.fill(new Path2D(LOGO_TEXT_PATH));
-  ctx.fillStyle = '#f4f4f4';
-  ctx.fill(new Path2D(LOGO_SILVER_PATH));
-  ctx.restore();
+  await drawLogo(ctx, W, H);
 
   for (const quality of [0.84, 0.76, 0.68]) {
     const blob = await toBlob(canvas, 'image/jpeg', quality);

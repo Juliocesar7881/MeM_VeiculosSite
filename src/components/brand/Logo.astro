@@ -1,5 +1,5 @@
 ---
-import { LOGO_ASPECT } from './logo-data';
+import { LOGO_OFICIAL } from './logo-oficial';
 
 interface Props {
   /** Altura em px; a largura acompanha a proporção da logo. */
@@ -9,11 +9,15 @@ interface Props {
 }
 
 const { height = 40, class: className, priority = false } = Astro.props;
-const width = Math.round(height * LOGO_ASPECT);
+const width = Math.round(height * LOGO_OFICIAL.aspect);
+// Logo oficial da loja (fundo transparente); o navegador escolhe a versão pelo tamanho da tela.
+const srcset = `${LOGO_OFICIAL.srcSmall} ${LOGO_OFICIAL.smallWidth}w, ${LOGO_OFICIAL.src} ${LOGO_OFICIAL.width}w`;
 ---
 
 <img
-  src="/brand/mm-veiculos-logo.svg"
+  src={LOGO_OFICIAL.src}
+  srcset={srcset}
+  sizes={`${width}px`}
   alt="M&M Veículos"
   width={width}
   height={height}

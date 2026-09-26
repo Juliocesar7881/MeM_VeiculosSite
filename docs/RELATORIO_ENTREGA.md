@@ -113,7 +113,7 @@ Nada disso foi inventado; o site simplesmente não mostra o que não foi informa
 | **Endereço** completo e **horário de funcionamento** (se quiserem exibir)                                                        | `src/config/site.ts` (técnico)       |
 | Confirmar contatos já cadastrados: WhatsApp +55 48 9641-0338, Instagram @mmveiculos.sc, Facebook, e-mail mmveiculos.sc@gmail.com | `src/config/site.ts` (técnico)       |
 | Texto sobre repasses (condições)                                                                                                 | `src/config/site.ts` (técnico)       |
-| **Logo original** em alta resolução (a atual foi redesenhada em vetor a partir do Instagram)                                     | `docs/brand/` → `npm run brand:logo` |
+| ✅ **Logo oficial** recebida e aplicada (25/09/2026); se houver versão em resolução maior, trocar o arquivo                      | `docs/brand/` → `npm run brand:logo` |
 | CNPJ, história/tempo de mercado, parceiros de financiamento (só se quiserem exibir)                                              | Pequena alteração nos textos         |
 | **Aprovação** do layout e dos textos (validação na URL temporária)                                                               | —                                    |
 
