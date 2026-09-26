@@ -122,16 +122,32 @@ Nada disso foi inventado; o site simplesmente não mostra o que não foi informa
 - Perfil da empresa no Google (Google Business Profile) apontando para o site.
 - Cloudflare Web Analytics (visitas gerais do site, grátis e sem cookies) — exige liberar o script na CSP.
 
-## 5. Limites do plano gratuito (o que observar)
+## 5. Limites do plano gratuito e capacidade
 
-| Recurso                       | Limite diário                              | Na prática                                                            |
-| ----------------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
-| Requisições ao site (Workers) | 100 mil/dia                                | Milhares de visitas por dia; arquivos estáticos não contam            |
-| Banco (D1)                    | 5 mi leituras e 100 mil escritas/dia       | Muito acima do necessário (cada visita a um veículo grava 1 contador) |
-| Fotos no KV                   | 100 mil leituras e **1 mil gravações/dia** | ~250 fotos de veículo por dia — resolvido ativando o R2 (item B3)     |
+Medido em 25/09/2026 no banco da Cloudflare (D1 local), com estoques simulados de 50 a 2.000 veículos com 10 fotos
+cada. Linhas lidas no banco por página (depois da otimização dos cards, que reduziu a leitura em ~2,4×):
 
-Se um limite estourar, o painel mostra uma mensagem clara (e o formulário público salva a proposta mesmo sem as
-fotos). Crescendo além disso, o plano pago da Cloudflare custa US$ 5/mês.
+| Veículos no estoque | Home   | Lista de veículos | Lista filtrada (ex.: Motos) | Página do veículo |
+| ------------------- | ------ | ----------------- | --------------------------- | ----------------- |
+| 50                  | 989    | 786               | 348                         | 152               |
+| 150                 | 2.171  | 1.686             | 920                         | 243               |
+| 300                 | 3.868  | 3.036             | 1.520                       | 383               |
+| 1.000               | 11.786 | 9.336             | 4.322                       | 434               |
+
+| Recurso (plano grátis)        | Limite                                        | Na prática                                                                                                               |
+| ----------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Fotos no KV                   | 1 GB e **1 mil gravações/dia**                | **~1.300 fotos ≈ 130 veículos com 10 fotos** (vendidos e arquivados ocupam; excluir libera); ~250 fotos enviadas por dia |
+| Fotos no R2 (ativar, item B3) | 10 GB e 1 mi gravações/mês                    | ~13 mil fotos ≈ 1.300 veículos                                                                                           |
+| Banco (D1) — espaço           | 500 MB por banco                              | Dezenas de milhares de veículos (não é o limite)                                                                         |
+| Banco (D1) — leituras         | 5 mi linhas/dia                               | Com 150 veículos, ~1.100 visitas completas/dia (Home + lista + 2 veículos); link direto de um veículo custa ~300 linhas  |
+| Requisições (Workers)         | 100 mil/dia (páginas, fotos, contadores)      | ~60 por visita completa ≈ 1.600 visitas/dia; arquivos estáticos (CSS, JS, logo) não contam                               |
+| Pessoas ao mesmo tempo        | sem limite fixo (a Cloudflare escala sozinha) | Centenas de pessoas simultâneas sem ficar lento; o que limita é o total do dia                                           |
+
+Com o domínio próprio, as páginas públicas ficam 60 s no cache da Cloudflare (a Home e a lista não consultam o banco
+a cada visita), o que aumenta a folga. Se um limite diário estourar, o site volta às 21h (horário de Brasília), quando
+a cota renova; o painel mostra uma mensagem clara e o formulário público salva a proposta mesmo sem as fotos.
+Crescendo além disso (centenas de veículos ou milhares de visitas por dia), o plano pago da Cloudflare custa
+**US$ 5/mês** (10 mi requisições/mês e 25 bilhões de linhas lidas/mês).
 
 ## 6. Acessos e segredos
 

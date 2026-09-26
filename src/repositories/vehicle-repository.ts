@@ -6,8 +6,8 @@ import { reaisToCents } from '@/utils/money';
 import { likeContains, searchTerms } from '@/utils/text';
 import { mapVehicle, mapVehicleCard, type VehicleCardRow, type VehicleRow } from './mappers';
 
-const CARD_SELECT = `
-  SELECT v.*,
+const CARD_COLUMNS = `
+  v.*,
     ci.large_key AS cover_large_key,
     ci.thumb_key AS cover_thumb_key,
     ci.width AS cover_width,
@@ -16,11 +16,15 @@ const CARD_SELECT = `
     ci.thumb_height AS cover_thumb_height,
     ci.medium_key AS cover_medium_key,
     ci.medium_width AS cover_medium_width,
-    (SELECT COUNT(*) FROM vehicle_images x WHERE x.vehicle_id = v.id) AS image_count
-  FROM vehicles v
+    (SELECT COUNT(*) FROM vehicle_images x WHERE x.vehicle_id = v.id) AS image_count`;
+
+/** Capa = primeira foto na ordem definida no painel. */
+const CARD_COVER_JOIN = `
   LEFT JOIN vehicle_images ci ON ci.id = (
     SELECT id FROM vehicle_images WHERE vehicle_id = v.id ORDER BY position ASC, created_at ASC LIMIT 1
   )`;
+
+const CARD_SELECT = `SELECT ${CARD_COLUMNS} FROM vehicles v ${CARD_COVER_JOIN}`;
 
 interface Where {
   clauses: string[];
@@ -110,6 +114,26 @@ function orderBy(sort: InventoryFilters['sort']): string {
     default:
       return `${soldLast}, COALESCE(v.published_at, v.created_at) DESC, v.id`;
   }
+}
+
+/**
+ * Cards de uma página: ordena e corta só pela tabela de veículos (1 linha lida por veículo) e depois
+ * busca capa e total de fotos apenas das linhas exibidas. Calcular capa e contagem para o estoque
+ * inteiro antes de ordenar custava ~12 linhas lidas por veículo no D1 (cota diária do plano grátis).
+ */
+function cardPage(
+  where: Where,
+  order: { sql: string; args?: SqlValue[] },
+  limit: number,
+  offset = 0,
+): { sql: string; args: SqlValue[] } {
+  const orderArgs = order.args ?? [];
+  return {
+    sql: `WITH page AS (SELECT v.id FROM vehicles v ${whereSql(where)} ORDER BY ${order.sql} LIMIT ? OFFSET ?)
+      SELECT ${CARD_COLUMNS} FROM page p JOIN vehicles v ON v.id = p.id ${CARD_COVER_JOIN}
+      ORDER BY ${order.sql}`,
+    args: [...where.args, ...orderArgs, limit, offset, ...orderArgs],
+  };
 }
 
 function whereSql(where: Where): string {
@@ -351,14 +375,11 @@ export class VehicleRepository {
     const ws = whereSql(where);
 
     const offset = (Math.max(1, filters.page) - 1) * options.pageSize;
+    const page = cardPage(where, { sql: orderBy(filters.sort) }, options.pageSize, offset);
     // Em paralelo: no Cloudflare cada consulta ao D1 é uma ida e volta pela rede.
     const [countRow, rows] = await Promise.all([
       this.db.first<{ total: number }>(`SELECT COUNT(*) AS total FROM vehicles v ${ws}`, where.args),
-      this.db.all<VehicleCardRow>(`${CARD_SELECT} ${ws} ORDER BY ${orderBy(filters.sort)} LIMIT ? OFFSET ?`, [
-        ...where.args,
-        options.pageSize,
-        offset,
-      ]),
+      this.db.all<VehicleCardRow>(page.sql, page.args),
     ]);
     return { items: rows.map(mapVehicleCard), total: Number(countRow?.total ?? 0) };
   }
@@ -381,12 +402,12 @@ export class VehicleRepository {
       where.clauses.push(`v.id NOT IN (${options.excludeIds.map(() => '?').join(', ')})`);
       where.args.push(...options.excludeIds);
     }
-    const rows = await this.db.all<VehicleCardRow>(
-      `${CARD_SELECT} ${whereSql(where)}
-       ORDER BY CASE WHEN v.status = 'reserved' THEN 1 ELSE 0 END, COALESCE(v.published_at, v.created_at) DESC
-       LIMIT ?`,
-      [...where.args, options.limit],
+    const page = cardPage(
+      where,
+      { sql: "CASE WHEN v.status = 'reserved' THEN 1 ELSE 0 END, COALESCE(v.published_at, v.created_at) DESC, v.id" },
+      options.limit,
     );
+    const rows = await this.db.all<VehicleCardRow>(page.sql, page.args);
     return rows.map(mapVehicleCard);
   }
 
@@ -396,13 +417,15 @@ export class VehicleRepository {
     publicVisibility(where, false);
     where.clauses.push('v.id <> ?', 'v.category = ?');
     where.args.push(vehicle.id, vehicle.category);
-    const rows = await this.db.all<VehicleCardRow>(
-      `${CARD_SELECT} ${whereSql(where)}
-       ORDER BY CASE WHEN v.brand = ? COLLATE NOCASE THEN 0 ELSE 1 END,
-                ABS(COALESCE(v.price, 0) - ?) ASC
-       LIMIT ?`,
-      [...where.args, vehicle.brand, vehicle.price ?? 0, limit],
+    const page = cardPage(
+      where,
+      {
+        sql: 'CASE WHEN v.brand = ? COLLATE NOCASE THEN 0 ELSE 1 END, ABS(COALESCE(v.price, 0) - ?) ASC, v.id',
+        args: [vehicle.brand, vehicle.price ?? 0],
+      },
+      limit,
     );
+    const rows = await this.db.all<VehicleCardRow>(page.sql, page.args);
     return rows.map(mapVehicleCard);
   }
 
@@ -571,10 +594,13 @@ export class VehicleRepository {
       `SELECT COUNT(*) AS total FROM vehicles v ${ws}`,
       where.args,
     );
-    const rows = await this.db.all<VehicleCardRow>(
-      `${CARD_SELECT} ${ws} ORDER BY v.updated_at DESC, v.id LIMIT ? OFFSET ?`,
-      [...where.args, filters.pageSize, (Math.max(1, filters.page) - 1) * filters.pageSize],
+    const page = cardPage(
+      where,
+      { sql: 'v.updated_at DESC, v.id' },
+      filters.pageSize,
+      (Math.max(1, filters.page) - 1) * filters.pageSize,
     );
+    const rows = await this.db.all<VehicleCardRow>(page.sql, page.args);
     return { items: rows.map(mapVehicleCard), total: Number(countRow?.total ?? 0) };
   }
 
