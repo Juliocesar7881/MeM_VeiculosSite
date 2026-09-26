@@ -174,8 +174,8 @@ Como foi feita a migração do KV (sem nenhuma foto quebrar):
    e lê do KV o que ainda não foi copiado (`src/lib/storage/fallback.ts`).
 4. Cópia conferida byte a byte (e contra o tamanho gravado no KV), com o site no ar: `npm run cf:migrate-media`.
    Para só conferir: `npm run cf:migrate-media -- --check`.
-5. Depois de alguns dias sem problemas: remover `kv_namespaces` do `wrangler.jsonc` e publicar; o namespace KV
-   `mm-veiculos-media` pode então ser apagado no painel.
+5. Conferência final (668/668 idênticos) e `kv_namespaces` removido do `wrangler.jsonc` no mesmo dia: o site usa só o
+   R2. O namespace KV `mm-veiculos-media` (cópia antiga das fotos) pode ser apagado no painel da Cloudflare.
 
 O bucket **não** deve ser público: as fotos de propostas têm dados de clientes. O site entrega as fotos de veículos
 por `/media/...` (cache de 1 ano) e as de propostas só para o painel.

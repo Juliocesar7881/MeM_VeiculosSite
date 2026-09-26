@@ -154,5 +154,5 @@ Crescendo além disso (centenas de veículos ou milhares de visitas por dia), o 
 - Segredos da produção ficam nos _secrets_ do Worker (`ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, `IP_HASH_SALT`,
   `TURNSTILE_SECRET_KEY`); a chave pública do Turnstile e demais configurações ficam em `wrangler.jsonc`.
 - Recursos na Cloudflare (conta lupinho7881@gmail.com): Worker `mm-veiculos`, banco D1 `mm-veiculos`, R2
-  `mm-veiculos-media` (binding `MEDIA`, privado), KV `mm-veiculos-media` (binding `MEDIA_KV`, só reserva durante a
-  migração), widget Turnstile “M&M Veiculos”.
+  `mm-veiculos-media` (binding `MEDIA`, privado), widget Turnstile “M&M Veiculos”. O KV `mm-veiculos-media` (cópia
+  antiga das fotos, não usada desde 26/09/2026) pode ser apagado no painel.

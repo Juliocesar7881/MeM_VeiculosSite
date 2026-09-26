@@ -22,11 +22,10 @@
     },
   ],
 
-  // Fotos no R2 (bucket privado; 10 GB grátis, teto de 9 GB no painel). O KV antigo continua ligado
-  // só como reserva de leitura durante a migração (lib/storage/fallback.ts): o que ainda não estiver no
-  // R2 é lido de lá. Depois de conferir (npm run cf:migrate-media -- --check), remova "kv_namespaces".
+  // Fotos no R2 (bucket privado; 10 GB grátis, teto de 9 GB no painel). Migradas do KV em 26/09/2026 e
+  // conferidas byte a byte (668/668). Para uma nova migração, religue o armazenamento antigo como
+  // "kv_namespaces" (MEDIA_KV): enquanto ele existir, o site lê de lá o que faltar no R2 (lib/storage/fallback.ts).
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mm-veiculos-media" }],
-  "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "07d500e6534c4d558dca80ef113621cb" }],
 
   // Variáveis públicas (não secretas). Segredos: `npx wrangler secret put <NOME>`
   // (ADMIN_PASSWORD_HASH, SESSION_SECRET, IP_HASH_SALT, TURNSTILE_SECRET_KEY)
