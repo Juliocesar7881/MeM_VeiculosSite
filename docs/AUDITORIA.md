@@ -209,6 +209,20 @@ redirecionamentos, imagem do WhatsApp e navegador real em 360, 768 e 1440 px). C
 37. **Palavra longa sem espaço** (modelo ou versão digitados juntos) alargava a página do veículo, a Home e a ficha
     técnica no celular; agora quebra a linha.
 
+Fase 8 (fotos no R2, 26/09/2026):
+
+Migração KV -> R2 com o site no ar (leitura de reserva no KV durante a cópia), 668/668 arquivos conferidos byte a
+byte e contra o tamanho gravado no KV; depois o KV saiu da configuração. Teto de 9 GB no painel (o R2 cobra acima de
+10 GB). Verificado: 180 testes, 35 E2E, 103 ataques no runtime da Cloudflare com R2 (mesmos 3 itens de ambiente
+local das fases anteriores), ciclo de vida das fotos no R2 (rascunho privado e sem cache, público ao publicar,
+privado ao tirar do site, apagado ao excluir, espaço liberado) e 64 verificações na produção (501/501 fotos servidas
+pelo R2). Correção:
+
+38. **Foto logo após publicar:** o status "público" do veículo ficava guardado alguns segundos por instância; quem
+    abrisse o anúncio logo após a publicação podia ver a foto quebrada, e o 404 ficava 60 s no navegador. Agora
+    publicar/tirar do site/editar/excluir vale na hora e o 404 de foto não pública não é guardado (teste de
+    integração).
+
 **Recomendações para os responsáveis (fora do código)**
 
 - Revogar qualquer token da Cloudflare que tenha sido compartilhado por chat/e-mail e criar outro só quando
