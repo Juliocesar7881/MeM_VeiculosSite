@@ -25,13 +25,19 @@ const NOISE = 16;
 const SOLID = 170;
 const SCALE = 2;
 
-async function transparentLogo(): Promise<{ png: Buffer; width: number; height: number }> {
+/** Linha (na imagem original) acima da qual começam só os traços do carro; as letras começam em ~290. */
+const TEXT_TOP = 285;
+
+interface Rgba {
+  data: Buffer;
+  width: number;
+  height: number;
+}
+
+/** Fundo preto -> transparência, recompondo a cor das bordas. */
+async function unscreen(): Promise<Rgba> {
   const { data, info } = await sharp(SOURCE).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const out = Buffer.alloc(info.width * info.height * 4);
-  let minX = info.width;
-  let minY = info.height;
-  let maxX = -1;
-  let maxY = -1;
   for (let y = 0; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
       const i = (y * info.width + x) * 3;
@@ -46,7 +52,73 @@ async function transparentLogo(): Promise<{ png: Buffer; width: number; height: 
       out[o + 1] = Math.min(255, Math.round(g / alpha));
       out[o + 2] = Math.min(255, Math.round(b / alpha));
       out[o + 3] = Math.round(alpha * 255);
-      if (alpha > 0.1) {
+    }
+  }
+  return { data: out, width: info.width, height: info.height };
+}
+
+/**
+ * Só o traço do carro (dourado + prata), sem o texto: mantém as peças conectadas que começam acima
+ * de TEXT_TOP, com uma margem de 2 px para levar junto as bordas suaves.
+ */
+function strokesOnly(img: Rgba): Rgba {
+  const { data, width, height } = img;
+  const solid = (p: number) => (data[p * 4 + 3] ?? 0) > 40;
+  const seen = new Uint8Array(width * height);
+  const keep = new Uint8Array(width * height);
+  for (let start = 0; start < width * height; start += 1) {
+    if (seen[start] || !solid(start)) continue;
+    const stack = [start];
+    const pixels: number[] = [];
+    seen[start] = 1;
+    let minY = height;
+    while (stack.length) {
+      const p = stack.pop() as number;
+      pixels.push(p);
+      const x = p % width;
+      const y = Math.floor(p / width);
+      minY = Math.min(minY, y);
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const np = ny * width + nx;
+          if (!seen[np] && solid(np)) {
+            seen[np] = 1;
+            stack.push(np);
+          }
+        }
+      }
+    }
+    if (minY < TEXT_TOP) for (const p of pixels) keep[p] = 1;
+  }
+  const out = Buffer.alloc(data.length);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      let near = false;
+      for (let dy = -2; dy <= 2 && !near; dy += 1) {
+        for (let dx = -2; dx <= 2 && !near; dx += 1) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height && keep[ny * width + nx]) near = true;
+        }
+      }
+      if (near) data.copy(out, (y * width + x) * 4, (y * width + x) * 4, (y * width + x) * 4 + 4);
+    }
+  }
+  return { data: out, width, height };
+}
+
+/** Recorta no conteúdo (com folga), amplia 2x e devolve o PNG transparente. */
+async function cropScaled(img: Rgba): Promise<{ png: Buffer; width: number; height: number }> {
+  let minX = img.width;
+  let minY = img.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < img.height; y += 1) {
+    for (let x = 0; x < img.width; x += 1) {
+      if ((img.data[(y * img.width + x) * 4 + 3] ?? 0) > 25) {
         minX = Math.min(minX, x);
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
@@ -54,6 +126,8 @@ async function transparentLogo(): Promise<{ png: Buffer; width: number; height: 
       }
     }
   }
+  const info = { width: img.width, height: img.height };
+  const out = img.data;
   const pad = 3;
   const left = Math.max(0, minX - pad);
   const top = Math.max(0, minY - pad);
@@ -69,7 +143,9 @@ async function transparentLogo(): Promise<{ png: Buffer; width: number; height: 
 }
 
 async function main() {
-  const logo = await transparentLogo();
+  const full = await unscreen();
+  const logo = await cropScaled(full);
+  const strokes = await cropScaled(strokesOnly(full));
   const outBrand = path.join(ROOT, 'public/brand');
   await sharp(logo.png)
     .png({ palette: true, quality: 95, compressionLevel: 9 })
@@ -80,6 +156,10 @@ async function main() {
     .resize(small)
     .webp({ quality: 88, alphaQuality: 90 })
     .toFile(path.join(outBrand, 'mm-veiculos-logo-sm.webp'));
+  // Só o traço do carro: fundo de "Fotos em breve" e arte da chamada "Quer vender seu veículo?".
+  await sharp(strokes.png)
+    .webp({ quality: 88, alphaQuality: 90 })
+    .toFile(path.join(outBrand, 'mm-veiculos-traco.webp'));
 
   const aspect = logo.width / logo.height;
   await writeFile(
@@ -93,6 +173,13 @@ export const LOGO_OFICIAL = {
   width: ${logo.width},
   height: ${logo.height},
   aspect: ${aspect.toFixed(4)},
+} as const;
+
+/** Só o traço do carro (sem o texto), da mesma logo oficial. */
+export const LOGO_TRACO = {
+  src: '/brand/mm-veiculos-traco.webp',
+  width: ${strokes.width},
+  height: ${strokes.height},
 } as const;
 `,
   );

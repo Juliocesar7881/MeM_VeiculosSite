@@ -1,5 +1,5 @@
 ---
-import { LOGO_GOLD_PATHS, LOGO_SILVER_PATH, LOGO_VIEWBOX } from '@/components/brand/logo-data';
+import { LOGO_TRACO } from '@/components/brand/logo-oficial';
 
 interface Props {
   class?: string;
@@ -10,14 +10,16 @@ const { class: className, label = 'Fotos em breve' } = Astro.props;
 ---
 
 <div class:list={['photo-placeholder', className]} role="img" aria-label={label}>
-  <svg viewBox={LOGO_VIEWBOX} class="w-[58%] max-w-[16rem]" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-    <g transform="translate(0 -20)">
-      {LOGO_GOLD_PATHS.map((d) => (
-        <path d={d} fill="currentColor" />
-      ))}
-      <path d={LOGO_SILVER_PATH} fill="currentColor" opacity="0.6" />
-    </g>
-  </svg>
+  <!-- Traço do carro da logo oficial, apagado. -->
+  <img
+    src={LOGO_TRACO.src}
+    width={LOGO_TRACO.width}
+    height={LOGO_TRACO.height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+    class="placeholder-art"
+  />
   <span>{label}</span>
 </div>
 
@@ -31,7 +33,12 @@ const { class: className, label = 'Fotos em breve' } = Astro.props;
     justify-content: center;
     gap: 0.4rem;
     background: radial-gradient(120% 90% at 50% 20%, #1c1f24 0%, #0d0f11 70%);
-    color: color-mix(in oklab, var(--color-gold-500) 38%, transparent);
+  }
+  .placeholder-art {
+    width: 58%;
+    max-width: 16rem;
+    height: auto;
+    opacity: 0.45;
   }
   .photo-placeholder span {
     font-size: 0.85rem;

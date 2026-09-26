@@ -8,3 +8,10 @@ export const LOGO_OFICIAL = {
   height: 186,
   aspect: 4.5269,
 } as const;
+
+/** Só o traço do carro (sem o texto), da mesma logo oficial. */
+export const LOGO_TRACO = {
+  src: '/brand/mm-veiculos-traco.webp',
+  width: 842,
+  height: 112,
+} as const;

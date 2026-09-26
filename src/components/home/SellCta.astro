@@ -1,5 +1,5 @@
 ---
-import { LOGO_GOLD_PATHS, LOGO_VIEWBOX } from '@/components/brand/logo-data';
+import { LOGO_TRACO } from '@/components/brand/logo-oficial';
 import Icon from '@/components/ui/Icon.astro';
 import type { SiteSettings } from '@/types/settings';
 
@@ -18,11 +18,15 @@ const steps = [
 
 <section class="container-site" aria-labelledby="venda-title">
   <div class="sell-cta relative overflow-hidden px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-20">
-    <svg viewBox={LOGO_VIEWBOX} class="sell-art" aria-hidden="true">
-      {LOGO_GOLD_PATHS.map((d) => (
-        <path d={d} fill="currentColor" />
-      ))}
-    </svg>
+    <img
+      src={LOGO_TRACO.src}
+      width={LOGO_TRACO.width}
+      height={LOGO_TRACO.height}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      class="sell-art"
+    />
     <div class="relative grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20">
       <div>
         <h2 id="venda-title" class="display text-[2.9rem] text-white sm:text-6xl xl:text-7xl">
@@ -72,10 +76,11 @@ const steps = [
   }
   .sell-art {
     position: absolute;
-    right: -8%;
-    bottom: -22%;
+    right: -6%;
+    bottom: 5%;
     width: 72%;
-    color: color-mix(in oklab, var(--color-gold-500) 7%, transparent);
+    height: auto;
+    opacity: 0.1;
     pointer-events: none;
   }
   /* Linha do tempo: números ligados por um fio dourado que se apaga no último passo. */
