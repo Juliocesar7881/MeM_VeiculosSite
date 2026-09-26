@@ -244,10 +244,11 @@ garantia de gratuidade permanente**; revise periodicamente.
 | Turnstile           | Gratuito                                                                                           | [turnstile/plans](https://developers.cloudflare.com/turnstile/plans/)                                                                           |
 | Access (Zero Trust) | Até 50 usuários                                                                                    | [plans/zero-trust-services](https://www.cloudflare.com/plans/zero-trust-services/)                                                              |
 
-**Estimativa de uso da M&M:** uma visita típica gera ~5–15 requisições ao Worker (HTML + fotos; CSS/JS não contam) →
-capacidade de milhares de visitas por dia. O ponto de atenção é o **KV: 1.000 gravações/dia ≈ 250 fotos de veículo
-por dia** (cada foto gera 4 arquivos). Para o cadastro inicial do estoque, ative o **R2** (passo 7 do
-[DEPLOY.md](docs/DEPLOY.md#7-ativar-o-r2-para-as-fotos-recomendado)).
+**Estimativa de uso da M&M:** uma visita completa (Home, lista e 2 veículos) gera ~60 requisições ao Worker (páginas,
+fotos e contadores; CSS/JS não contam) → ~1.500 visitas completas por dia; capacidade medida em
+[RELATORIO_ENTREGA.md](docs/RELATORIO_ENTREGA.md#5-limites-do-plano-gratuito-e-capacidade). As fotos ficam no **R2** desde 26/09/2026 (10 GB grátis; o painel tem teto
+de 9 GB para nunca gerar cobrança). Antes ficavam no KV (1.000 gravações/dia ≈ 250 fotos por dia) — ver passo 7 do
+[DEPLOY.md](docs/DEPLOY.md#7-fotos-no-r2-ativado-em-26092026)).
 
 **Custo obrigatório:** apenas o **domínio** (ex.: `.com.br` no Registro.br). Se um dia o tráfego passar dos limites
 gratuitos, o plano Workers Paid custa US$ 5/mês por conta.

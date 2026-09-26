@@ -28,7 +28,7 @@ públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git)
 4. [Senha do painel e secrets](#4-senha-do-painel-e-secrets)
 5. [Turnstile](#5-turnstile)
 6. [Domínio próprio](#6-domínio-próprio)
-7. [Ativar o R2 para as fotos (recomendado)](#7-ativar-o-r2-para-as-fotos-recomendado)
+7. [Fotos no R2 (ativado em 26/09/2026)](#7-fotos-no-r2-ativado-em-26092026)
 8. [Opcional: Cloudflare Access no painel](#8-opcional-cloudflare-access-no-painel)
 9. [Opcional: aviso de propostas por e-mail](#9-opcional-aviso-de-propostas-por-e-mail)
 10. [Limites do plano gratuito e monitoramento](#10-limites-do-plano-gratuito-e-monitoramento)
@@ -49,12 +49,12 @@ npx wrangler whoami
 
 ## 2. Recursos da conta (já criados)
 
-| Recurso   | Nome / binding        | Para quê                                                     |
-| --------- | --------------------- | ------------------------------------------------------------ |
-| Worker    | `mm-veiculos`         | O site e o painel (Astro SSR)                                |
-| D1        | `mm-veiculos` → `DB`  | Banco SQLite (veículos, propostas, configurações, histórico) |
-| KV        | `MEDIA_KV`            | Fotos (enquanto o R2 não é ativado)                          |
-| Turnstile | widget “M&M Veículos” | Anti-spam do formulário “Anuncie seu veículo”                |
+| Recurso   | Nome / binding                                                                    | Para quê                                                                                            |
+| --------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Worker    | `mm-veiculos`                                                                     | O site e o painel (Astro SSR)                                                                       |
+| D1        | 5 mi linhas lidas/dia, 100 mil escritas/dia, 500 MB por banco, Time Travel 7 dias | Com 150 veículos, Home ≈ 2.200 linhas e lista ≈ 1.700 por visita (medido; ver RELATORIO_ENTREGA §5) |
+| KV        | 100 mil leituras/dia, **1 mil gravações/dia**, 1 GB                               | Só reserva das fotos antigas durante a migração para o R2 (passo 7)                                 |
+| Turnstile | widget “M&M Veículos”                                                             | Anti-spam do formulário “Anuncie seu veículo”                                                       |
 
 Variáveis **públicas** ficam em `wrangler.jsonc` → `vars` (`STORAGE_DRIVER`, `AUTH_MODE`, `ALLOW_INDEXING`,
 `TURNSTILE_SITE_KEY` e, quando houver domínio, `PUBLIC_SITE_URL`).
@@ -159,36 +159,23 @@ Em 24/09/2026, **`mmveiculos.com.br` estava disponível** no Registro.br (e tamb
 Com domínio próprio, o **cache de borda** passa a funcionar: páginas públicas ficam 60 s no data center mais próximo
 do visitante (sem consultar o banco). Na URL `*.workers.dev` a Cloudflare ignora esse cache.
 
-## 7. Ativar o R2 para as fotos (recomendado)
+## 7. Fotos no R2 (ativado em 26/09/2026)
 
-O KV gratuito aceita **1.000 gravações por dia**. Cada foto de veículo gera 4 arquivos (grande, média, miniatura e
-compartilhamento), ou seja, **~250 fotos por dia**; cada foto de proposta gera 2. Para o cadastro inicial do estoque
-(dezenas de veículos com 15–30 fotos), ative o R2: 10 GB grátis, 1 milhão de gravações e 10 milhões de leituras por
-mês.
+As fotos ficam no **R2** (bucket privado `mm-veiculos-media`, binding `MEDIA`): 10 GB grátis, 1 milhão de gravações
+e 10 milhões de leituras por mês, saída grátis. O painel tem um **teto de 9 GB** (`STORAGE_CAP_BYTES` em
+`src/config/site.ts`): acima disso recusa fotos novas com mensagem clara, então o uso nunca passa do gratuito e o
+cartão cadastrado na Cloudflare nunca é cobrado. O Dashboard mostra o espaço usado.
 
-1. Painel da Cloudflare → **R2** → _Purchase R2 / Enable_ (o plano gratuito pode exigir um cartão cadastrado na conta;
-   só há cobrança acima dos limites gratuitos).
-2. Crie o bucket (privado):
+Como foi feita a migração do KV (sem nenhuma foto quebrar):
 
-   ```bash
-   npx wrangler r2 bucket create mm-veiculos-media
-   ```
-
-3. Copie as fotos que já estão no KV (se houver):
-
-   ```bash
-   npm run cf:backup
-   ```
-
-4. Em `wrangler.jsonc`: descomente `"r2_buckets"` e troque `"STORAGE_DRIVER": "kv"` por `"r2"`.
-5. Envie as fotos do backup para o R2 e publique:
-
-   ```bash
-   npm run cf:restore -- backups/cf-<data> --media-only
-   npm run cf:deploy
-   ```
-
-6. Abra alguns veículos no site e confira as fotos. Depois de alguns dias, o namespace KV pode ser removido.
+1. R2 ativado no painel da Cloudflare (pede cartão; sem cobrança dentro do grátis).
+2. Bucket privado criado: `npx wrangler r2 bucket create mm-veiculos-media --location enam`.
+3. `wrangler.jsonc`: `STORAGE_DRIVER=r2` + `r2_buckets`, **mantendo** `kv_namespaces`: com os dois, o site grava no R2
+   e lê do KV o que ainda não foi copiado (`src/lib/storage/fallback.ts`).
+4. Cópia conferida byte a byte (e contra o tamanho gravado no KV), com o site no ar: `npm run cf:migrate-media`.
+   Para só conferir: `npm run cf:migrate-media -- --check`.
+5. Depois de alguns dias sem problemas: remover `kv_namespaces` do `wrangler.jsonc` e publicar; o namespace KV
+   `mm-veiculos-media` pode então ser apagado no painel.
 
 O bucket **não** deve ser público: as fotos de propostas têm dados de clientes. O site entrega as fotos de veículos
 por `/media/...` (cache de 1 ano) e as de propostas só para o painel.
@@ -220,10 +207,10 @@ diariamente às 00:00 UTC (21:00 em Brasília).
 
 | Serviço   | Limite gratuito                                                                     | O que significa para a M&M                                                                                          |
 | --------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Workers   | 100 mil requisições/dia, 10 ms de CPU por requisição; arquivos estáticos ilimitados | HTML e fotos contam; estáticos (CSS/JS/logo) não. Uma visita típica usa ~5–15 requisições → milhares de visitas/dia |
+| Workers   | 100 mil requisições/dia, 10 ms de CPU por requisição; arquivos estáticos ilimitados | HTML, fotos e contadores contam; estáticos (CSS/JS/logo) não. Visita completa ≈ 60 requisições → ~1.500 visitas/dia |
 | D1        | 5 mi linhas lidas/dia, 100 mil escritas/dia, 500 MB por banco, Time Travel 7 dias   | Muito acima do necessário para um estoque de centenas de veículos                                                   |
 | KV        | 100 mil leituras/dia, **1 mil gravações/dia**, 1 GB                                 | Fotos: ~250 fotos de veículo por dia (ver passo 7)                                                                  |
-| R2        | 10 GB, 1 mi gravações e 10 mi leituras por mês, saída grátis                        | Folga para anos de fotos                                                                                            |
+| R2        | 10 GB, 1 mi gravações e 10 mi leituras por mês, saída grátis                        | Fotos (desde 26/09/2026): ~900 veículos com 12 fotos até o teto de 9 GB do painel, sem cobrança                     |
 | Turnstile | Gratuito                                                                            | —                                                                                                                   |
 | Access    | Até 50 usuários                                                                     | —                                                                                                                   |
 

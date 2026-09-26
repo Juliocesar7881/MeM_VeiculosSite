@@ -23,7 +23,7 @@ const mapsQuery = settings.address ? `${settings.address}, ${cityState}` : `${se
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
 
 // Cada palavra sobe de dentro de uma máscara, em sequência (a última leva o ponto dourado).
-const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
+const headline = ['O', 'veículo', 'certo', 'para', 'você', 'está', 'aqui'];
 ---
 
 <section class="hero relative isolate" aria-labelledby="hero-title">
@@ -162,7 +162,7 @@ const headline = ['Seu', 'próximo', 'veículo', 'começa', 'aqui'];
       radial-gradient(34% 14% at 72% 80%, color-mix(in oklab, white 4%, transparent), transparent 70%);
   }
 
-  /* Duas linhas no desktop ("Seu próximo veículo / começa aqui."): o tamanho acompanha a coluna. */
+  /* "O veículo certo para você está aqui.": o tamanho acompanha a coluna. */
   .hero-title {
     font-size: clamp(2.9rem, 1.2rem + 7vw, 5.5rem);
   }

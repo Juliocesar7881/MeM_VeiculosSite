@@ -5,7 +5,7 @@ test.describe('Cliente que quer comprar', () => {
   test('Home → Estoque → Veículo → WhatsApp', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/M&M Veículos/);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Seu próximo veículo');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('O veículo certo para você está aqui');
     await expect(page.locator('.hero').getByRole('link', { name: 'Ver todos os veículos' })).toHaveAttribute(
       'href',
       '/veiculos',

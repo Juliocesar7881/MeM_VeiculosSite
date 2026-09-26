@@ -17,7 +17,8 @@ import { readFileSync } from 'node:fs';
 import { contentTypeForKey } from '../src/lib/storage/keys';
 
 const DB_NAME = 'DB';
-const CONCURRENCY = 6;
+/** Arquivos em paralelo (cada um usa ~4 chamadas à API; o limite da Cloudflare é 1.200 a cada 5 min). */
+const CONCURRENCY = Number(process.env.MIGRATE_CONCURRENCY ?? 6);
 const WRANGLER = path.resolve('node_modules/wrangler/bin/wrangler.js');
 
 function readConfig(): { kvId: string; bucket: string } {
