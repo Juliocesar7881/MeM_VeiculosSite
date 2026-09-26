@@ -25,7 +25,9 @@ export function formDataToObject(
 const emptyToUndefined = (value: unknown) =>
   value === null || value === undefined || (typeof value === 'string' && value.trim() === '') ? undefined : value;
 
-/** Texto obrigatório com espaços normalizados. */
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** Texto obrigatório com espaços normalizados. `label` no meio da frase: "seu nome", "a marca". */
 export const requiredText = (label: string, min: number, max: number) =>
   z
     .string({ error: `Informe ${label}.` })
@@ -33,8 +35,10 @@ export const requiredText = (label: string, min: number, max: number) =>
     .pipe(
       z
         .string()
-        .min(min, { error: min <= 1 ? `Informe ${label}.` : `${label} deve ter ao menos ${min} caracteres.` })
-        .max(max, { error: `${label} deve ter no máximo ${max} caracteres.` }),
+        .min(min, {
+          error: min <= 1 ? `Informe ${label}.` : `${capitalize(label)} deve ter ao menos ${min} caracteres.`,
+        })
+        .max(max, { error: `${capitalize(label)} deve ter no máximo ${max} caracteres.` }),
     );
 
 /** Texto opcional de uma linha -> string | null */

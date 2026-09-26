@@ -49,10 +49,14 @@ const errorCount = Object.keys(errors).length;
       role="alert"
       data-form-errors
     >
-      <p class="font-semibold">
+      <p class="font-semibold" data-form-errors-count>
         Revise {errorCount === 1 ? 'o campo destacado' : `os ${errorCount} campos destacados`}.
       </p>
-      {err('_form') && <p class="mt-1">{err('_form')}</p>}
+      {err('_form') && (
+        <p class="mt-1" data-form-errors-general>
+          {err('_form')}
+        </p>
+      )}
     </div>
   )}
 
@@ -93,7 +97,11 @@ const errorCount = Object.keys(errors).length;
             <option value={b} />
           ))}
         </datalist>
-        {err('brand') && <p class="field-error">{err('brand')}</p>}
+        {err('brand') && (
+          <p class="field-error" data-error-for="brand">
+            {err('brand')}
+          </p>
+        )}
       </div>
       <div>
         <label for="v-model" class="field-label">
@@ -108,7 +116,11 @@ const errorCount = Object.keys(errors).length;
           maxlength="60"
           aria-invalid={err('model') ? 'true' : undefined}
         />
-        {err('model') && <p class="field-error">{err('model')}</p>}
+        {err('model') && (
+          <p class="field-error" data-error-for="model">
+            {err('model')}
+          </p>
+        )}
       </div>
       <div class="sm:col-span-2 xl:col-span-1">
         <label for="v-version" class="field-label">
@@ -122,7 +134,11 @@ const errorCount = Object.keys(errors).length;
           maxlength="80"
           placeholder="Ex.: XEi 2.0 Flex"
         />
-        {err('version') && <p class="field-error">{err('version')}</p>}
+        {err('version') && (
+          <p class="field-error" data-error-for="version">
+            {err('version')}
+          </p>
+        )}
       </div>
       <div>
         <label for="v-fab" class="field-label">
@@ -137,7 +153,11 @@ const errorCount = Object.keys(errors).length;
           maxlength="4"
           aria-invalid={err('manufactureYear') ? 'true' : undefined}
         />
-        {err('manufactureYear') && <p class="field-error">{err('manufactureYear')}</p>}
+        {err('manufactureYear') && (
+          <p class="field-error" data-error-for="manufactureYear">
+            {err('manufactureYear')}
+          </p>
+        )}
       </div>
       <div>
         <label for="v-mod" class="field-label">
@@ -152,7 +172,11 @@ const errorCount = Object.keys(errors).length;
           maxlength="4"
           aria-invalid={err('modelYear') ? 'true' : undefined}
         />
-        {err('modelYear') && <p class="field-error">{err('modelYear')}</p>}
+        {err('modelYear') && (
+          <p class="field-error" data-error-for="modelYear">
+            {err('modelYear')}
+          </p>
+        )}
       </div>
     </div>
   </section>
@@ -175,7 +199,11 @@ const errorCount = Object.keys(errors).length;
           data-money-input
         />
         <p class="field-hint">Deixe em branco para exibir “Preço sob consulta”.</p>
-        {err('price') && <p class="field-error">{err('price')}</p>}
+        {err('price') && (
+          <p class="field-error" data-error-for="price">
+            {err('price')}
+          </p>
+        )}
       </div>
       <div class="grid content-start gap-3">
         <label class="check toggle-row">
@@ -225,7 +253,11 @@ const errorCount = Object.keys(errors).length;
           data-money-input
         />
         <p class="field-hint">Exibe “De R$ X por R$ Y” quando maior que o preço atual.</p>
-        {err('previousPrice') && <p class="field-error">{err('previousPrice')}</p>}
+        {err('previousPrice') && (
+          <p class="field-error" data-error-for="previousPrice">
+            {err('previousPrice')}
+          </p>
+        )}
       </div>
     </div>
   </section>
@@ -247,7 +279,11 @@ const errorCount = Object.keys(errors).length;
           aria-invalid={err('mileage') ? 'true' : undefined}
           data-int-input
         />
-        {err('mileage') && <p class="field-error">{err('mileage')}</p>}
+        {err('mileage') && (
+          <p class="field-error" data-error-for="mileage">
+            {err('mileage')}
+          </p>
+        )}
       </div>
       <div>
         <label for="v-hours" class="field-label">
@@ -263,7 +299,11 @@ const errorCount = Object.keys(errors).length;
           aria-invalid={err('usageHours') ? 'true' : undefined}
           data-int-input
         />
-        {err('usageHours') && <p class="field-error">{err('usageHours')}</p>}
+        {err('usageHours') && (
+          <p class="field-error" data-error-for="usageHours">
+            {err('usageHours')}
+          </p>
+        )}
       </div>
       <div>
         <label for="v-fuel" class="field-label">
@@ -345,7 +385,11 @@ const errorCount = Object.keys(errors).length;
         maxlength="5000"
         placeholder="Estado de conservação, revisões, diferenciais..."
       >{val('description')}</textarea>
-      {err('description') && <p class="field-error">{err('description')}</p>}
+      {err('description') && (
+        <p class="field-error" data-error-for="description">
+          {err('description')}
+        </p>
+      )}
     </div>
   </section>
 
@@ -498,6 +542,7 @@ const errorCount = Object.keys(errors).length;
 
 <script>
   import { setLeaveWarning } from '@/features/admin/confirm-dialog';
+  import { initLiveFieldErrors } from '@/features/field-errors';
 
   // Alterações não salvas: sair por um link do painel pede confirmação (na própria página).
   const vehicleForm = document.querySelector<HTMLFormElement>('[data-vehicle-form]');
@@ -521,4 +566,18 @@ const errorCount = Object.keys(errors).length;
     const digits = input.value.replace(/\D/g, '').slice(0, 9);
     input.value = digits ? Number(digits).toLocaleString('pt-BR') : '';
   });
+
+  // Aviso de erro de um campo some assim que ele é editado (o servidor confere de novo ao salvar).
+  if (vehicleForm) {
+    initLiveFieldErrors(vehicleForm, {
+      onUpdate: (remaining) => {
+        const box = vehicleForm.querySelector<HTMLElement>('[data-form-errors]');
+        const count = box?.querySelector<HTMLElement>('[data-form-errors-count]');
+        if (!box || !count) return;
+        count.textContent = remaining === 1 ? 'Revise o campo destacado.' : `Revise os ${remaining} campos destacados.`;
+        count.hidden = remaining === 0;
+        box.hidden = remaining === 0 && !box.querySelector('[data-form-errors-general]');
+      },
+    });
+  }
 </script>

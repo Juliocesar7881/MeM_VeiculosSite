@@ -1,3 +1,4 @@
+import { initLiveFieldErrors } from './field-errors';
 import { extensionFor, ImageProcessingError, makeImagePair, type PairOptions } from './image-compress';
 
 interface Limits extends PairOptions {
@@ -49,17 +50,17 @@ function renderTurnstile(): Promise<string | null> {
   });
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  name: 'Nome',
-  whatsapp: 'WhatsApp',
-  email: 'E-mail',
-  category: 'Categoria',
-  brand: 'Marca',
-  model: 'Modelo',
-  manufactureYear: 'Ano de fabricação',
-  modelYear: 'Ano modelo',
-  consent: 'Autorização',
+/** Campos obrigatórios e o aviso de cada um (mesmo texto do servidor, schemas/lead.ts). */
+const REQUIRED_MESSAGES: Record<string, string> = {
+  name: 'Informe seu nome.',
+  whatsapp: 'Informe seu WhatsApp.',
+  brand: 'Informe a marca.',
+  model: 'Informe o modelo.',
+  manufactureYear: 'Informe o ano de fabricação.',
 };
+
+const reviseMessage = (count: number) =>
+  `Revise ${count === 1 ? 'o campo destacado' : `os ${count} campos destacados`}.`;
 
 function formatThousands(input: HTMLInputElement) {
   const digits = input.value.replace(/\D/g, '').slice(0, 12);
@@ -215,6 +216,7 @@ export function initSellForm() {
         p.className = 'field-error';
         p.dataset.generated = 'true';
         p.textContent = text;
+        p.dataset.errorFor = field;
         const id = `err-${field}`;
         p.id = id;
         input.setAttribute('aria-describedby', id);
@@ -224,11 +226,9 @@ export function initSellForm() {
     }
     if (alertBox) {
       const count = Object.keys(errors).length;
-      alertBox.textContent =
-        message ??
-        (count
-          ? `Revise ${count === 1 ? 'o campo destacado' : `os ${count} campos destacados`}.`
-          : 'Verifique os dados.');
+      alertBox.textContent = message ?? (count ? reviseMessage(count) : 'Verifique os dados.');
+      // Aviso sobre campos: acompanha as correções (some quando todos estiverem certos).
+      alertBox.dataset.fields = String(count > 0);
       alertBox.hidden = false;
     }
     (first ?? alertBox)?.focus?.({ preventScroll: false });
@@ -238,15 +238,26 @@ export function initSellForm() {
   const clientValidate = (): Record<string, string> => {
     const errors: Record<string, string> = {};
     const data = new FormData(form);
-    for (const field of ['name', 'whatsapp', 'brand', 'model', 'manufactureYear']) {
-      if (!String(data.get(field) ?? '').trim()) errors[field] = `Informe ${FIELD_LABELS[field]?.toLowerCase()}.`;
+    for (const [field, message] of Object.entries(REQUIRED_MESSAGES)) {
+      if (!String(data.get(field) ?? '').trim()) errors[field] = message;
     }
+    if (String(data.get('name') ?? '').trim().length === 1) errors.name = 'Seu nome deve ter ao menos 2 caracteres.';
     if (!data.get('category')) errors.category = 'Selecione a categoria.';
     if (!data.get('consent')) errors.consent = 'É necessário autorizar o contato para enviar.';
     const phone = String(data.get('whatsapp') ?? '').replace(/\D/g, '');
     if (phone && (phone.length < 10 || phone.length > 13)) errors.whatsapp = 'Informe um WhatsApp válido com DDD.';
     return errors;
   };
+
+  // O aviso de cada campo some assim que ele é preenchido/corrigido (sem esperar um novo envio).
+  initLiveFieldErrors(form, {
+    validate: (field) => clientValidate()[field] ?? null,
+    onUpdate: (remaining) => {
+      if (!alertBox || alertBox.dataset.fields !== 'true') return;
+      if (remaining === 0) alertBox.hidden = true;
+      else alertBox.textContent = reviseMessage(remaining);
+    },
+  });
 
   const setLoading = (loading: boolean, text?: string) => {
     if (!submit) return;

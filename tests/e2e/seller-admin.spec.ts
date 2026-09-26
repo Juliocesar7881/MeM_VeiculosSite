@@ -10,18 +10,33 @@ test('Home → Anuncie seu veículo → Enviar proposta', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Quer vender seu veículo?');
 
   // Envio sem dados mostra erros de validação
+  const alert = page.locator('[data-form-alert]');
+  const errorOf = (field: string) => page.locator(`[data-error-for="${field}"]`);
   await page.getByRole('button', { name: /Enviar para avaliação/ }).click();
-  await expect(page.locator('[data-form-alert]')).toBeVisible();
+  await expect(alert).toHaveText('Revise os 7 campos destacados.');
+  await expect(errorOf('name')).toHaveText('Informe seu nome.');
+  await expect(errorOf('whatsapp')).toHaveText('Informe seu WhatsApp.');
 
+  // Cada aviso some assim que o campo é preenchido (o resumo acompanha)
   const field = (name: string) => page.getByRole('textbox', { name, exact: true });
   await field('Nome').fill('Ana Teste E2E');
+  await expect(errorOf('name')).toHaveCount(0);
+  await expect(field('Nome')).not.toHaveAttribute('aria-invalid');
+  await expect(alert).toHaveText('Revise os 6 campos destacados.');
+  // WhatsApp incompleto: ao sair do campo, o aviso passa a explicar o que falta
+  await field('WhatsApp').fill('4798');
+  await field('WhatsApp').blur();
+  await expect(errorOf('whatsapp')).toHaveText('Informe um WhatsApp válido com DDD.');
   await field('WhatsApp').fill('47988887777');
   await expect(field('WhatsApp')).toHaveValue('(47) 98888-7777');
+  await expect(errorOf('whatsapp')).toHaveCount(0);
   await page.locator('label.cat-option', { hasText: 'Carro' }).click();
+  await expect(errorOf('category')).toBeHidden();
   await field('Marca').fill('Volkswagen');
   await field('Modelo').fill('Gol');
   await field('Versão').fill('1.6 MSI');
   await field('Ano de fabricação').fill('2018');
+  await expect(alert).toHaveText('Revise o campo destacado.');
   await field('Ano modelo').fill('2019');
   await field('Quilometragem').fill('71000');
   await expect(field('Quilometragem')).toHaveValue('71.000');
@@ -36,6 +51,8 @@ test('Home → Anuncie seu veículo → Enviar proposta', async ({ page }) => {
   await expect(page.locator('[data-photo-list] img')).toHaveCount(1);
 
   await page.getByLabel(/Autorizo a M&M Veículos/).check();
+  await expect(errorOf('consent')).toBeHidden();
+  await expect(alert).toBeHidden();
   // Turnstile (chave de teste da Cloudflare) gera o token automaticamente
   await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, { timeout: 20_000 });
 
@@ -246,9 +263,14 @@ test('Admin: cadastro com fotos na mesma tela (sem precisar salvar antes)', asyn
   await expect(page.locator('[data-form-errors]')).toBeVisible();
   await expect(page).toHaveURL(/\/admin\/veiculos\/novo$/);
   await expect(photos).toHaveCount(2);
+  await expect(page.locator('[data-error-for="brand"]')).toBeVisible();
 
   // Corrige e salva: o veículo é criado e as fotos sobem na ordem da tela (a capa primeiro)
   await page.getByLabel('Marca *').fill('Volkswagen');
+  // O aviso do campo (e o resumo no topo) some assim que ele é preenchido
+  await expect(page.locator('[data-error-for="brand"]')).toBeHidden();
+  await expect(page.getByLabel('Marca *')).not.toHaveAttribute('aria-invalid');
+  await expect(page.locator('[data-form-errors]')).toBeHidden();
   await page.getByLabel('Ano de fabricação').fill('2018');
   await page.getByLabel('Ano modelo').fill('2019');
   await page.getByLabel('Preço (R$)').fill('58.900');

@@ -222,6 +222,11 @@ pelo R2). Correção:
     abrisse o anúncio logo após a publicação podia ver a foto quebrada, e o 404 ficava 60 s no navegador. Agora
     publicar/tirar do site/editar/excluir vale na hora e o 404 de foto não pública não é guardado (teste de
     integração).
+39. **Aviso "Informe…" continuava depois de preenchido** ("Anuncie seu veículo" e cadastro do painel): o aviso só
+    saía num novo envio, e a pessoa ficava na dúvida se tinha digitado certo. Agora cada aviso some assim que o
+    campo é preenchido/corrigido, o resumo no topo acompanha ("Revise os N campos…" até sumir), e o WhatsApp
+    incompleto passa a dizer o que falta ao sair do campo. Textos revisados: "Informe seu nome.", "Informe a
+    marca." etc. (E2E).
 
 **Recomendações para os responsáveis (fora do código)**
 
