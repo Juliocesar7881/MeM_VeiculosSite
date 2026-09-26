@@ -16,7 +16,7 @@ zero. O único custo obrigatório é o **domínio**. A alternativa pela Vercel c
 | Banco            | D1 `mm-veiculos` (região ENAM), migrations 0001–0005 aplicadas                                                |
 | Fotos            | R2 `mm-veiculos-media` (privado; passo 7)                                                                     |
 | Anti-spam        | Turnstile com chave real (hostnames: domínio com e sem www e a URL `*.workers.dev`)                           |
-| Buscadores       | Liberados (`ALLOW_INDEXING=true`); falta enviar o sitemap ao Google Search Console                            |
+| Buscadores       | Liberados (`ALLOW_INDEXING=true`); Search Console com sitemap enviado (26/09/2026)                            |
 
 Tudo o que o site precisa já está configurado em [`wrangler.jsonc`](../wrangler.jsonc) (bindings e variáveis
 públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git).
@@ -159,8 +159,11 @@ os passos abaixo. Observações do que aconteceu, para uma próxima vez:
 
 5. Confira `https://www.seudominio.com.br/robots.txt` (deve liberar o site e apontar o sitemap) e compartilhe um
    veículo no WhatsApp para ver a prévia (foto + título + preço).
-6. **Google Search Console** → adicionar propriedade (tipo _Domínio_, verificação por DNS na Cloudflare) → enviar
-   `https://www.seudominio.com.br/sitemap.xml`.
+6. **Google Search Console** → adicionar propriedade → enviar `https://www.seudominio.com.br/sitemap.xml`.
+   Feito em 26/09/2026: propriedade _Prefixo do URL_ `https://www.mmveiculos.com.br/`, verificada automaticamente
+   pelo registro TXT `google-site-verification=…` que está no DNS da Cloudflare — **não apague esse registro** (o
+   Google perde a verificação). Sitemap enviado e indexação da Home solicitada. Para dar acesso a outra pessoa:
+   Search Console → Configurações → Usuários e permissões.
 7. Atualize o link do site no Instagram e no Facebook.
 
 Com domínio próprio, o **cache de borda** passa a funcionar: páginas públicas ficam 60 s no data center mais próximo
@@ -253,5 +256,5 @@ recém-criado, vazio). Detalhes em [BACKUP.md](BACKUP.md).
 - [ ] Veículos reais cadastrados com fotos; destaques marcados
 - [ ] Formulário “Anuncie seu veículo” testado de ponta a ponta (proposta chegou no painel)
 - [x] Domínio comprado e ativo na Cloudflare; `npm run cf:domain -- mmveiculos.com.br` executado (26/09/2026)
-- [ ] Sitemap enviado ao Google Search Console
+- [x] Sitemap enviado ao Google Search Console (26/09/2026)
 - [x] Backup inicial feito (`npm run cf:backup`) — repetir depois do cadastro real e semanalmente
