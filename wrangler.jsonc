@@ -22,15 +22,16 @@
     },
   ],
 
-  // Fotos. Enquanto o R2 não estiver ativado na conta, usamos o Workers KV (grátis, sem cartão).
-  // Para usar o R2: crie o bucket, descomente "r2_buckets" e troque STORAGE_DRIVER para "r2".
+  // Fotos no R2 (bucket privado; 10 GB grátis, teto de 9 GB no painel). O KV antigo continua ligado
+  // só como reserva de leitura durante a migração (lib/storage/fallback.ts): o que ainda não estiver no
+  // R2 é lido de lá. Depois de conferir (npm run cf:migrate-media -- --check), remova "kv_namespaces".
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mm-veiculos-media" }],
   "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "07d500e6534c4d558dca80ef113621cb" }],
-  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mm-veiculos-media" }],
 
   // Variáveis públicas (não secretas). Segredos: `npx wrangler secret put <NOME>`
   // (ADMIN_PASSWORD_HASH, SESSION_SECRET, IP_HASH_SALT, TURNSTILE_SECRET_KEY)
   "vars": {
-    "STORAGE_DRIVER": "kv",
+    "STORAGE_DRIVER": "r2",
     "AUTH_MODE": "password",
     "ALLOW_INDEXING": "false",
     // Chave pública do widget Turnstile (hostname: mm-veiculos.lupinho7881.workers.dev). Adicione o
