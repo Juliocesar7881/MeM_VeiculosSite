@@ -7,7 +7,7 @@ Data: **25/09/2026** · Repositório: https://github.com/Juliocesar7881/MeM_Veic
 |                    |                                                                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Situação**       | Sistema completo (site público + painel administrativo), publicado e testado                                                                          |
-| **Endereço atual** | https://mm-veiculos.lupinho7881.workers.dev (temporário, para validação) · painel em `/admin`                                                         |
+| **Endereço atual** | **https://www.mmveiculos.com.br** (desde 26/09/2026) · painel em `/admin` · o endereço antigo redireciona para ele                                    |
 | **Hospedagem**     | Cloudflare, plano gratuito, conta **lupinho7881@gmail.com** (só este projeto): Workers, D1, R2, Turnstile                                             |
 | **Custo mensal**   | **R$ 0**. Custo obrigatório: só o **domínio** (~R$ 40/ano no Registro.br para `.com.br`)                                                              |
 | **Dados no ar**    | Configurações oficiais da empresa já cadastradas; estoque **vazio** (“Novos veículos em breve”) até a M&M cadastrar os veículos reais. Nada inventado |

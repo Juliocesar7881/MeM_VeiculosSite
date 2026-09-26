@@ -4,18 +4,19 @@ Este é o caminho **principal** de hospedagem: plano gratuito da Cloudflare, uso
 zero. O único custo obrigatório é o **domínio**. A alternativa pela Vercel continua documentada em
 [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md).
 
-## Situação atual (24/09/2026)
+## Situação atual (26/09/2026)
 
-| Item                        | Estado                                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Site no ar (URL temporária) | **https://mm-veiculos.lupinho7881.workers.dev**                                                              |
-| Painel                      | https://mm-veiculos.lupinho7881.workers.dev/admin (senha forte definida em 24/09/2026; para trocar: passo 4) |
-| Conta Cloudflare            | **lupinho7881@gmail.com** (dedicada a este projeto)                                                          |
-| Worker                      | `mm-veiculos` (Smart Placement, observabilidade ligada)                                                      |
-| Banco                       | D1 `mm-veiculos` (região ENAM), migrations 0001–0005 aplicadas                                               |
-| Fotos                       | Workers KV `MEDIA_KV` (o R2 ainda não está ativado na conta, ver passo 7)                                    |
-| Anti-spam                   | Turnstile com chave real (hostname `mm-veiculos.lupinho7881.workers.dev`)                                    |
-| Buscadores                  | Bloqueados (`ALLOW_INDEXING=false`) até existir o domínio                                                    |
+| Item             | Estado                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| Site no ar       | **https://www.mmveiculos.com.br** (sem www, http:// e `mm-veiculos.lupinho7881.workers.dev` → 301 para ele)   |
+| Painel           | https://www.mmveiculos.com.br/admin (senha forte definida em 24/09/2026; para trocar: passo 4)                |
+| Conta Cloudflare | **lupinho7881@gmail.com** (dedicada a este projeto); zona `mmveiculos.com.br` no plano Free                   |
+| Domínio          | Registro.br, na conta do cliente (titular), válido até 26/09/2031; nameservers `earl`/`lia.ns.cloudflare.com` |
+| Worker           | `mm-veiculos` (Smart Placement, observabilidade ligada), Custom Domains com e sem www                         |
+| Banco            | D1 `mm-veiculos` (região ENAM), migrations 0001–0005 aplicadas                                                |
+| Fotos            | R2 `mm-veiculos-media` (privado; passo 7)                                                                     |
+| Anti-spam        | Turnstile com chave real (hostnames: domínio com e sem www e a URL `*.workers.dev`)                           |
+| Buscadores       | Liberados (`ALLOW_INDEXING=true`); falta enviar o sitemap ao Google Search Console                            |
 
 Tudo o que o site precisa já está configurado em [`wrangler.jsonc`](../wrangler.jsonc) (bindings e variáveis
 públicas) e nos **secrets** do Worker (valores sigilosos que não ficam no Git).
@@ -118,16 +119,22 @@ npx wrangler secret put SESSION_SECRET
 
 Painel da Cloudflare → **Turnstile** → widget “M&M Veículos”:
 
-- **Hostnames:** mantenha `mm-veiculos.lupinho7881.workers.dev` durante a validação e **adicione o domínio definitivo** (ex.:
-  `mmveiculos.com.br` e `www.mmveiculos.com.br`) quando ele existir.
+- **Hostnames:** `mmveiculos.com.br`, `www.mmveiculos.com.br` e `mm-veiculos.lupinho7881.workers.dev` (o
+  `npm run cf:domain` adiciona o domínio automaticamente).
 - A **Site Key** fica em `wrangler.jsonc` (`TURNSTILE_SITE_KEY`, é pública); a **Secret Key** fica no secret
   `TURNSTILE_SECRET_KEY` (`npx wrangler secret put TURNSTILE_SECRET_KEY`).
 - Sem as chaves, o formulário mostra “temporariamente indisponível” (falha segura).
 
 ## 6. Domínio próprio
 
-Em 24/09/2026, **`mmveiculos.com.br` estava disponível** no Registro.br (e também `mmveiculossc.com.br`;
-`mmveiculos.net.br` já tem dono).
+**Feito em 26/09/2026:** `mmveiculos.com.br` comprado pelo cliente no Registro.br (conta dele) e ligado ao site com
+os passos abaixo. Observações do que aconteceu, para uma próxima vez:
+
+- O Registro.br entrega o domínio com **DNSSEC ligado**. Ao trocar os servidores DNS ele tira o DNSSEC na hora e
+  só publica os nameservers novos **~2 h depois** (tempo para a chave antiga sair dos caches). Não deixe DNSSEC
+  preenchido ao trocar; se quiser DNSSEC de novo, ative pela Cloudflare (DNS → Settings) e cadastre o DS no Registro.br.
+- A Cloudflare ativou a zona ~3 min depois de o Registro.br publicar os nameservers.
+- O próprio Worker leva `http://` para `https://` (src/server/canonical.ts), sem depender de configuração no painel.
 
 1. Compre o domínio no **Registro.br** (~R$ 40/ano para `.com.br`). O titular precisa de CPF ou CNPJ — de
    preferência o CNPJ da M&M.
@@ -242,9 +249,9 @@ recém-criado, vazio). Detalhes em [BACKUP.md](BACKUP.md).
 - [x] Senha de desenvolvimento substituída por senha forte (passo 4) — falta entregá-la ao cliente de forma segura
 - [ ] Contatos conferidos no site (WhatsApp 554896410338, Instagram, Facebook, e-mail, slogan — em `src/config/site.ts`)
 - [ ] Endereço e horário preenchidos, se o cliente quiser exibir
-- [ ] R2 ativado antes do cadastro do estoque inicial (passo 7)
+- [x] R2 ativado (passo 7) — fotos migradas do KV e conferidas em 26/09/2026
 - [ ] Veículos reais cadastrados com fotos; destaques marcados
 - [ ] Formulário “Anuncie seu veículo” testado de ponta a ponta (proposta chegou no painel)
-- [ ] Domínio comprado e ativo na Cloudflare; `npm run cf:domain -- <domínio>` executado com sucesso
+- [x] Domínio comprado e ativo na Cloudflare; `npm run cf:domain -- mmveiculos.com.br` executado (26/09/2026)
 - [ ] Sitemap enviado ao Google Search Console
 - [x] Backup inicial feito (`npm run cf:backup`) — repetir depois do cadastro real e semanalmente
