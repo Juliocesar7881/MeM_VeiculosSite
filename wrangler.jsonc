@@ -8,6 +8,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": false,
+  "routes": [
+    { "pattern": "www.mmveiculos.com.br", "custom_domain": true },
+    { "pattern": "mmveiculos.com.br", "custom_domain": true },
+  ],
   "observability": { "enabled": true },
   // Smart Placement: executa o Worker perto do D1 quando isso reduz a latência das consultas.
   "placement": { "mode": "smart" },
@@ -30,9 +34,10 @@
   // Variáveis públicas (não secretas). Segredos: `npx wrangler secret put <NOME>`
   // (ADMIN_PASSWORD_HASH, SESSION_SECRET, IP_HASH_SALT, TURNSTILE_SECRET_KEY)
   "vars": {
+    "PUBLIC_SITE_URL": "https://www.mmveiculos.com.br",
     "STORAGE_DRIVER": "r2",
     "AUTH_MODE": "password",
-    "ALLOW_INDEXING": "false",
+    "ALLOW_INDEXING": "true",
     // Chave pública do widget Turnstile (hostname: mm-veiculos.lupinho7881.workers.dev). Adicione o
     // domínio definitivo no painel do Turnstile quando ele existir.
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFCiSR2Su9bfoT-b",
